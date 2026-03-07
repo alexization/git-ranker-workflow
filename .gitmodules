@@ -1,8 +1,6 @@
 [submodule "git-ranker"]
-    branch = main
 	path = git-ranker
 	url = https://github.com/alexization/git-ranker.git
 [submodule "git-ranker-client"]
-    branch = main
 	path = git-ranker-client
 	url = https://github.com/alexization/git-ranker-client.git
