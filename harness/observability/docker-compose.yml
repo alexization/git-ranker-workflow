@@ -1,0 +1,61 @@
+services:
+  loki:
+    image: grafana/loki
+    command:
+      - -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/loki-config.yml:ro
+      - ../../.runtime/${TASK_SLUG:-example-task}/observability/loki:/loki
+
+  promtail:
+    image: grafana/promtail
+    command:
+      - -config.file=/etc/promtail/promtail-config.yml
+      - -config.expand-env=true
+    depends_on:
+      - loki
+    volumes:
+      - ./promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - ../../.runtime/${TASK_SLUG:-example-task}/logs:/var/log/task:ro
+
+  prometheus:
+    image: prom/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ../../.runtime/${TASK_SLUG:-example-task}/observability/prometheus:/prometheus
+
+  tempo:
+    image: grafana/tempo
+    command:
+      - -config.file=/etc/tempo/tempo.yml
+    ports:
+      - "${TEMPO_PORT:-3200}:3200"
+      - "${OTLP_GRPC_PORT:-4317}:4317"
+      - "${OTLP_HTTP_PORT:-4318}:4318"
+    volumes:
+      - ./tempo.yml:/etc/tempo/tempo.yml:ro
+      - ../../.runtime/${TASK_SLUG:-example-task}/observability/tempo:/var/tempo
+
+  grafana:
+    image: grafana/grafana-oss
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_FEATURE_TOGGLES_ENABLE: traceqlEditor
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../../.runtime/${TASK_SLUG:-example-task}/observability/grafana:/var/lib/grafana
+
