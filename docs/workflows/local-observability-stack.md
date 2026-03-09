@@ -1,8 +1,8 @@
 ---
-summary: Local per-task observability model using Loki, Prometheus, Tempo, and Grafana.
+summary: Local per-task observability model using Loki, Prometheus, and Grafana.
 read_when:
   - setting up the task runtime
-  - deciding where logs, metrics, and traces should go
+  - deciding where logs and metrics should go
 ---
 
 # Local Observability Stack
@@ -12,16 +12,17 @@ read_when:
 Mirror the agent-facing observability workflow described by OpenAI:
 
 - one isolated observability context per task
-- logs, metrics, and traces queryable by the agent
+- logs and metrics queryable by the agent
 - disposable runtime after the task completes
 
 ## Implementation choice
 
-OpenAI's article describes local queryable logs, metrics, and traces with
-LogQL, PromQL, and TraceQL. This repository uses Loki, Prometheus, Tempo, and
-Grafana as a practical equivalent for self-hosted local development.
+OpenAI's article describes queryable local observability. This repository uses
+Loki, Prometheus, and Grafana as the default local stack for self-hosted
+development.
 
-This is an implementation inference, not a direct quote from OpenAI.
+Because the operating environment is a single-server deployment, the default
+workflow intentionally does not include Tempo or distributed tracing.
 
 ## Directory contract
 
@@ -29,7 +30,6 @@ This is an implementation inference, not a direct quote from OpenAI.
 .runtime/<task-slug>/
   logs/
   metrics/
-  traces/
   observability/
 ```
 
@@ -56,12 +56,6 @@ Every emitted signal should carry at least:
 histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{task_slug="<task-slug>"}[5m])))
 ```
 
-### TraceQL
-
-```text
-{ resource.task_slug = "<task-slug>" } | duration > 2s
-```
-
 ## Config location
 
 See `harness/observability/`.
@@ -71,5 +65,5 @@ See `harness/observability/`.
 - backend metrics are available from Spring Actuator on port `9090` at
   `/actuator/prometheus`
 - backend logs are already structured through `logback-spring.xml`
-- frontend metrics and trace export are not yet committed as part of the client
-  repo, so the harness keeps those pieces generic for now
+- frontend metrics export is not yet committed as part of the client repo, so
+  the harness keeps that piece generic for now

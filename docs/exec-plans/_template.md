@@ -69,7 +69,7 @@ Describe:
     - Playwright journeys
     - CDP checks
     - Loki or log-backend queries
-    - metrics or trace checks when relevant
+    - metrics checks when relevant
 
 ## Idempotence and Recovery
 
@@ -85,11 +85,10 @@ Record paths for:
     - DOM snapshots
     - console captures
     - log query output
-    - metric or trace captures
+    - metric captures
 
 ## Interfaces and Dependencies
 
 List the interfaces, contracts, libraries, providers, and service boundaries the
 task depends on or creates.
 ```
-

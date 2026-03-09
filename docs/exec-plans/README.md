@@ -26,6 +26,5 @@ Example:
 1. Create from `_template.md`.
 2. Fill in the request intake and context before coding.
 3. Update `Progress`, `Decision Log`, and `Surprises & Discoveries` during work.
-4. Record artifact paths for Playwright, CDP, logs, metrics, and traces.
+4. Record artifact paths for Playwright, CDP, logs, and metrics when relevant.
 5. Move the plan to `completed/` when the work and retrospective are finished.
-

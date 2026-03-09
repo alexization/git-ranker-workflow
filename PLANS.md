@@ -68,7 +68,7 @@ snippets, and transcripts.
 3. Research before implementation.
 4. Update the plan before and after every material milestone.
 5. Validate behavior in the isolated task runtime.
-6. Record the evidence path for screenshots, videos, traces, and logs.
+6. Record the evidence path for screenshots, videos, logs, and metrics when relevant.
 7. Update docs when a new durable rule or system fact is discovered.
 
 ## Plan naming
@@ -80,4 +80,3 @@ Use a sortable filename:
 ## Template
 
 Start from `docs/exec-plans/_template.md`.
-

@@ -16,7 +16,7 @@ intent.
 
 - which journey matters?
 - what latency or failure budget matters?
-- how will logs, metrics, or traces prove compliance?
+- how will logs and metrics prove compliance?
 
 ## Default expectations
 
@@ -28,8 +28,6 @@ intent.
 
 - `LogQL`: service startup completed without retries or fatal errors
 - `PromQL`: request or job latency remained under the target threshold
-- `TraceQL`: no span in the named journey exceeded the agreed threshold
 
 Exact thresholds belong in the relevant ExecPlan until stable enough to promote
 into a permanent doc.
-

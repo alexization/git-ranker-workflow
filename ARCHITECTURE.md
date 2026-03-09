@@ -42,7 +42,7 @@ feature request
   -> frontend integration / UI changes
   -> isolated task runtime
   -> Playwright + CDP validation
-  -> logs / metrics / traces review
+  -> logs / metrics review
   -> fix loop
   -> PR / merge / debt update
 ```
@@ -61,7 +61,7 @@ Expected layout:
 .runtime/
   <task-slug>/
     logs/
-    traces/
+    metrics/
     screenshots/
     videos/
     playwright/
@@ -130,13 +130,13 @@ Every user-visible change is expected to produce:
 - a Playwright run over the affected journey
 - CDP evidence for DOM, console, network, and screenshot state
 - log evidence from the isolated task runtime
-- metrics and trace evidence when performance or async flow matters
+- metric evidence when performance or throughput matters
 
 The recommended local stack is documented in
 [docs/workflows/local-observability-stack.md](docs/workflows/local-observability-stack.md).
-The implementation provided in `harness/` uses Loki, Prometheus, Tempo, and
-Grafana to preserve the same agent-facing query model described by OpenAI:
-LogQL, PromQL, and TraceQL.
+The implementation provided in `harness/` uses Loki, Prometheus, and Grafana to
+preserve an agent-facing query model for logs and metrics with LogQL and
+PromQL.
 
 ## What stays out of this repo
 
@@ -147,7 +147,7 @@ LogQL, PromQL, and TraceQL.
 ## Current limitations
 
 - the frontend repo does not yet contain committed Playwright or test config
-- the harness knows the backend metrics endpoint, but frontend metrics and trace
-  export wiring are still generic
+- the harness knows the backend metrics endpoint, but frontend metrics export
+  wiring is still generic
 - repo-specific start scripts and local env bootstrapping still need to be
   codified into the harness

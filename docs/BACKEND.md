@@ -13,7 +13,7 @@ read_when:
 - language/runtime: Java 21
 - architecture hints: domain, infrastructure, global, and batch packages
 - observability already present: Actuator, Prometheus endpoint, structured
-  logback JSON encoder, trace-id MDC support
+  logback JSON encoder
 - test stack already present: JUnit 5, Testcontainers, ArchUnit, Jacoco
 
 ## What agents must optimize for
@@ -32,7 +32,7 @@ read_when:
 4. Run backend build and tests.
 5. Boot the isolated task runtime.
 6. Exercise the changed API or worker path.
-7. Query logs, metrics, and traces for the affected path.
+7. Query logs and metrics for the affected path.
 8. Record evidence and findings in the ExecPlan.
 
 ## Contract rules
@@ -49,7 +49,6 @@ Every important backend change should leave behind:
 
 - structured log evidence for the changed flow
 - at least one metric or timing check for latency-sensitive paths
-- trace evidence when multiple async steps or external calls are involved
 - a note describing which log query proves the behavior worked
 
 ## Expected commands to codify

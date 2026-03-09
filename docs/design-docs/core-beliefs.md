@@ -31,16 +31,14 @@ what lets agents move quickly without spreading architectural drift.
 ## 5. Behavior matters more than code motion
 
 Every change must end in observable behavior: a journey that passes, an error
-that disappears, a metric that stays below target, or a trace that no longer
-regresses.
+that disappears, or a metric that stays below target.
 
 ## 6. Feedback loops are part of the product
 
-Playwright specs, CDP inspection, logs, metrics, traces, and review loops are
-first-class system components. If they are missing, the workflow is incomplete.
+Playwright specs, CDP inspection, logs, metrics, and review loops are first-class
+system components. If they are missing, the workflow is incomplete.
 
 ## 7. Continuous cleanup is mandatory
 
 Bad patterns compound quickly in an AI-heavy codebase. Capture taste once,
 enforce it repeatedly, and keep the debt surface small.
-

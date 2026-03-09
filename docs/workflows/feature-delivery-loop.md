@@ -38,7 +38,7 @@ state using CDP tooling.
 
 ## Phase 7: Observe
 
-Query the isolated runtime's logs, metrics, and traces. Confirm the system
+Query the isolated runtime's logs and metrics. Confirm the system
 behavior matches the plan, not just the UI.
 
 ## Phase 8: Feedback
@@ -57,4 +57,3 @@ At the end of the task:
 - update `Outcomes & Retrospective`
 - promote durable lessons into docs or scripts
 - add remaining debt to the tracker if it cannot be fixed now
-

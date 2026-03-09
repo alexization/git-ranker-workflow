@@ -39,7 +39,7 @@ List the minimum required evidence:
 - Playwright journey names
 - CDP checks
 - log queries
-- performance or trace checks when relevant
+- performance or metric checks when relevant
 
 ## 7. Non-goals
 
@@ -63,4 +63,3 @@ QA evidence:
 Non-goals:
 Risks:
 ```
-

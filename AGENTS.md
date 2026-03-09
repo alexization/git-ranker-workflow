@@ -77,6 +77,6 @@ in [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/](docs/index.md).
 5. Boot the isolated stack for the task.
 6. Run Playwright journeys.
 7. Inspect UI, network, console, and DOM with CDP tooling.
-8. Query logs, metrics, and traces for the same task runtime.
+8. Query logs and metrics for the same task runtime.
 9. Feed findings back into code, docs, and the ExecPlan.
 10. Record outcomes and remaining debt before handoff or merge.

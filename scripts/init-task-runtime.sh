@@ -12,7 +12,6 @@ env_file="$runtime_dir/task.env"
 
 mkdir -p "$runtime_dir/logs"
 mkdir -p "$runtime_dir/metrics"
-mkdir -p "$runtime_dir/traces"
 mkdir -p "$runtime_dir/screenshots"
 mkdir -p "$runtime_dir/videos"
 mkdir -p "$runtime_dir/playwright"

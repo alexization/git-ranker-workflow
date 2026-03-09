@@ -6,8 +6,7 @@ OpenAI-style harness workflow used by this repository.
 ## What lives here
 
 - `task.env.example`: environment template for a task-scoped runtime
-- `observability/`: Docker Compose and config for Loki, Prometheus, Tempo, and
-  Grafana
+- `observability/`: Docker Compose and config for Loki, Prometheus, and Grafana
 
 ## Suggested flow
 
@@ -32,4 +31,4 @@ OpenAI-style harness workflow used by this repository.
 
 The config is intentionally generic because the repo-specific build, start, and
 test commands are not yet codified into this harness. Once those commands are
-standardized, bind their log, metric, and trace endpoints into this harness.
+standardized, bind their log and metric endpoints into this harness.

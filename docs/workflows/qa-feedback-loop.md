@@ -28,7 +28,7 @@ read_when:
    - failed requests
    - final URL and app state
 5. Query logs for the same time window and task slug.
-6. If performance or async orchestration matters, inspect metrics and traces too.
+6. If performance or throughput matters, inspect metrics too.
 7. Compare observations against the acceptance section of the ExecPlan.
 8. If anything disagrees, fix the system and rerun the loop.
 
@@ -44,4 +44,3 @@ read_when:
 
 This is the core OpenAI harness pattern applied locally: the agent must be able
 to see the product behavior directly, not infer success from code changes alone.
-
