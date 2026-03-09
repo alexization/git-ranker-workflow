@@ -5,6 +5,7 @@ required_files='
 AGENTS.md
 ARCHITECTURE.md
 PLANS.md
+.gitmessage.ko.txt
 harness/README.md
 harness/task.env.example
 harness/observability/docker-compose.yml
@@ -25,6 +26,7 @@ docs/generated/README.md
 docs/workflows/feature-delivery-loop.md
 docs/workflows/qa-feedback-loop.md
 docs/workflows/local-observability-stack.md
+docs/workflows/commit-message-convention.md
 '
 
 missing=0

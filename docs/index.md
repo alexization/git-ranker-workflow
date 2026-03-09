@@ -34,6 +34,7 @@ This directory is the system of record for the AI workflow in
 - [workflows/feature-delivery-loop.md](workflows/feature-delivery-loop.md)
 - [workflows/qa-feedback-loop.md](workflows/qa-feedback-loop.md)
 - [workflows/local-observability-stack.md](workflows/local-observability-stack.md)
+- [workflows/commit-message-convention.md](workflows/commit-message-convention.md)
 
 ## Planning
 
@@ -49,4 +50,3 @@ This directory is the system of record for the AI workflow in
 - [references/openai-harness-engineering-analysis.md](references/openai-harness-engineering-analysis.md)
 - [references/openai-execplans-analysis.md](references/openai-execplans-analysis.md)
 - [references/steipete-ai-workflow-analysis.md](references/steipete-ai-workflow-analysis.md)
-

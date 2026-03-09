@@ -30,7 +30,6 @@ OpenAI-style harness workflow used by this repository.
 
 ## Current state
 
-The config is intentionally generic because the application submodules are not
-yet initialized in this workspace. Once the real app commands are available,
-bind their log, metric, and trace endpoints into this harness.
-
+The config is intentionally generic because the repo-specific build, start, and
+test commands are not yet codified into this harness. Once those commands are
+standardized, bind their log, metric, and trace endpoints into this harness.

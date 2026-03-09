@@ -22,8 +22,8 @@ read_when:
   commands are not yet wired to this project's real scripts.
 - Consequence: the docs are operationally ready, but runtime automation still
   needs repo-specific command binding.
-- Desired fix: once submodules are initialized, codify build, start, and test
-  commands in `harness/` and verification scripts.
+- Desired fix: codify build, start, and test commands in `harness/` and
+  verification scripts.
 
 ### 3. Frontend automated QA harness is missing from the repo
 
@@ -33,10 +33,3 @@ read_when:
   code in the frontend repo itself.
 - Desired fix: add Playwright, artifact paths, and at least one critical user
   journey spec to `git-ranker-client`.
-
-## Resolved recently
-
-### Submodule bootstrap
-
-- `scripts/bootstrap-submodules.sh` was added.
-- `git-ranker` and `git-ranker-client` are initialized in this workspace.

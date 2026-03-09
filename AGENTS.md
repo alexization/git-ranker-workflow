@@ -49,7 +49,8 @@ in [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/](docs/index.md).
 - Quality and cleanup rules: [docs/QUALITY_SCORE.md](docs/QUALITY_SCORE.md)
 - Generated facts: [docs/generated/README.md](docs/generated/README.md)
 - Workflow loop: [docs/workflows/feature-delivery-loop.md](docs/workflows/feature-delivery-loop.md),
-  [docs/workflows/qa-feedback-loop.md](docs/workflows/qa-feedback-loop.md)
+  [docs/workflows/qa-feedback-loop.md](docs/workflows/qa-feedback-loop.md),
+  [docs/workflows/commit-message-convention.md](docs/workflows/commit-message-convention.md)
 
 ## Non-negotiables
 
@@ -79,4 +80,3 @@ in [ARCHITECTURE.md](ARCHITECTURE.md) and [docs/](docs/index.md).
 8. Query logs, metrics, and traces for the same task runtime.
 9. Feed findings back into code, docs, and the ExecPlan.
 10. Record outcomes and remaining debt before handoff or merge.
-

@@ -15,7 +15,7 @@ agents, not to store application logic.
 
 ## Current repo facts
 
-The submodules are initialized in this workspace and currently expose these
+When the application repositories are checked out, this workflow assumes these
 high-level facts:
 
 - backend: Spring Boot 3.4, Java 21, JPA, Batch, Security, Actuator, Prometheus,
