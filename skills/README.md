@@ -69,7 +69,13 @@ skills/promql-logql-evidence/
 
 ## Registry Status
 
-현재 이 디렉터리에는 authoring 규칙만 있고, 실제 project skill 본문은 아직 추가되지 않았다. 후속 작업에서 아래 skill 후보를 순서대로 채운다.
+현재 등록된 project skill은 아래와 같다.
+
+- `red` (`GRW-S05`): failing test file 하나만 남기는 TDD red turn
+- `green` (`GRW-S05`): test 수정 없이 최소 구현으로 green을 만드는 턴
+- `refactor` (`GRW-S05`): green 유지 하에 구조를 정리하는 refactor 턴
+
+후속 작업에서 아래 skill pack을 순서대로 채운다.
 
 - `GRW-S02`: `issue-to-exec-plan`, `parallel-work-split`, `api-contract-sync`
 - `GRW-S03`: `ranking-read-harness`, `playwright-browser-qa`, `promql-logql-evidence`

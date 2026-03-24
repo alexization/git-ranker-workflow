@@ -123,6 +123,17 @@
 - 산출물: skill index, authoring 규칙 문서
 - 검증: `find skills -maxdepth 2 -type f | sort`, 핵심 문서 내용 확인
 
+### GRW-S05. TDD red-green-refactor skill pack v1
+
+- 저장소: `git-ranker-workflow`
+- 선행조건: `GRW-S01`
+- 권장 write scope: `skills/` 하위, 관련 source of truth 문서
+- 기본 결정: `red`, `green`, `refactor`는 분리된 skill로 유지한다. red turn의 산출물은 failing test file 하나뿐이다. green turn은 test 수정 없이 최소 구현으로 통과시킨다. refactor turn은 green 유지 하에 production/test cleanup을 허용하되 의미 변경은 금지한다.
+- 핵심 작업: `red`, `green`, `refactor` 문서 작성, skill index에 사용 시점 연결
+- 비범위: 특정 기능 구현, 테스트 프레임워크 선택 강제, coverage automation 추가
+- 산출물: TDD skill 3종, 갱신된 skill registry
+- 검증: `find skills -maxdepth 2 -type f | sort`, `cat skills/red/SKILL.md`, `cat skills/green/SKILL.md`, `cat skills/refactor/SKILL.md`, 관련 문서 grep
+
 ### GRW-S02. core planning/parallel-agent skill pack v1
 
 - 저장소: `git-ranker-workflow`
