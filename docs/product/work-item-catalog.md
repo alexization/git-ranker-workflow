@@ -112,15 +112,15 @@
 
 ## Skill Track
 
-### GRW-S01. skill registry와 template 정의
+### GRW-S01. skill registry와 authoring 규칙 정의
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-01`
-- 권장 write scope: `skills/` 하위만
+- 권장 write scope: `skills/` 하위, 관련 source of truth 문서
 - 기본 결정: skill은 문서형 자산부터 시작하고, 처음부터 실행 스크립트를 넣지 않는다. 각 skill 폴더의 필수 파일은 `SKILL.md` 하나다.
-- 핵심 작업: `skills/` 구조, `skills/README.md`, `skills/_template/SKILL.md`, 지원 파일 규칙과 naming 규칙 정의
+- 핵심 작업: `skills/` 구조, `skills/README.md`, `skills/authoring-rules.md`, 지원 파일 규칙과 naming 규칙 정의
 - 비범위: ranking/batch skill 본문 작성
-- 산출물: skill index, template, authoring 규칙 문서
+- 산출물: skill index, authoring 규칙 문서
 - 검증: `find skills -maxdepth 2 -type f | sort`, 핵심 문서 내용 확인
 
 ### GRW-S02. core planning/parallel-agent skill pack v1

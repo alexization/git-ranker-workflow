@@ -19,7 +19,7 @@
 
 1. `GRW-01` workflow skeleton과 문서 규칙 만들기
 2. `GRW-02` 현재 readiness 기준선 문서화
-3. `GRW-S01` skill registry와 template 정의
+3. `GRW-S01` skill registry와 authoring 규칙 정의
 4. `GRB-01` 백엔드 OpenAPI 계약 생성 기반 만들기
 5. `GRW-03` 백엔드 도메인/운영 문서 수집
 6. `GRC-01` 프런트엔드 계약 타입 단일화
