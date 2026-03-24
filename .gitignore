@@ -1,2 +1,4 @@
 .gitignore
 .idea/
+.artifacts/*
+!.artifacts/.gitkeep
