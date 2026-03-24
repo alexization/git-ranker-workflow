@@ -79,7 +79,8 @@ percentile = ranking / totalUserCount * 100
 
 - `totalScore >= 2000`이 아니면 상위 백분위여도 `PLATINUM` 이상 티어를 부여하지 않는다.
 - 동점자는 같은 rank를 공유해야 한다.
-- 랭킹 재산정 후에는 랭킹 캐시가 비워져야 한다.
+- service 경로의 랭킹 재산정은 랭킹 캐시를 비워 stale page를 계속 반환하지 않아야 한다.
+- batch 경로는 cache stale 가능성을 허용하되, 최대 `5분` window를 운영 리스크와 evidence에 함께 남겨야 한다.
 
 ## 참고 경로
 
