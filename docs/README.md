@@ -1,0 +1,30 @@
+# Docs Index
+
+이 저장소의 공식 문서는 목적별 디렉터리로 나뉜다. 새 작업은 이 문서와 각 디렉터리 `README.md`를 진입점으로 삼는다.
+
+## 먼저 읽을 문서
+
+1. [AGENTS.md](../AGENTS.md)
+2. [PLANS.md](../PLANS.md)
+3. [docs/architecture/control-plane-map.md](architecture/control-plane-map.md)
+4. [docs/operations/workflow-governance.md](operations/workflow-governance.md)
+5. [docs/product/harness-roadmap.md](product/harness-roadmap.md)
+6. [docs/product/work-item-catalog.md](product/work-item-catalog.md)
+
+## 디렉터리 맵
+
+- [docs/architecture](architecture/README.md): 저장소 구조, cross-repo 경계, 문서 배치 규칙
+- [docs/domain](domain/README.md): 도메인 규칙과 계약 설명
+- [docs/product](product/README.md): 로드맵, 작업 카탈로그, 단계별 우선순위
+- [docs/operations](operations/README.md): 작업 운영 규칙, evidence, 실행 runbook
+- [docs/reliability](reliability/README.md): 장애 대응과 장기 검증 루프
+- [docs/security](security/README.md): 보안 정책과 경계
+- [docs/quality-score](quality-score/README.md): readiness와 품질 점수 기록
+- [docs/exec-plans](exec-plans/README.md): Issue 단위 실행 문서
+- [docs/generated](generated/README.md): 생성 산출물
+- [docs/references](references/README.md): 참고 자료와 과거 문서
+
+## 우선순위
+
+- 원본 로드맵 문서는 이관 전 기준과 배경을 보관하는 참고 자료다.
+- 현재 작업 지시와 운영 기준은 `docs/` 아래 문서를 우선한다.

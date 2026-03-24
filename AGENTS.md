@@ -1,0 +1,30 @@
+# AGENTS.md
+
+`git-ranker-workflow`는 `git-ranker-workflow`, `git-ranker`, `git-ranker-client`를 묶는 하네스 컨트롤 플레인 저장소다.
+
+## 시작 순서
+
+1. [docs/README.md](docs/README.md)를 읽고 문서 구조를 확인한다.
+2. [PLANS.md](PLANS.md)에서 exec plan 파일명과 상태 규칙을 확인한다.
+3. [docs/operations/workflow-governance.md](docs/operations/workflow-governance.md)에서 공통 작업 운영 규칙과 증거 규칙을 확인한다.
+4. 해당 작업과 관련된 디렉터리의 `README.md`와 본문 문서를 읽는다.
+5. 현재 작업 문서는 `docs/exec-plans/active/`, 완료된 작업 문서는 `docs/exec-plans/completed/`에서 찾는다.
+
+## source of truth 위치
+
+- [docs/architecture](docs/architecture/README.md): 컨트롤 플레인 구조와 cross-repo 경계
+- [docs/domain](docs/domain/README.md): 점수, 티어, 계약, 데이터 흐름 같은 도메인 규칙
+- [docs/product](docs/product/README.md): 실행 순서, 작업 카탈로그, 단계별 목표
+- [docs/operations](docs/operations/README.md): 작업 운영 규칙, evidence, runbook
+- [docs/reliability](docs/reliability/README.md): 장애 대응, 검증 루프, 배치 runbook
+- [docs/security](docs/security/README.md): 인증, 시크릿, 보안 경계
+- [docs/quality-score](docs/quality-score/README.md): readiness score와 점검 결과
+- [docs/generated](docs/generated/README.md): 기계 생성 산출물
+- [docs/references](docs/references/README.md): 참고 자료와 이관 전 역사 문서
+- [docs/exec-plans](docs/exec-plans/README.md): Issue 단위 실행 문서
+
+## 운영 원칙
+
+- 루트 문서는 인덱스만 맡는다. 상세 규칙은 `docs/` 아래에 둔다.
+- 새 작업은 원칙적으로 원본 로드맵보다 위 source of truth 문서를 먼저 읽고 시작한다.
+- 변경이 생기면 코드만이 아니라 관련 source of truth 문서도 함께 갱신한다.

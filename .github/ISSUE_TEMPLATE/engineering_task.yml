@@ -1,0 +1,73 @@
+name: "🛠️ Workflow Engineering Task"
+description: 문서 구조, control plane, skill, 검증 런타임, 운영 규칙 개선 작업을 기록합니다.
+title: "[Task] "
+labels: ["task", "triage"]
+body:
+  - type: dropdown
+    id: task_type
+    attributes:
+      label: 작업 유형
+      options:
+        - control-plane
+        - documentation
+        - skill
+        - runtime/harness
+        - quality-score
+        - governance/process
+        - security
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 왜 필요한가요?
+      description: 지금 이 작업이 필요한 이유와 미루었을 때의 비용을 적어 주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 작업 범위
+      description: 변경할 문서, 디렉터리, 스크립트, 연동 저장소를 적어 주세요.
+      placeholder: |
+        - `AGENTS.md`
+        - `docs/operations/*`
+        - `docs/exec-plans/*`
+        - 연동 저장소: `git-ranker`, `git-ranker-client`
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 조건
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: 검증 방법
+      placeholder: |
+        - `find docs -maxdepth 3 -type d | sort`
+        - `cat AGENTS.md`
+        - `cat PLANS.md`
+        - 필요한 경우 `gh pr create --base develop`
+    validations:
+      required: true
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: 리스크 및 의존성
+      placeholder: |
+        - 리스크:
+        - 의존성:
+        - 후속 작업:
+    validations:
+      required: false
