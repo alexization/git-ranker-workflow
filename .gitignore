@@ -1,9 +1,2 @@
 .gitignore
-.runtime/
-.worktrees/
-.artifacts/
 .idea/
-playwright-report/
-test-results/
-dist/
-coverage/
