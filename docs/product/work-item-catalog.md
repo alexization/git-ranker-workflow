@@ -27,7 +27,7 @@
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-01`
 - 권장 write scope: `docs/quality-score`, `docs/references`
-- 기본 결정: readiness 평가는 `1~5 점수 + Low/Medium/High + 핵심 리스크 요약` 형식으로 통일한다. 실제 확인한 명령과 날짜를 함께 남긴다.
+- 기본 결정: readiness 평가는 `1~5 점수 + Low/Medium/High(핵심 리스크 수준) + 핵심 리스크 요약` 형식으로 통일한다. API를 제공하지 않는 저장소의 `API 계약` 항목은 `N/A`로 처리한다. 실제 확인한 명령과 날짜를 함께 남긴다.
 - 핵심 작업: 세 저장소 상태를 문서화, 문서화/테스트/정적 가드레일/API 계약/운영 재현성/관측 가능성/Agent 탐색 가능성 점검
 - 비범위: 코드 수정
 - 산출물: readiness review 문서, 점수표 또는 상태표

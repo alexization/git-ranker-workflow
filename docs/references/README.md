@@ -5,6 +5,7 @@
 현재 참고 문서:
 
 - [docs/plans/git-ranker-harness-issue-pr-roadmap.md](../plans/git-ranker-harness-issue-pr-roadmap.md): 초기 전체 roadmap 원문
+- [2026-03-24-readiness-evidence.md](2026-03-24-readiness-evidence.md): `GRW-02` readiness 기준선 판단 근거
 
 원칙:
 
