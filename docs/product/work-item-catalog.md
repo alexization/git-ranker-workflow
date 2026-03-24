@@ -6,7 +6,7 @@
 
 1. [docs/operations/workflow-governance.md](../operations/workflow-governance.md)를 읽는다.
 2. 아래에서 해당 Issue 항목을 읽고 선행조건, write scope, 기본 결정을 확인한다.
-3. `docs/exec-plans/active/YYYY-MM-DD-<issue-id>-<slug>.md`를 만든다.
+3. `docs/exec-plans/active/YYYY-MM-DD-<issue-id-lower>-<slug>.md`를 만든다.
 4. 작업 후에는 문서를 `docs/exec-plans/completed/`로 이동한다.
 
 ## Workflow Track
