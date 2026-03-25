@@ -5,3 +5,4 @@
 현재 기준 문서:
 
 - [control-plane-map.md](control-plane-map.md)
+- [frontend-route-map.md](frontend-route-map.md)
