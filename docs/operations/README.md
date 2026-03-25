@@ -9,3 +9,4 @@
 - [daily-batch-flow.md](daily-batch-flow.md)
 - [github-api-failure-policy.md](github-api-failure-policy.md)
 - [observability-reference.md](observability-reference.md)
+- [frontend-runtime-reference.md](frontend-runtime-reference.md)

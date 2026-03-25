@@ -8,3 +8,4 @@
 - [tiering.md](tiering.md)
 - [ranking-read-flow.md](ranking-read-flow.md)
 - [badge-serving-flow.md](badge-serving-flow.md)
+- [frontend-data-flows.md](frontend-data-flows.md)
