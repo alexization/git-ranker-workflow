@@ -21,7 +21,7 @@
 
 | 유형 | 명령어 / 증거 | 결과 |
 | --- | --- | --- |
-| Docs Structure | `find docs -maxdepth 3 -type d | sort` 또는 `미실행(<사유>)` | |
+| Docs Structure | `find docs -maxdepth 3 -type d` 실행 후 정렬 결과 첨부 또는 `미실행(<사유>)` | |
 | Policy / Index | `cat AGENTS.md`, `cat PLANS.md` 또는 `미실행(<사유>)` | |
 | Generated / Runtime | 실행한 명령 또는 `미실행(<사유>)` | |
 | GitHub Flow | `gh issue create`, `gh pr create --base develop` 또는 `미실행(<사유>)` | |
