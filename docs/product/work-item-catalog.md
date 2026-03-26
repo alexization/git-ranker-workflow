@@ -116,29 +116,29 @@
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-01`
-- 권장 write scope: `skills/` 하위, 관련 source of truth 문서
+- 권장 write scope: `.codex/skills/` 하위, 관련 source of truth 문서
 - 기본 결정: skill은 문서형 자산부터 시작하고, 처음부터 실행 스크립트를 넣지 않는다. 각 skill 폴더의 필수 파일은 `SKILL.md` 하나다.
-- 핵심 작업: `skills/` 구조, `skills/README.md`, `skills/authoring-rules.md`, 지원 파일 규칙과 naming 규칙 정의
+- 핵심 작업: `.codex/skills/` 구조, `.codex/skills/README.md`, `.codex/skills/authoring-rules.md`, 지원 파일 규칙과 naming 규칙 정의
 - 비범위: ranking/batch skill 본문 작성
 - 산출물: skill index, authoring 규칙 문서
-- 검증: `find skills -maxdepth 2 -type f | sort`, 핵심 문서 내용 확인
+- 검증: `find .codex/skills -maxdepth 2 -type f | sort`, 핵심 문서 내용 확인
 
 ### GRW-S05. TDD red-green-refactor skill pack v1
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-S01`
-- 권장 write scope: `skills/` 하위, 관련 source of truth 문서
+- 권장 write scope: `.codex/skills/` 하위, 관련 source of truth 문서
 - 기본 결정: `red`, `green`, `refactor`는 분리된 skill로 유지한다. red turn의 산출물은 failing test file 하나뿐이다. green turn은 test 수정 없이 최소 구현으로 통과시킨다. refactor turn은 green 유지 하에 production/test cleanup을 허용하되 의미 변경은 금지한다.
 - 핵심 작업: `red`, `green`, `refactor` 문서 작성, skill index에 사용 시점 연결
 - 비범위: 특정 기능 구현, 테스트 프레임워크 선택 강제, coverage automation 추가
 - 산출물: TDD skill 3종, 갱신된 skill registry
-- 검증: `find skills -maxdepth 2 -type f | sort`, `cat skills/red/SKILL.md`, `cat skills/green/SKILL.md`, `cat skills/refactor/SKILL.md`, 관련 문서 grep
+- 검증: `find .codex/skills -maxdepth 2 -type f | sort`, `cat .codex/skills/red/SKILL.md`, `cat .codex/skills/green/SKILL.md`, `cat .codex/skills/refactor/SKILL.md`, 관련 문서 grep
 
 ### GRW-S02. core planning/parallel-agent skill pack v1
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-S01`, `GRW-03`, `GRW-04` 권장
-- 권장 write scope: `skills/` 하위만
+- 권장 write scope: `.codex/skills/` 하위만
 - 기본 결정: coordination skill만 작성한다. 코드 생성이나 검증 실행 skill은 아직 넣지 않는다. 각 skill에는 병렬 수행 시 ownership 규칙을 반드시 적는다.
 - 핵심 작업: `issue-to-exec-plan`, `parallel-work-split`, `api-contract-sync` 문서 작성과 예시 추가
 - 비범위: ranking harness execution skill 작성
@@ -149,7 +149,7 @@
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-S01`, `GRC-04`, `GRW-06`
-- 권장 write scope: `skills/` 하위만
+- 권장 write scope: `.codex/skills/` 하위만
 - 기본 결정: 이미 만들어진 runtime/query/test를 재사용하는 설명서여야 한다. 새 인프라를 발명하지 않는다.
 - 핵심 작업: `ranking-read-harness`, `playwright-browser-qa`, `promql-logql-evidence` skill 문서 작성
 - 비범위: badge/batch skill 작성
@@ -160,7 +160,7 @@
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-S01`, `GRW-09` 권장
-- 권장 write scope: `skills/` 하위만
+- 권장 write scope: `.codex/skills/` 하위만
 - 기본 결정: reliability skill은 체크리스트 중심으로 시작한다. 자동 복구나 자동 triage 구현은 이 Issue의 범위가 아니다.
 - 핵심 작업: `batch-failure-triage`, `github-rate-limit-investigation`, `doc-gardener` skill 문서 작성
 - 비범위: 실제 batch harness 구현, 장애 자동 복구

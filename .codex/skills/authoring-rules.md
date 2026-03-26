@@ -35,7 +35,7 @@
 
 ## File Layout Rules
 
-- 기본 레이아웃은 `skills/<skill-name>/SKILL.md`다.
+- 기본 레이아웃은 `.codex/skills/<skill-name>/SKILL.md`다.
 - `SKILL.md` 상단에는 가능하면 아래 형태의 YAML frontmatter를 둔다.
 
 ```yaml
@@ -52,7 +52,7 @@ description: One-line trigger and purpose summary.
   - `queries/`
   - `examples/`
   - `checklists/`
-- 공통 지원 자산이 정말 생기기 전까지는 `skills/` 루트에 별도 shared 디렉터리를 만들지 않는다.
+- 공통 지원 자산이 정말 생기기 전까지는 `.codex/skills/` 루트에 별도 shared 디렉터리를 만들지 않는다.
 
 ## Scope Guardrails
 

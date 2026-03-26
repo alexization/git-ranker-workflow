@@ -17,11 +17,11 @@ workflow 저장소에는 issue를 exec plan으로 고정하고, 병렬 agent own
 
 ## Scope
 
-- `skills/issue-to-exec-plan/SKILL.md` 작성
-- `skills/parallel-work-split/SKILL.md` 작성
-- `skills/api-contract-sync/SKILL.md` 작성
+- `.codex/skills/issue-to-exec-plan/SKILL.md` 작성
+- `.codex/skills/parallel-work-split/SKILL.md` 작성
+- `.codex/skills/api-contract-sync/SKILL.md` 작성
 - 각 skill에 입력/출력 예시와 병렬 수행 시 금지 사항 추가
-- `skills/README.md`에 추천 사용 시점과 현재 skill registry 반영
+- `.codex/skills/README.md`에 추천 사용 시점과 현재 skill registry 반영
 - `GRW-S02` 실행 기록 남기기
 
 ## Non-scope
@@ -33,15 +33,15 @@ workflow 저장소에는 issue를 exec plan으로 고정하고, 병렬 agent own
 
 ## Write Scope
 
-- `skills/`
+- `.codex/skills/`
 - `docs/exec-plans/`
 
 ## Outputs
 
-- `skills/issue-to-exec-plan/SKILL.md`
-- `skills/parallel-work-split/SKILL.md`
-- `skills/api-contract-sync/SKILL.md`
-- `skills/README.md`
+- `.codex/skills/issue-to-exec-plan/SKILL.md`
+- `.codex/skills/parallel-work-split/SKILL.md`
+- `.codex/skills/api-contract-sync/SKILL.md`
+- `.codex/skills/README.md`
 - `GRW-S02` 실행/완료 기록
 
 ## Working Decisions
@@ -53,15 +53,15 @@ workflow 저장소에는 issue를 exec plan으로 고정하고, 병렬 agent own
 
 ## Verification
 
-- `find skills -maxdepth 2 -type f | sort`
-  - 결과: `skills/api-contract-sync/SKILL.md`, `skills/issue-to-exec-plan/SKILL.md`, `skills/parallel-work-split/SKILL.md`가 registry 문서와 함께 기대 경로에 생성된 것을 확인했다.
-- `cat skills/issue-to-exec-plan/SKILL.md`
+- `find .codex/skills -maxdepth 2 -type f | sort`
+  - 결과: `.codex/skills/api-contract-sync/SKILL.md`, `.codex/skills/issue-to-exec-plan/SKILL.md`, `.codex/skills/parallel-work-split/SKILL.md`가 registry 문서와 함께 기대 경로에 생성된 것을 확인했다.
+- `cat .codex/skills/issue-to-exec-plan/SKILL.md`
   - 결과: exec plan 생성 절차, required evidence, 병렬 수행 금지 사항, `GRC-04` 기준 example input/output이 포함된 것을 확인했다.
-- `cat skills/parallel-work-split/SKILL.md`
+- `cat .codex/skills/parallel-work-split/SKILL.md`
   - 결과: disjoint write set, cross-repo 분리, critical path 우선 규칙, ownership 표 예시가 포함된 것을 확인했다.
-- `cat skills/api-contract-sync/SKILL.md`
+- `cat .codex/skills/api-contract-sync/SKILL.md`
   - 결과: canonical backend contract를 `git-ranker/docs/openapi/openapi.json`으로 고정하고, workflow는 sync 절차/evidence만 관리한다는 역할 분리가 명시된 것을 확인했다.
-- `rg -n "Recommended Use|issue-to-exec-plan|parallel-work-split|api-contract-sync" skills/README.md skills/issue-to-exec-plan/SKILL.md skills/parallel-work-split/SKILL.md skills/api-contract-sync/SKILL.md`
+- `rg -n "Recommended Use|issue-to-exec-plan|parallel-work-split|api-contract-sync" .codex/skills/README.md .codex/skills/issue-to-exec-plan/SKILL.md .codex/skills/parallel-work-split/SKILL.md .codex/skills/api-contract-sync/SKILL.md`
   - 결과: skill index의 registry entry, 추천 사용 순서, 각 skill의 example/parallel 금지 사항 섹션이 모두 grep 결과에 포함되는 것을 확인했다.
 - sample issue를 exec plan으로 바꾸는 시뮬레이션 검토
   - 결과: `issue-to-exec-plan`의 `GRC-04` 예시가 issue metadata, scope/non-scope, verification까지 포함한 exec plan skeleton으로 충분히 변환 가능한 것을 확인했다.
@@ -93,10 +93,10 @@ workflow 저장소에는 issue를 exec plan으로 고정하고, 병렬 agent own
 
 ## Docs Updated
 
-- `skills/README.md`
-- `skills/issue-to-exec-plan/SKILL.md`
-- `skills/parallel-work-split/SKILL.md`
-- `skills/api-contract-sync/SKILL.md`
+- `.codex/skills/README.md`
+- `.codex/skills/issue-to-exec-plan/SKILL.md`
+- `.codex/skills/parallel-work-split/SKILL.md`
+- `.codex/skills/api-contract-sync/SKILL.md`
 - `docs/exec-plans/completed/2026-03-26-grw-s02-core-planning-skill-pack.md`
 
 ## Skill Consideration

@@ -1,6 +1,6 @@
 # Skills
 
-이 디렉터리는 `git-ranker-workflow`에서 재사용할 project skill을 관리한다. 여기서 말하는 skill은 source of truth 문서를 대체하는 것이 아니라, 반복 작업을 같은 입력/출력/증거 규칙으로 수행하게 만드는 실행 레시피다.
+이 디렉터리는 `git-ranker-workflow`에서만 쓰는 project-local skill을 관리한다. 여기서 말하는 skill은 source of truth 문서를 대체하는 것이 아니라, 반복 작업을 같은 입력/출력/증거 규칙으로 수행하게 만드는 실행 레시피다.
 
 ## 목적
 
@@ -10,14 +10,14 @@
 
 ## 기본 구조
 
-- 실제 skill은 `skills/<skill-name>/SKILL.md` 구조를 사용한다.
+- 실제 skill은 `.codex/skills/<skill-name>/SKILL.md` 구조를 사용한다.
 - 각 skill 폴더의 필수 파일은 `SKILL.md` 하나다.
-- `skills/` 루트에는 공통 설명 문서만 둔다. 실제 skill 지원 파일은 가능한 한 각 skill 폴더 안에 둔다.
+- 공통 설명 문서가 필요하면 `.codex/skills/` 루트에 두고, 실제 skill 지원 파일은 가능한 한 각 skill 폴더 안에 둔다.
 
 예시:
 
 ```text
-skills/
+.codex/skills/
   README.md
   authoring-rules.md
   issue-to-exec-plan/
@@ -31,7 +31,7 @@ skills/
 - skill 폴더명은 `kebab-case`를 사용한다.
 - 한 폴더는 한 skill만 나타낸다.
 - skill 이름은 역할 중심으로 짧고 구체적으로 짓는다.
-- 프로젝트 전체에 공통인 지원 자산이 실제로 생기기 전까지는 `skills/` 루트에 새 하위 디렉터리를 추가하지 않는다.
+- 프로젝트 전체에 공통인 지원 자산이 실제로 생기기 전까지는 `.codex/skills/` 루트에 새 하위 디렉터리를 추가하지 않는다.
 
 권장 예시:
 
@@ -59,7 +59,7 @@ skills/
 예시:
 
 ```text
-skills/promql-logql-evidence/
+.codex/skills/promql-logql-evidence/
   SKILL.md
   queries/
   templates/
@@ -102,6 +102,6 @@ coordination skill은 구현 전에 먼저 쓴다.
 
 ## Related Docs
 
-- `skills/authoring-rules.md`
+- `.codex/skills/authoring-rules.md`
 - `docs/operations/workflow-governance.md`
 - `docs/product/work-item-catalog.md`
