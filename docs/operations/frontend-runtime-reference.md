@@ -6,8 +6,8 @@
 
 | 이름 | 필요도 | 사용 위치 | 기본값/대체값 | 비고 |
 | --- | --- | --- | --- | --- |
-| `NEXT_PUBLIC_API_URL` | 필수 | [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts), [api-client.ts](../../git-ranker-client/src/shared/lib/api-client.ts), [login/page.tsx](../../git-ranker-client/src/app/login/page.tsx), [user-profile-client.tsx](../../git-ranker-client/src/app/users/[username]/user-profile-client.tsx), [sitemap.ts](../../git-ranker-client/src/app/sitemap.ts), [opengraph-image.tsx](../../git-ranker-client/src/app/users/[username]/opengraph-image.tsx) | 없음 | backend API origin, OAuth 시작 URL, badge URL의 단일 기준이다. unset 시 fail-fast 한다 |
-| `NEXT_PUBLIC_BASE_URL` | 필수 | [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts), [layout.tsx](../../git-ranker-client/src/app/layout.tsx), [page.tsx](../../git-ranker-client/src/app/page.tsx), [ranking/layout.tsx](../../git-ranker-client/src/app/ranking/layout.tsx), [users/[username]/page.tsx](../../git-ranker-client/src/app/users/[username]/page.tsx), [robots.ts](../../git-ranker-client/src/app/robots.ts), [sitemap.ts](../../git-ranker-client/src/app/sitemap.ts) | 없음 | canonical URL, OG URL, sitemap/robots 기준이다. unset 시 fail-fast 한다 |
+| `NEXT_PUBLIC_API_URL` | 필수 | [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts), [api-client.ts](../../git-ranker-client/src/shared/lib/api-client.ts), [login/page.tsx](../../git-ranker-client/src/app/login/page.tsx), [user-profile-client.tsx](../../git-ranker-client/src/app/users/[username]/user-profile-client.tsx), [sitemap.ts](../../git-ranker-client/src/app/sitemap.ts), [opengraph-image.tsx](../../git-ranker-client/src/app/users/[username]/opengraph-image.tsx) | 없음 | backend API origin, OAuth 시작 URL, badge URL의 단일 기준이다. unset 또는 invalid absolute URL이면 fail-fast 한다. path component가 있어도 origin만 사용한다 |
+| `NEXT_PUBLIC_BASE_URL` | 필수 | [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts), [layout.tsx](../../git-ranker-client/src/app/layout.tsx), [page.tsx](../../git-ranker-client/src/app/page.tsx), [ranking/layout.tsx](../../git-ranker-client/src/app/ranking/layout.tsx), [users/[username]/page.tsx](../../git-ranker-client/src/app/users/[username]/page.tsx), [robots.ts](../../git-ranker-client/src/app/robots.ts), [sitemap.ts](../../git-ranker-client/src/app/sitemap.ts) | 없음 | canonical URL, OG URL, sitemap/robots 기준이다. unset 또는 invalid absolute URL이면 fail-fast 한다. path component가 있어도 origin만 사용한다 |
 | `NEXT_PUBLIC_ANALYTICS_ENDPOINT` | 선택 | [web-vitals-reporter.tsx](../../git-ranker-client/src/shared/components/web-vitals-reporter.tsx) | 없음 | production에서만 `sendBeacon` 전송 |
 | `NEXT_PUBLIC_SENTRY_DSN` | 선택 | [sentry.client.config.ts](../../git-ranker-client/sentry.client.config.ts), [sentry.server.config.ts](../../git-ranker-client/sentry.server.config.ts), [sentry.edge.config.ts](../../git-ranker-client/sentry.edge.config.ts) | 없음 | client/edge/server 공용 fallback |
 | `SENTRY_DSN` | 선택 | [sentry.server.config.ts](../../git-ranker-client/sentry.server.config.ts), [sentry.edge.config.ts](../../git-ranker-client/sentry.edge.config.ts) | `NEXT_PUBLIC_SENTRY_DSN` fallback | server/edge 우선값 |
@@ -16,7 +16,7 @@
 ## Build And Container Injection
 
 - Docker build/runtime은 [Dockerfile](../../git-ranker-client/Dockerfile)과 [docker-compose.yml](../../git-ranker-client/docker-compose.yml)에서 `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_BASE_URL`를 주입한다.
-- [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts)가 두 env를 공용 helper에서 바로 검증하므로, unset 상태에서는 build와 runtime이 fail-fast 한다.
+- [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts)가 두 env를 공용 helper에서 바로 검증하고 absolute URL의 `origin`만 사용하므로, unset 또는 invalid URL 상태에서는 build와 runtime이 fail-fast 한다.
 - [README.md](../../git-ranker-client/README.md)와 [.env.example](../../git-ranker-client/.env.example)는 로컬 `http://localhost:3000` / `http://localhost:8080`, 프로덕션 `https://www.git-ranker.com` 기준 값을 함께 문서화한다.
 - `NEXT_PUBLIC_*` 값은 build 시 inline 되므로, runtime에만 바꿔도 이미 번들된 값과 어긋날 수 있다.
 - `NODE_ENV=production`은 container runtime에서 명시된다.
@@ -43,7 +43,7 @@
 현재 proxy가 모든 응답에 아래 정책을 주입한다.
 
 - `Content-Security-Policy`
-  - `script-src`: self, inline/eval, Google Tag Manager
+  - `script-src`: self, inline, Google Tag Manager. `unsafe-eval`은 development에서만 허용한다
   - `style-src`: self, inline
   - `font-src`: self
   - `img-src`: self, data/blob, `NEXT_PUBLIC_API_URL`, GitHub avatar/GitHub, Google Analytics
