@@ -71,9 +71,28 @@ skills/promql-logql-evidence/
 
 현재 등록된 project skill은 아래와 같다.
 
+- `issue-to-exec-plan` (`GRW-S02`): 새 Issue를 `docs/exec-plans/active/*.md` 실행 문서로 고정할 때 사용
+- `parallel-work-split` (`GRW-S02`): 여러 agent가 같은 Issue를 나눠 작업하기 전에 ownership과 write set을 분리할 때 사용
+- `api-contract-sync` (`GRW-S02`): backend OpenAPI 변경을 client 타입과 workflow 문서에 동기화할 때 사용
 - `red` (`GRW-S05`): failing test file 하나만 남기는 TDD red turn
 - `green` (`GRW-S05`): test 수정 없이 최소 구현으로 green을 만드는 턴
 - `refactor` (`GRW-S05`): green 유지 하에 구조를 정리하는 refactor 턴
+
+## Recommended Use
+
+coordination skill은 구현 전에 먼저 쓴다.
+
+1. `issue-to-exec-plan`
+2. `parallel-work-split`
+3. `api-contract-sync` if backend contract changed
+
+구현 skill은 그 다음 slice에 맞춰 쓴다.
+
+1. `red`
+2. `green`
+3. `refactor`
+
+`api-contract-sync`의 canonical backend contract는 `git-ranker/docs/openapi/openapi.json`이다. workflow는 canonical spec을 복제해 소유하지 않고, sync 절차와 evidence를 관리한다.
 
 후속 작업에서 아래 skill pack을 순서대로 채운다.
 
