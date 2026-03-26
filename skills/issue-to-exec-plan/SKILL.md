@@ -41,11 +41,13 @@ description: Use this skill when a roadmap item or GitHub issue must be turned i
 ```bash
 rg -n "GRW-S02|GRC-04|GRB-02" docs/product docs/exec-plans
 find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort
-gh issue create --repo alexization/git-ranker-workflow --title "[Task] GRW-S02 ..."
+gh issue create --repo <owner>/<target-repo> --title "[Task] <issue-id> ..."
 git checkout -b feat/grw-s02-core-planning-skill-pack
 ```
 
 명령 자체보다 중요한 것은 "어떤 문서를 읽고 어떤 범위를 고정했는지"를 exec plan에 남기는 것이다.
+
+`gh issue create`의 `--repo`는 항상 대상 저장소와 맞아야 한다. 예를 들어 `GRW-*`는 `alexization/git-ranker-workflow`, `GRB-*`는 `alexization/git-ranker`, `GRC-*`는 `alexization/git-ranker-client`를 쓴다.
 
 ## Required Evidence
 

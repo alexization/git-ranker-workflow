@@ -46,7 +46,7 @@ backend API 계약 변경이 생겼을 때 canonical source, client consumer, wo
 ```bash
 rg -n '"/api/v1/ranking"|EMERALD|AuthMeResponse' git-ranker/docs/openapi/openapi.json git-ranker-client/src/shared/types/api.ts git-ranker-client/src/shared/lib/validations.ts
 sed -n '1,200p' git-ranker/docs/openapi/README.md
-npx tsc --noEmit
+npx tsc --noEmit -p git-ranker-client/tsconfig.json
 rg -n "ranking|auth callback|tier" docs/domain docs/operations docs/exec-plans
 ```
 
@@ -104,7 +104,7 @@ Contract sync checklist
   - `docs/domain/ranking-read-flow.md`
   - `docs/domain/frontend-data-flows.md`
 - Verification:
-  - `npx tsc --noEmit`
+  - `npx tsc --noEmit -p git-ranker-client/tsconfig.json`
 - Note:
   - workflow `docs/generated/`에는 현재 tracked mirror가 없어 no-op
 ```

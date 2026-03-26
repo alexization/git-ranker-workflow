@@ -67,6 +67,8 @@ workflow 저장소에는 issue를 exec plan으로 고정하고, 병렬 agent own
   - 결과: `issue-to-exec-plan`의 `GRC-04` 예시가 issue metadata, scope/non-scope, verification까지 포함한 exec plan skeleton으로 충분히 변환 가능한 것을 확인했다.
 - contract-sync checklist가 backend canonical source 기준으로 동작하는지 문서 리뷰
   - 결과: `api-contract-sync` 예시가 backend canonical spec, client consumer, workflow review, no-op generated note까지 분리해 체크리스트를 만들 수 있음을 확인했다.
+- PR review follow-up
+  - 결과: `issue-to-exec-plan`의 issue 생성 명령을 target repo placeholder로 일반화했고, `api-contract-sync`의 TypeScript 검증 명령을 `npx tsc --noEmit -p git-ranker-client/tsconfig.json`으로 바꿔 workflow 루트에서도 실제 client config를 검증하도록 수정했다.
 - `gh issue create --repo alexization/git-ranker-workflow ...`
   - 결과: `GRW-S02` GitHub issue `#18`을 생성했다.
 
