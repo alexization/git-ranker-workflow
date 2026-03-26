@@ -2,7 +2,7 @@
 
 - Issue ID: `GRC-03`
 - GitHub Issue: `alexization/git-ranker-client#6`
-- GitHub PR: `Not created in this turn`
+- GitHub PR: `alexization/git-ranker-client#7`
 - Status: `Completed`
 - Repository: `git-ranker-client`
 - Branch Name: `feat/grc-03-frontend-build-runtime-harness`
@@ -66,6 +66,7 @@
 - 종료 기준: build가 로컬 폰트와 필수 env 설정으로 재현 가능하게 통과
 - 폰트 증거: `src/fonts/JetBrainsMonoVariable.ttf`, `src/fonts/JetBrainsMono-OFL.txt`
 - 문서 증거: `README.md`, `.env.example`, `frontend-route-map.md`, `frontend-data-flows.md`, `frontend-runtime-reference.md`
+- workflow sync PR: `alexization/git-ranker-workflow#25`
 - 후속 수정: `public-env.ts`의 동적 `process.env[name]` 접근을 direct `process.env.NEXT_PUBLIC_*` 참조로 바꿔 dev client runtime에서도 env가 주입되도록 수정
 
 결과 요약:
@@ -81,7 +82,7 @@
 
 - 로컬 폰트 자산 추가 후 렌더링 메트릭이나 타이포그래피가 미세하게 달라질 수 있다.
 - env fail-fast 도입으로 기존 fallback에 기대던 실행 방식은 명시적 설정 없이는 바로 실패한다.
-- workflow 문서 변경과 client 코드 변경이 함께 있어, 실제 PR은 governance 규칙에 따라 repo별로 나눠 열어야 한다.
+- workflow 문서 변경과 client 코드 변경은 governance 규칙에 따라 `alexization/git-ranker-client#7`, `alexization/git-ranker-workflow#25`로 분리했다.
 
 ## Next Preconditions
 
