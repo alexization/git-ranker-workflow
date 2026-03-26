@@ -12,11 +12,11 @@
 
 | 계층 | 구현 | 역할 |
 | --- | --- | --- |
-| locale | [middleware.ts](../../git-ranker-client/src/middleware.ts), [server-locale.ts](../../git-ranker-client/src/shared/i18n/server-locale.ts), [locale-provider.tsx](../../git-ranker-client/src/shared/providers/locale-provider.tsx) | URL prefix, cookie, `x-locale` 헤더를 기준으로 locale 결정 |
+| locale | [proxy.ts](../../git-ranker-client/src/proxy.ts), [server-locale.ts](../../git-ranker-client/src/shared/i18n/server-locale.ts), [locale-provider.tsx](../../git-ranker-client/src/shared/providers/locale-provider.tsx) | URL prefix, cookie, `x-locale` 헤더를 기준으로 locale 결정 |
 | query cache | [query-provider.tsx](../../git-ranker-client/src/shared/providers/query-provider.tsx) | 모든 React Query cache의 기본 `staleTime=1m`, `retry=1`, `refetchOnWindowFocus=false` 제공 |
 | auth store | [auth-store.ts](../../git-ranker-client/src/features/auth/store/auth-store.ts) | `auth-storage`에 `user`, `isAuthenticated` persisted |
 | recent search store | [search-store.ts](../../git-ranker-client/src/features/home/store/search-store.ts) | 홈 검색 히스토리 최대 5개 보관 |
-| API transport | [api-client.ts](../../git-ranker-client/src/shared/lib/api-client.ts) | `withCredentials` 요청, `ApiResponse` unwrap, `401 -> /auth/refresh -> retry` 처리 |
+| API transport | [api-client.ts](../../git-ranker-client/src/shared/lib/api-client.ts), [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts) | 필수 public env 검증, `withCredentials` 요청, `ApiResponse` unwrap, `401 -> /auth/refresh -> retry` 처리 |
 
 ## Ranking Read Flow
 
@@ -41,7 +41,7 @@
 2. [ranking/page.tsx](../../git-ranker-client/src/app/ranking/page.tsx)가 `useSearchParams()`에서 `page`, `tier`를 읽어 local UI state를 파생한다.
 3. [useRankingList()](../../git-ranker-client/src/features/ranking/api/ranking-service.ts)가 query key `['ranking', page, tier]`로 [getRankingList()](../../git-ranker-client/src/features/ranking/api/ranking-service.ts)를 호출한다.
 4. [getRankingList()](../../git-ranker-client/src/features/ranking/api/ranking-service.ts)는 `page`, `tier`를 `URLSearchParams`로 만들어 `/ranking?...` 요청을 보낸다.
-5. [apiClient](../../git-ranker-client/src/shared/lib/api-client.ts)가 `${NEXT_PUBLIC_API_URL}/api/v1` base URL을 사용하고, 성공 시 `response.data.data`만 반환한다.
+5. [apiClient](../../git-ranker-client/src/shared/lib/api-client.ts)가 [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts)에서 검증한 API origin을 `/api/v1` base URL로 사용하고, 성공 시 `response.data.data`만 반환한다.
 6. 사용자는 tier 버튼이나 pagination 버튼을 누를 때마다 `router.push()`로 URL을 갱신하고, 리스트 상단으로 scroll 한다.
 7. 항목 클릭 시 `selectedUsername`과 `modalOpen`이 바뀌며 상세 모달 흐름으로 넘어간다.
 
@@ -97,14 +97,14 @@
 
 backend 관련 경로:
 
-- OAuth 시작: `${NEXT_PUBLIC_API_URL}/oauth2/authorization/github`
+- OAuth 시작: [public-env.ts](../../git-ranker-client/src/shared/lib/public-env.ts)의 `githubOAuthStartUrl`
 - backend redirect target: [application-local.yml](../../git-ranker/src/main/resources/application-local.yml), [application-prod.yml](../../git-ranker/src/main/resources/application-prod.yml)의 `/auth/callback`
 
 ### 처리 순서
 
 1. 사용자가 login 화면이나 user-not-found 화면에서 GitHub 로그인 버튼을 누르면 backend OAuth 시작 endpoint로 이동한다.
 2. backend가 인증 성공 후 `/auth/callback`으로 redirect 한다.
-3. [middleware.ts](../../git-ranker-client/src/middleware.ts)가 bare path `/auth/callback`을 locale path로 redirect 한 뒤 내부적으로 `/auth/callback` page route로 rewrite 한다.
+3. [proxy.ts](../../git-ranker-client/src/proxy.ts)가 bare path `/auth/callback`을 locale path로 redirect 한 뒤 내부적으로 `/auth/callback` page route로 rewrite 한다.
 4. callback page는 fake progress interval을 돌리면서, 1회만 `apiClient.get('/auth/me')`를 호출한다.
 5. `AuthMeResponse.username`을 받으면 [getUser()](../../git-ranker-client/src/features/user/api/user-service.ts)로 전체 user profile을 다시 읽는다.
 6. 성공 시 persisted auth store의 `login(user)`를 호출하고 toast를 띄운 뒤 `/users/${user.username}`로 replace 한다.
@@ -120,7 +120,7 @@ backend 관련 경로:
 
 주의:
 
-- callback success/failure 후 이동 경로는 locale path를 직접 계산하지 않고 bare path를 쓴다. 현재는 middleware가 locale prefix를 복구한다.
+- callback success/failure 후 이동 경로는 locale path를 직접 계산하지 않고 bare path를 쓴다. 현재는 proxy가 locale prefix를 복구한다.
 - `/auth/callback`과 `/oauth2/redirect` 구현이 동일해 drift 위험이 있다. source of truth와 backend 설정 기준 canonical 경로는 `/auth/callback`이다.
 
 ## Harness Notes
