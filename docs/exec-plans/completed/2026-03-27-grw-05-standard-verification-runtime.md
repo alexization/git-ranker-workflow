@@ -68,6 +68,7 @@
 - `./runtime/grw-runtime start`: backend/client/db/prometheus/loki/promtail 기동 성공
 - `./runtime/grw-runtime verify`: backend actuator, ranking API, client root, Prometheus ready, Loki ready 모두 성공
 - `./runtime/grw-runtime stop`: 컨테이너와 network 정상 종료, volume 유지
+- `git submodule status`: `git-ranker`, `git-ranker-client` submodule 연결 확인
 - client healthcheck는 초기 정의의 `localhost` probe에서 실패했지만, `127.0.0.1` probe로 수정 후 compose 상태와 실제 readiness를 일치시켰다.
 
 ## Evidence
@@ -86,6 +87,8 @@
   - `http://localhost:3100/ready` 준비 완료
 - `docker compose --env-file runtime/.env.example -f runtime/compose.yaml config`
   - 성공, backend observability 설정 재사용을 포함한 compose 해석 확인
+- `git submodule status`
+  - `git-ranker`, `git-ranker-client` submodule 연결 확인, `start` preflight 추가 근거 확보
 - `docker exec runtime-git-ranker-client-1 wget -q --spider http://localhost:3000`
   - 실패, `localhost` probe connection refused
 - `docker exec runtime-git-ranker-client-1 wget -q --spider http://127.0.0.1:3000`

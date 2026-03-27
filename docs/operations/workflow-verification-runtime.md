@@ -45,7 +45,7 @@
 동작 규칙:
 
 - helper는 `runtime/.env`가 있으면 우선 사용하고, 없으면 `runtime/.env.example`을 사용한다.
-- `start`는 compose build/up만 수행한다.
+- `start`는 compose build/up 전에 sibling `git-ranker`, `git-ranker-client` 저장소의 필수 파일을 먼저 검사한다.
 - `stop`은 컨테이너만 내리고 volume은 유지한다.
 - `reset`은 volume까지 제거해 db/metrics/log positions를 초기화한다.
 - `seed`는 현재 placeholder다. 실제 결정적 데이터 적재는 `GRB-03`에서 연결한다.
@@ -57,6 +57,7 @@
 - Prometheus/Loki/Promtail 본문 설정은 모두 `git-ranker`를 source of truth로 재사용한다.
 - workflow에는 runtime wiring과 host/env 정책만 남긴다.
 - 따라서 observability 규칙 자체를 두 군데에서 병렬 수정하지 않는다.
+- submodule clone이 비어 있으면 `start`가 `git submodule update --init --recursive` 안내와 함께 fail-fast 한다.
 
 ## 서비스와 포트
 

@@ -6,6 +6,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMPOSE_FILE="${SCRIPT_DIR}/compose.yaml"
 DEFAULT_ENV_FILE="${SCRIPT_DIR}/.env.example"
 LOCAL_ENV_FILE="${SCRIPT_DIR}/.env"
+BACKEND_REPO_DIR="${SCRIPT_DIR}/../git-ranker"
+CLIENT_REPO_DIR="${SCRIPT_DIR}/../git-ranker-client"
 
 ACTIVE_ENV_FILE="${DEFAULT_ENV_FILE}"
 if [[ -f "${LOCAL_ENV_FILE}" ]]; then
@@ -37,6 +39,27 @@ require_docker() {
   fi
 }
 
+require_runtime_sources() {
+  local missing=()
+
+  [[ -f "${BACKEND_REPO_DIR}/Dockerfile" ]] || missing+=("../git-ranker/Dockerfile")
+  [[ -f "${BACKEND_REPO_DIR}/prometheus.yml" ]] || missing+=("../git-ranker/prometheus.yml")
+  [[ -f "${BACKEND_REPO_DIR}/loki-config.yml" ]] || missing+=("../git-ranker/loki-config.yml")
+  [[ -f "${BACKEND_REPO_DIR}/promtail-config.yml" ]] || missing+=("../git-ranker/promtail-config.yml")
+  [[ -f "${CLIENT_REPO_DIR}/Dockerfile" ]] || missing+=("../git-ranker-client/Dockerfile")
+
+  if ((${#missing[@]} == 0)); then
+    return 0
+  fi
+
+  {
+    echo "[grw-runtime] Required sibling repositories are missing or not initialized:"
+    printf '  - %s\n' "${missing[@]}"
+    echo "[grw-runtime] Run 'git submodule update --init --recursive' from the workflow root before './runtime/grw-runtime start'."
+  } >&2
+  exit 1
+}
+
 wait_for_http() {
   local name="$1"
   local url="$2"
@@ -56,6 +79,7 @@ wait_for_http() {
 }
 
 cmd_start() {
+  require_runtime_sources
   require_docker
   compose up -d --build
   echo "[grw-runtime] Stack started. Run './runtime/grw-runtime verify' to confirm health."
