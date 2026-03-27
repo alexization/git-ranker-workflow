@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="${SCRIPT_DIR}/compose.yaml"
+DEFAULT_ENV_FILE="${SCRIPT_DIR}/.env.example"
+LOCAL_ENV_FILE="${SCRIPT_DIR}/.env"
+BACKEND_REPO_DIR="${SCRIPT_DIR}/../git-ranker"
+CLIENT_REPO_DIR="${SCRIPT_DIR}/../git-ranker-client"
+
+ACTIVE_ENV_FILE="${DEFAULT_ENV_FILE}"
+if [[ -f "${LOCAL_ENV_FILE}" ]]; then
+  ACTIVE_ENV_FILE="${LOCAL_ENV_FILE}"
+fi
+
+set -a
+source "${ACTIVE_ENV_FILE}"
+set +a
+
+compose() {
+  docker compose --env-file "${ACTIVE_ENV_FILE}" -f "${COMPOSE_FILE}" "$@"
+}
+
+require_command() {
+  local cmd="$1"
+  if ! command -v "${cmd}" >/dev/null 2>&1; then
+    echo "[grw-runtime] '${cmd}' command is required." >&2
+    exit 1
+  fi
+}
+
+require_docker() {
+  require_command docker
+
+  if ! docker info >/dev/null 2>&1; then
+    echo "[grw-runtime] Docker daemon is not reachable. Start Docker or OrbStack first." >&2
+    exit 1
+  fi
+}
+
+require_runtime_sources() {
+  local missing=()
+
+  [[ -f "${BACKEND_REPO_DIR}/Dockerfile" ]] || missing+=("../git-ranker/Dockerfile")
+  [[ -f "${BACKEND_REPO_DIR}/prometheus.yml" ]] || missing+=("../git-ranker/prometheus.yml")
+  [[ -f "${BACKEND_REPO_DIR}/loki-config.yml" ]] || missing+=("../git-ranker/loki-config.yml")
+  [[ -f "${BACKEND_REPO_DIR}/promtail-config.yml" ]] || missing+=("../git-ranker/promtail-config.yml")
+  [[ -f "${CLIENT_REPO_DIR}/Dockerfile" ]] || missing+=("../git-ranker-client/Dockerfile")
+
+  if ((${#missing[@]} == 0)); then
+    return 0
+  fi
+
+  {
+    echo "[grw-runtime] Required sibling repositories are missing or not initialized:"
+    printf '  - %s\n' "${missing[@]}"
+    echo "[grw-runtime] Run 'git submodule update --init --recursive' from the workflow root before './runtime/grw-runtime start'."
+  } >&2
+  exit 1
+}
+
+wait_for_http() {
+  local name="$1"
+  local url="$2"
+  local retries="${3:-60}"
+  local delay_seconds="${4:-2}"
+
+  for ((i = 1; i <= retries; i++)); do
+    if curl --silent --show-error --fail "${url}" >/dev/null; then
+      echo "[grw-runtime] ${name} is ready: ${url}"
+      return 0
+    fi
+    sleep "${delay_seconds}"
+  done
+
+  echo "[grw-runtime] ${name} did not become ready: ${url}" >&2
+  return 1
+}
+
+cmd_start() {
+  require_runtime_sources
+  require_docker
+  compose up -d --build
+  echo "[grw-runtime] Stack started. Run './runtime/grw-runtime verify' to confirm health."
+}
+
+cmd_stop() {
+  require_docker
+  compose down --remove-orphans
+}
+
+cmd_reset() {
+  require_docker
+  compose down -v --remove-orphans
+  echo "[grw-runtime] Volumes removed. The next start will recreate an empty runtime state."
+}
+
+cmd_seed() {
+  cat <<'EOF' >&2
+[grw-runtime] seed is intentionally a placeholder in GRW-05.
+Actual deterministic ranking data must be connected by GRB-03.
+EOF
+  exit 3
+}
+
+cmd_verify() {
+  require_docker
+  require_command curl
+
+  wait_for_http "backend actuator health" "http://localhost:${BACKEND_MANAGEMENT_PORT}/actuator/health"
+  wait_for_http "backend ranking API" "http://localhost:${BACKEND_HTTP_PORT}/api/v1/ranking?page=0"
+  wait_for_http "client root" "http://localhost:${CLIENT_PORT}"
+  wait_for_http "prometheus ready" "http://localhost:${PROMETHEUS_PORT}/-/ready"
+  wait_for_http "loki ready" "http://localhost:${LOKI_PORT}/ready"
+  compose ps
+}
+
+usage() {
+  cat <<EOF
+Usage: ./runtime/grw-runtime <command>
+
+Commands:
+  start   Build and start backend/client/db/prometheus/loki runtime
+  stop    Stop containers and keep volumes
+  reset   Stop containers and remove volumes
+  seed    Placeholder until GRB-03
+  verify  Check runtime endpoints from the host
+
+Env file:
+  ${LOCAL_ENV_FILE} if present, otherwise ${DEFAULT_ENV_FILE}
+EOF
+}
+
+case "${1:-}" in
+  start)
+    cmd_start
+    ;;
+  stop)
+    cmd_stop
+    ;;
+  reset)
+    cmd_reset
+    ;;
+  seed)
+    cmd_seed
+    ;;
+  verify)
+    cmd_verify
+    ;;
+  ""|-h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 64
+    ;;
+esac

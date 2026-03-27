@@ -5,6 +5,7 @@
 현재 기준 문서:
 
 - [workflow-governance.md](workflow-governance.md)
+- [workflow-verification-runtime.md](workflow-verification-runtime.md)
 - [manual-refresh-flow.md](manual-refresh-flow.md)
 - [daily-batch-flow.md](daily-batch-flow.md)
 - [github-api-failure-policy.md](github-api-failure-policy.md)
