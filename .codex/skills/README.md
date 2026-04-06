@@ -94,11 +94,16 @@ coordination skill은 구현 전에 먼저 쓴다.
 
 `api-contract-sync`의 canonical backend contract는 `git-ranker/docs/openapi/openapi.json`이다. workflow는 canonical spec을 복제해 소유하지 않고, sync 절차와 evidence를 관리한다.
 
-후속 작업에서 아래 skill pack을 순서대로 채운다.
+현재 등록된 skill은 그대로 유지하되, 후속 skill pack의 방향은 더 이상 ranking harness 중심으로 확장하지 않는다.
 
-- `GRW-S02`: `issue-to-exec-plan`, `parallel-work-split`, `api-contract-sync`
-- `GRW-S03`: `ranking-read-harness`, `playwright-browser-qa`, `promql-logql-evidence`
-- `GRW-S04`: `batch-failure-triage`, `github-rate-limit-investigation`, `doc-gardener`
+후속 작업에서는 아래 순서로 새 skill pack을 채운다.
+
+- `GRW-S06`: `request-intake`, `ambiguity-interview`
+- `GRW-S07`: `context-pack-selection`, `boundary-check`
+- `GRW-S08`: `verification-contract-runner`, `repair-loop-triage`, `reviewer-handoff`
+- `GRW-S09`: `guardrail-ledger-update`, `failure-to-policy`
+
+구현 결과의 최종 승인은 구현 Agent가 아니라 별도 review Agent가 담당한다.
 
 ## Related Docs
 
