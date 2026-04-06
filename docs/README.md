@@ -7,9 +7,10 @@
 1. [AGENTS.md](../AGENTS.md)
 2. [PLANS.md](../PLANS.md)
 3. [docs/architecture/control-plane-map.md](architecture/control-plane-map.md)
-4. [docs/operations/workflow-governance.md](operations/workflow-governance.md)
-5. [docs/product/harness-roadmap.md](product/harness-roadmap.md)
-6. [docs/product/work-item-catalog.md](product/work-item-catalog.md)
+4. [docs/architecture/harness-system-map.md](architecture/harness-system-map.md)
+5. [docs/operations/workflow-governance.md](operations/workflow-governance.md)
+6. [docs/product/harness-roadmap.md](product/harness-roadmap.md)
+7. [docs/product/work-item-catalog.md](product/work-item-catalog.md)
 
 ## 디렉터리 맵
 
@@ -26,5 +27,5 @@
 
 ## 우선순위
 
-- 원본 로드맵 문서는 이관 전 기준과 배경을 보관하는 참고 자료다.
+- 역사 roadmap 문서는 이관 전 기준과 배경을 보관하는 참고 자료다.
 - 현재 작업 지시와 운영 기준은 `docs/` 아래 문서를 우선한다.

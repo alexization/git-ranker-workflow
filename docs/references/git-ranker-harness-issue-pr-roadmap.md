@@ -1,6 +1,8 @@
-# Git Ranker Harness Engineering Issue/PR Roadmap
+# Historical: Git Ranker Harness Engineering Issue/PR Roadmap
 
-> 상태: 초기 분해를 남겨두는 역사 문서다. 새 작업은 이 문서보다 아래 문서를 먼저 읽는다.
+> 상태: 초기 분해를 남겨두는 역사 문서다. 현재 계획 source of truth는 이 문서가 아니라 `docs/product/`, `docs/operations/`, `docs/exec-plans/`다.
+>
+> 새 작업은 이 문서보다 아래 문서를 먼저 읽는다.
 >
 > - [AGENTS.md](../../AGENTS.md)
 > - [PLANS.md](../../PLANS.md)

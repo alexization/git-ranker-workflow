@@ -68,6 +68,11 @@
 
 - 작업 시작 전 대상 저장소에 `gh issue create`로 이슈를 만든다.
 - 이슈와 PR 본문은 대상 저장소의 Issue/PR template 형식을 따른다.
+- 멀티라인 GitHub 본문은 shell 인라인 `--body`, escaped `\n`, `$'...'` 문자열로 직접 만들지 않는다.
+- GitHub 본문은 먼저 파일로 작성한 뒤 `gh issue create --body-file <path>` 또는 `gh pr create --body-file <path>`로 보낸다.
+- workflow 저장소 Issue 본문은 `.codex/skills/issue-to-exec-plan/templates/github-issue-body.md`를 복사해 채운다.
+- workflow 저장소 PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md`를 복사한 임시 파일을 기준으로 채운다.
+- 생성 직후에는 `gh issue view --json body` 또는 `gh pr view --json body`로 본문이 예상한 줄바꿈과 섹션을 유지하는지 확인한다.
 - Issue template은 최소한 `문제`, `왜 지금`, `범위/비범위`, `write scope`, `context source`, `verification plan`, `open questions`를 포함해야 한다.
 - PR template은 최소한 `연결된 issue`, `범위/비범위`, `write scope`, `verification 결과`, `독립 review 결과`, `feedback follow-up`, `문서 반영`, `리스크`를 포함해야 한다.
 - 커밋 메시지는 항상 루트의 `.gitmessage.ko.txt` 형식을 따른다.
@@ -79,10 +84,11 @@
 현재 기준 실행 순서:
 
 1. 대상 저장소의 `develop` 최신 상태를 기준으로 worktree 또는 branch를 만든다.
-2. `gh issue create`로 대상 저장소 이슈를 만든다.
+2. body file을 준비한 뒤 `gh issue create --body-file ...`로 대상 저장소 이슈를 만든다.
 3. 이슈 번호를 브랜치명과 exec plan에 연결한다.
-4. 작업 후 `gh pr create --base develop`로 PR을 연다.
-5. PR 본문에 검증 결과, 독립 review 결과, 문서 반영 여부, 남은 리스크를 채운다.
+4. 작업 후 PR body file을 준비하고 `gh pr create --base develop --body-file ...`로 PR을 연다.
+5. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
+6. PR 본문에 검증 결과, 독립 review 결과, 문서 반영 여부, 남은 리스크를 채운다.
 
 ## 문서, SKILL, exec plan의 역할
 

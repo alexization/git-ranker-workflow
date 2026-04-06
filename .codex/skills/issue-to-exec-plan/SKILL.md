@@ -41,13 +41,17 @@ description: Use this skill when a roadmap item or GitHub issue must be turned i
 ```bash
 rg -n "GRW-S02|GRC-04|GRB-02" docs/product docs/exec-plans
 find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort
-gh issue create --repo <owner>/<target-repo> --title "[Task] <issue-id> ..."
+cp .codex/skills/issue-to-exec-plan/templates/github-issue-body.md /tmp/<issue-id>-issue-body.md
+gh issue create --repo <owner>/<target-repo> --title "[Task] <issue-id> ..." --body-file /tmp/<issue-id>-issue-body.md
+gh issue view --repo <owner>/<target-repo> <issue-number> --json body
 git checkout -b feat/grw-s02-core-planning-skill-pack
 ```
 
 명령 자체보다 중요한 것은 "어떤 문서를 읽고 어떤 범위를 고정했는지"를 exec plan에 남기는 것이다.
 
 `gh issue create`의 `--repo`는 항상 대상 저장소와 맞아야 한다. 예를 들어 `GRW-*`는 `alexization/git-ranker-workflow`, `GRB-*`는 `alexization/git-ranker`, `GRC-*`는 `alexization/git-ranker-client`를 쓴다.
+
+workflow 저장소에서 멀티라인 Issue 본문을 만들 때는 `.codex/skills/issue-to-exec-plan/templates/github-issue-body.md`를 복사해 채운다. shell 인라인 `--body`, escaped `\n`, `$'...'` 문자열은 줄바꿈이 깨질 수 있으므로 쓰지 않는다.
 
 ## Required Evidence
 
@@ -65,6 +69,8 @@ git checkout -b feat/grw-s02-core-planning-skill-pack
 - verification을 `문서 확인`, `테스트 실행`처럼 추상적으로 쓰지 않는다.
 - 선행조건이 불명확한데 `Ready` 또는 `In Progress`로 올리지 않는다.
 - 애매한 요구사항을 임의 해석해 plan 본문에 박지 않는다.
+- 멀티라인 GitHub Issue 본문을 `gh issue create --body '...'` 또는 escaped `\n` 문자열로 직접 보내지 않는다.
+- Issue 생성 후 `gh issue view --json body` 확인 없이 줄바꿈이 정상이라고 가정하지 않는다.
 
 ## Parallel Ownership Rule
 
