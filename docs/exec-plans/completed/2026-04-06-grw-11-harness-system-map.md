@@ -30,6 +30,7 @@
 - stop condition, pass/fail semantics, repair loop의 상위 규칙을 정의한다.
 - 역사 roadmap 문서를 `docs/references/` 체계로 정리하고 관련 인덱스를 갱신한다.
 - GitHub issue/PR 멀티라인 본문 생성 규칙을 `--body-file` 중심으로 정리하고 재사용 템플릿을 추가한다.
+- PR template의 `6) Verification Contract`를 section block 형식으로 정리한다.
 
 ## Non-scope
 
@@ -54,6 +55,7 @@
 - 갱신된 architecture/docs/reference 인덱스
 - `docs/references/`로 이관된 역사 roadmap 문서
 - GitHub issue body 재발 방지 규칙과 템플릿
+- pipe-safe PR verification contract template
 
 ## Working Decisions
 
@@ -61,6 +63,7 @@
 - `GRW-11`은 상태 머신의 상위 semantics만 정의하고, stage별 세부 정책은 후속 Issue에서 확장한다.
 - verification/review 실패는 곧바로 완료 불가를 의미하며, 성공 경로와 실패 경로 모두 feedback 단계에서 close-out 또는 guardrail 후보 판단을 거친다.
 - GitHub issue/PR 멀티라인 본문은 shell 인라인 문자열 대신 body file을 canonical 작성 방식으로 사용한다.
+- PR의 verification contract는 section block 형식을 canonical으로 사용한다.
 
 ## Verification
 
@@ -73,7 +76,9 @@
 - `rg -n "docs/plans/" docs/README.md docs/architecture docs/references`
   - 결과: 현재 source of truth 인덱스와 reference 인덱스에는 `docs/plans/` 참조가 남아 있지 않은 것을 확인했다.
 - `sed -n '67,92p' docs/operations/workflow-governance.md`
-  - 결과: GitHub issue/PR 본문은 `--body-file`로 만들고 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 확인하는 규칙이 반영된 것을 확인했다.
+  - 결과: GitHub issue/PR 본문은 `--body-file`로 만들고, PR verification contract는 section block 형식으로 작성하며, 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 확인하는 규칙이 반영된 것을 확인했다.
+- `sed -n '1,260p' .github/PULL_REQUEST_TEMPLATE.md`
+  - 결과: `6) Verification Contract`가 section block 형식으로 정리된 것을 확인했다.
 - `sed -n '39,78p' .codex/skills/issue-to-exec-plan/SKILL.md`
   - 결과: `issue-to-exec-plan` skill의 기본 명령이 body file 기반 issue 생성과 body 확인 루프로 바뀐 것을 확인했다.
 - `sed -n '1,220p' .codex/skills/issue-to-exec-plan/templates/github-issue-body.md`
@@ -88,6 +93,7 @@
 - 시스템 맵 문서에서 정의한 canonical state와 transition
 - planning source of truth와 historical reference의 분리 결과
 - GitHub issue body 재발 방지 규칙과 템플릿
+- pipe-safe PR verification contract template
 - verification 명령 요약
 
 ## Risks or Blockers
@@ -111,6 +117,7 @@
 - `docs/architecture/README.md`
 - `docs/README.md`
 - `docs/operations/workflow-governance.md`
+- `.github/PULL_REQUEST_TEMPLATE.md`
 - `docs/references/README.md`
 - `docs/references/git-ranker-harness-issue-pr-roadmap.md`
 - `.codex/skills/issue-to-exec-plan/SKILL.md`

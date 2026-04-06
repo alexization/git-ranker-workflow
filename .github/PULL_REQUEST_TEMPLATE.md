@@ -23,12 +23,23 @@
 
 ## 6) Verification Contract
 
-| 항목 | 명령 / 확인 방법 | 결과 |
-| --- | --- | --- |
-| Docs / Policy | `미기입 시 사유 작성` | |
-| Type / Lint / Test / Build | `미기입 시 사유 작성` | |
-| Manual Check | `미기입 시 사유 작성` | |
-| 기타 작업별 계약 | `미기입 시 사유 작성` | |
+`Verification Contract`는 아래 section block 형식으로 작성합니다. 각 block에는 `Command / Check`와 `Result`를 기록합니다.
+
+### Docs / Policy
+- Command / Check:
+- Result:
+
+### Type / Lint / Test / Build
+- Command / Check:
+- Result:
+
+### Manual Check
+- Command / Check:
+- Result:
+
+### Other Task-Specific Contract
+- Command / Check:
+- Result:
 
 ## 7) Independent Review
 - Implementer:
