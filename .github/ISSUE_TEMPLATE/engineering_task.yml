@@ -1,73 +1,141 @@
-name: "🛠️ Workflow Engineering Task"
-description: 문서 구조, control plane, skill, 검증 런타임, 운영 규칙 개선 작업을 기록합니다.
+name: "🛠️ Harness Engineering Task"
+description: Harness workflow에 따라 issue/PR 단위 작업을 기록합니다.
 title: "[Task] "
 labels: ["task", "triage"]
 body:
   - type: dropdown
-    id: task_type
+    id: request_type
     attributes:
-      label: 작업 유형
+      label: 요청 유형
+      description: 이 작업을 어떤 흐름으로 처리해야 하는지 고릅니다.
       options:
-        - control-plane
-        - documentation
-        - skill
-        - runtime/harness
-        - quality-score
-        - governance/process
-        - security
+        - policy/governance
+        - documentation/context
+        - architecture/control-plane
+        - skill/process
+        - verification-contract
+        - review-policy
+        - workflow-automation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_repo
+    attributes:
+      label: 대상 저장소
+      options:
+        - git-ranker-workflow
+        - git-ranker
+        - git-ranker-client
+        - cross-repo planning
     validations:
       required: true
 
   - type: textarea
-    id: reason
+    id: problem
     attributes:
-      label: 왜 필요한가요?
-      description: 지금 이 작업이 필요한 이유와 미루었을 때의 비용을 적어 주세요.
+      label: 문제 정의
+      description: 지금 어떤 문제가 있고 무엇이 불명확하거나 불안정한지 적어 주세요.
     validations:
       required: true
 
   - type: textarea
-    id: scope
+    id: why_now
     attributes:
-      label: 작업 범위
-      description: 변경할 문서, 디렉터리, 스크립트, 연동 저장소를 적어 주세요.
+      label: 왜 지금 필요한가요?
+      description: 지금 이 작업을 먼저 해야 하는 이유를 적어 주세요.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_outcome
+    attributes:
+      label: 기대 결과 / 완료 조건
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: in_scope
+    attributes:
+      label: 범위
+      description: 이번 Issue에서 다룰 변경만 적어 주세요.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: 비범위
+      description: 이번 Issue에서 의도적으로 다루지 않을 내용을 적어 주세요.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: write_scope
+    attributes:
+      label: Write Scope
+      description: 수정 가능한 디렉터리, 파일, 저장소를 적어 주세요.
+      placeholder: |
+        - `docs/product/`
+        - `docs/operations/`
+        - `.github/`
+    validations:
+      required: true
+
+  - type: textarea
+    id: context_sources
+    attributes:
+      label: Context / Source of Truth
+      description: 먼저 읽어야 할 문서, 코드 경로, 기존 exec plan을 적어 주세요.
       placeholder: |
         - `AGENTS.md`
-        - `docs/operations/*`
-        - `docs/exec-plans/*`
-        - 연동 저장소: `git-ranker`, `git-ranker-client`
+        - `PLANS.md`
+        - `docs/operations/workflow-governance.md`
+        - `docs/product/work-item-catalog.md`
     validations:
       required: true
 
   - type: textarea
-    id: done
+    id: verification_plan
     attributes:
-      label: 완료 조건
+      label: Verification Contract / 검증 계획
+      description: 완료 판정에 사용할 명령이나 확인 방법을 적어 주세요.
       placeholder: |
-        - [ ] ...
-        - [ ] ...
+        - `npm run lint`
+        - `./gradlew test`
+        - 문서 링크와 template 섹션 확인
     validations:
       required: true
 
   - type: textarea
-    id: validation
+    id: review_expectation
     attributes:
-      label: 검증 방법
+      label: 독립 리뷰 기대사항
+      description: 구현 이후 review Agent 또는 리뷰어가 무엇을 검토해야 하는지 적어 주세요.
       placeholder: |
-        - `find docs -maxdepth 3 -type d | sort`
-        - `cat AGENTS.md`
-        - `cat PLANS.md`
-        - 필요한 경우 `gh pr create --base develop`
+        - 구현 Agent와 다른 리뷰어가 검토
+        - scope/non-scope 준수 여부 확인
+        - verification 결과와 diff 일치 여부 확인
     validations:
       required: true
 
   - type: textarea
-    id: risks
+    id: open_questions
     attributes:
-      label: 리스크 및 의존성
+      label: Open Questions / Blockers
+      description: 아직 모호하거나 막혀 있는 점이 있으면 적어 주세요.
       placeholder: |
-        - 리스크:
-        - 의존성:
+        - 질문:
+        - blocker:
         - 후속 작업:
     validations:
       required: false

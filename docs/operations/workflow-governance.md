@@ -15,13 +15,28 @@
 - 한 PR에서 여러 저장소를 동시에 건드리는 경우는 피한다
 - cross-repo 작업은 `workflow 문서 PR`과 `앱 코드 PR`로 나눈다
 
-## 각 PR에 반드시 들어가야 할 내용
+## 각 Issue에 반드시 들어가야 할 내용
 
 - 문제 정의
 - 왜 지금 필요한지
+- 기대 결과 또는 완료 조건
+- 범위와 비범위
+- 대상 저장소와 write scope
+- 참조할 source of truth 또는 context source
+- verification contract 또는 검증 계획
+- 남아 있는 open question 또는 blocker
+
+## 각 PR에 반드시 들어가야 할 내용
+
+- 연결된 Issue
+- 문제 정의
+- 왜 지금 필요한지
 - 이번 PR의 범위와 비범위
+- write scope
 - 산출물
 - 검증 명령과 결과
+- 독립 review 결과
+- feedback 또는 후속 guardrail 후보
 - 남은 리스크
 - 다음 Issue로 넘겨야 할 전제조건
 
@@ -53,6 +68,9 @@
 
 - 작업 시작 전 대상 저장소에 `gh issue create`로 이슈를 만든다.
 - 이슈와 PR 본문은 대상 저장소의 Issue/PR template 형식을 따른다.
+- Issue template은 최소한 `문제`, `왜 지금`, `범위/비범위`, `write scope`, `context source`, `verification plan`, `open questions`를 포함해야 한다.
+- PR template은 최소한 `연결된 issue`, `범위/비범위`, `write scope`, `verification 결과`, `독립 review 결과`, `feedback follow-up`, `문서 반영`, `리스크`를 포함해야 한다.
+- 커밋 메시지는 항상 루트의 `.gitmessage.ko.txt` 형식을 따른다.
 - 저장소별 작업은 각 저장소마다 별도 branch 또는 worktree에서 수행한다.
 - 모든 기능 브랜치는 대상 저장소의 `develop` 브랜치를 기준으로 분기한다.
 - cross-repo 작업은 저장소별로 이슈와 PR을 분리한다.
@@ -64,7 +82,7 @@
 2. `gh issue create`로 대상 저장소 이슈를 만든다.
 3. 이슈 번호를 브랜치명과 exec plan에 연결한다.
 4. 작업 후 `gh pr create --base develop`로 PR을 연다.
-5. PR 본문에 검증 결과, 문서 반영 여부, 남은 리스크를 채운다.
+5. PR 본문에 검증 결과, 독립 review 결과, 문서 반영 여부, 남은 리스크를 채운다.
 
 ## 문서, SKILL, exec plan의 역할
 
