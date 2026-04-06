@@ -30,6 +30,14 @@
 - `모호한 요청`은 source of truth로 줄일 수 있는 ambiguity를 먼저 제거하고, 남는 blocker만 interview 질문으로 다룬다.
 - `대화` 또는 `Rejected` close-out인 요청은 파일 편집을 시작하지 않는다.
 
+## Context Pack 규칙
+
+- active exec plan이 생기면 구현 전 [../architecture/context-pack-registry.md](../architecture/context-pack-registry.md)에서 primary context pack 하나를 고른다.
+- 모든 pack은 required docs만 먼저 읽고, optional docs는 issue, exec plan, hot file 탐색이 trigger를 줄 때만 연다.
+- 서로 다른 pack의 required docs까지 동시에 필요해지면 ad-hoc으로 pack을 합치지 말고 issue 분해 또는 exec plan 갱신을 먼저 한다.
+- `docs/references/`와 generated snapshot은 default context가 아니다. 현재 source of truth가 부족하거나 생성 계약을 확인할 때만 연다.
+- target repo entry 문서나 worktree가 없으면 `Context Ready`를 선언하지 않고 `Blocked` 또는 준비 작업으로 되돌린다.
+
 ## 각 Issue에 반드시 들어가야 할 내용
 
 - 문제 정의

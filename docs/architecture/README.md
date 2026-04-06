@@ -5,5 +5,6 @@
 현재 기준 문서:
 
 - [control-plane-map.md](control-plane-map.md)
+- [context-pack-registry.md](context-pack-registry.md)
 - [harness-system-map.md](harness-system-map.md)
 - [frontend-route-map.md](frontend-route-map.md)
