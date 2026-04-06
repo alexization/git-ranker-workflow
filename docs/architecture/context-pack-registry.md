@@ -10,6 +10,7 @@
 - 모든 pack은 공통 base context를 먼저 읽고, 그 다음 pack별 required docs를 연다.
 - optional docs는 issue, exec plan, hot file 탐색이 명시한 trigger가 있을 때만 연다.
 - 다른 pack의 required docs까지 필요해지면 임의로 pack을 합치지 않고 issue를 쪼개거나 exec plan을 갱신한다.
+- context pack selection만으로 tool/network/escalation 권한이 자동으로 열리지는 않는다. 구현 전에는 operations의 tool boundary policy로 access class를 따로 잠근다.
 - `docs/references/`와 generated snapshot은 default context가 아니다. 현재 source of truth가 부족하거나 생성 계약을 확인할 때만 연다.
 - target repo의 entrypoint 문서나 worktree가 없으면 `Context Ready`를 선언하지 않는다. 이 경우 worktree 준비 또는 `Blocked` 판단이 먼저다.
 
