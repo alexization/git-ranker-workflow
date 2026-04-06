@@ -18,7 +18,7 @@
 ## 읽기 우선순위
 
 1. 루트 인덱스: `AGENTS.md`, `PLANS.md`
-2. 아키텍처 기준: `docs/architecture/control-plane-map.md`, `docs/architecture/harness-system-map.md`
+2. 아키텍처 기준: `docs/architecture/control-plane-map.md`, `docs/architecture/harness-system-map.md`, `docs/architecture/context-pack-registry.md`
 3. 공통 운영 규칙: `docs/operations/workflow-governance.md`
 4. 실행 순서와 작업 카탈로그: `docs/product/*.md`
 5. 해당 작업의 exec plan: `docs/exec-plans/active/*.md` 또는 `docs/exec-plans/completed/*.md`
