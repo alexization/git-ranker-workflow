@@ -6,6 +6,7 @@
 
 - [workflow-governance.md](workflow-governance.md)
 - [request-routing-policy.md](request-routing-policy.md)
+- [tool-boundary-matrix.md](tool-boundary-matrix.md)
 - [workflow-verification-runtime.md](workflow-verification-runtime.md)
 - [manual-refresh-flow.md](manual-refresh-flow.md)
 - [daily-batch-flow.md](daily-batch-flow.md)
