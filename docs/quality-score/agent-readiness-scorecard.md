@@ -1,6 +1,6 @@
 # Agent Readiness Scorecard
 
-이 문서는 `GRW-02`부터 사용하는 readiness 기준선 평가 축과 점수 규칙을 정의한다.
+이 문서는 readiness 기준선 평가 축과 점수 규칙을 정의한다.
 
 ## 평가 항목
 

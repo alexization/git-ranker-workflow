@@ -4,7 +4,6 @@
 
 ## 목적과 범위
 
-- 대상 작업: `GRW-05`
 - 첫 대상 흐름: public ranking read
 - 포함 서비스: backend, client, db, prometheus, loki
 - 보조 서비스: promtail
@@ -13,7 +12,7 @@
 
 - workflow 루트에서 같은 compose 파일과 helper script로 기동
 - backend/client/public ranking endpoint/observability endpoint의 기본 health 확인
-- 후속 `GRB-03`, `GRC-04`, `GRW-06`이 붙을 interface와 포트 규칙 고정
+- 후속 deterministic seed, frontend smoke, observability evidence 작업이 재사용할 interface와 포트 규칙 고정
 
 현재 runtime은 아래를 아직 보장하지 않는다.
 
@@ -48,7 +47,7 @@
 - `start`는 compose build/up 전에 sibling `git-ranker`, `git-ranker-client` 저장소의 필수 파일을 먼저 검사한다.
 - `stop`은 컨테이너만 내리고 volume은 유지한다.
 - `reset`은 volume까지 제거해 db/metrics/log positions를 초기화한다.
-- `seed`는 현재 placeholder다. 실제 결정적 데이터 적재는 `GRB-03`에서 연결한다.
+- `seed`는 현재 placeholder다. 실제 결정적 데이터 적재는 별도 backend seed 작업에서 연결한다.
 - `verify`는 host 기준 endpoint에 대해 wait + health 확인을 수행한다.
 
 재사용 원칙:
@@ -116,8 +115,8 @@ helper는 `runtime/.env.example`의 값을 기본값으로 사용한다. 대표 
 - client의 sitemap/opengraph 같은 server-side fetch 경로는 `NEXT_PUBLIC_API_URL=http://localhost:8080`일 때 container 내부에서 동일하게 동작하지 않을 수 있다.
 - promtail은 Docker socket 기반으로 backend stdout JSON 로그를 수집한다. Docker 엔진 접근 제약이 있는 환경에서는 loki signal이 비어 있을 수 있다.
 
-## 다음 작업 연결
+## 향후 확장 포인트
 
-- `GRB-03`: `seed` 명령에 결정적 fixture 연결
-- `GRC-04`: ranking UI smoke와 pagination/tier filter를 runtime 위에서 실행
-- `GRW-06`: LogQL/PromQL query와 evidence summary 추가
+- `seed` 명령에 결정적 fixture를 연결한다.
+- ranking UI smoke와 pagination/tier filter를 runtime 위에서 실행한다.
+- LogQL/PromQL query와 evidence summary를 추가한다.

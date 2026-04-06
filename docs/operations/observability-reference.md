@@ -1,6 +1,6 @@
 # Observability Reference
 
-이 문서는 `GRW-03` 범위에서 후속 harness가 바로 참조할 수 있는 로그 이벤트, 공통 필드, 메트릭 이름, 관측 endpoint를 정리한다.
+이 문서는 후속 harness가 바로 참조할 수 있는 로그 이벤트, 공통 필드, 메트릭 이름, 관측 endpoint를 정리한다.
 
 ## 로그 공통 규칙
 

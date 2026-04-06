@@ -97,7 +97,7 @@
 - `Rejected`: 대화성 요청, 범위 밖 요청, 사용자 취소처럼 작업 자체를 진행하지 않는 경우다.
 - `Blocked`: 선행조건 부족, 외부 의존성, 권한 문제, canonical source 부재로 현재 이슈 안에서 더 진행할 수 없는 경우다.
 - `Completed`: verification 통과, reviewer 승인, feedback close-out이 모두 끝난 경우다.
-- `Repairing`은 terminal state가 아니다. 반복 실패가 누적되면 `GRW-15`, `GRW-17`에서 정의할 retry budget과 guardrail 정책에 따라 `Blocked` 또는 후속 Issue로 넘긴다.
+- `Repairing`은 terminal state가 아니다. 반복 실패가 누적되면 verification contract registry와 feedback/guardrail policy에 정의된 retry budget 기준에 따라 `Blocked` 또는 후속 planning으로 넘긴다.
 
 ## Role Separation Invariants
 
@@ -115,11 +115,11 @@
 - `Completed` 판정은 PR의 verification 결과와 reviewer verdict, exec plan의 close-out이 함께 있어야 성립한다.
 - 완료된 exec plan은 `docs/exec-plans/completed/`로 옮기고, 후속 Issue가 이 문서를 전제조건으로 참조한다.
 
-## Follow-up Ownership
+## Detailed Policy Surfaces
 
-- `GRW-12`는 `Router`, `Interviewing`, `Rejected` semantics를 세분화한다.
-- `GRW-13`은 `Planned`에서 `Context Ready`로 가는 규칙을 registry로 고정한다.
-- `GRW-14`는 `Context Ready`와 `Implementing` 단계의 tool boundary를 상세화한다.
-- `GRW-15`는 `Verifying`, `Repairing`, `Blocked` semantics와 retry budget을 명시한다.
-- `GRW-16`은 `Reviewing` 단계의 reviewer input과 verdict 규칙을 구체화한다.
-- `GRW-17`은 `Feedback Pending`과 guardrail 승격 규칙을 ledger 형태로 정의한다.
+- request routing and ambiguity interview policy는 `Router`, `Interviewing`, `Rejected` semantics를 세분화한다.
+- context pack registry는 `Planned`에서 `Context Ready`로 가는 규칙을 registry 형태로 고정한다.
+- tool boundary matrix는 `Context Ready`와 `Implementing` 단계의 허용 도구와 write scope 경계를 상세화한다.
+- verification contract registry는 `Verifying`, `Repairing`, `Blocked` semantics와 retry budget을 명시한다.
+- review policy는 `Reviewing` 단계의 reviewer input과 verdict 규칙을 구체화한다.
+- feedback ledger/policy는 `Feedback Pending`과 guardrail 승격 규칙을 고정한다.

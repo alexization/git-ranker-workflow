@@ -61,6 +61,7 @@ workflow 저장소에서 멀티라인 Issue 본문을 만들 때는 `.codex/skil
 - 예정된 verification 명령
 - 남아 있는 질문이나 blocker
 - 관련 GitHub Issue와 branch/slug
+- stable source of truth 문서에 임시 work item ID를 남겨야 하는지 여부와, 남긴다면 close-out 전에 제거하거나 planning/history 문서로 이동할 계획
 
 ## Forbidden Shortcuts
 
@@ -69,6 +70,7 @@ workflow 저장소에서 멀티라인 Issue 본문을 만들 때는 `.codex/skil
 - verification을 `문서 확인`, `테스트 실행`처럼 추상적으로 쓰지 않는다.
 - 선행조건이 불명확한데 `Ready` 또는 `In Progress`로 올리지 않는다.
 - 애매한 요구사항을 임의 해석해 plan 본문에 박지 않는다.
+- `docs/architecture/`, `docs/operations/`, `docs/domain/`, `docs/reliability/`, `docs/security/` 같은 stable source of truth 문서에 현재/후속 work item ID를 설명용 문장으로 남기지 않는다.
 - 멀티라인 GitHub Issue 본문을 `gh issue create --body '...'` 또는 escaped `\n` 문자열로 직접 보내지 않는다.
 - Issue 생성 후 `gh issue view --json body` 확인 없이 줄바꿈이 정상이라고 가정하지 않는다.
 
