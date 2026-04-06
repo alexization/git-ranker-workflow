@@ -8,12 +8,27 @@
 - 다른 디렉터리 문서를 가리킬 때도 현재 문서 위치를 기준으로 상대경로를 적는다.
 - 로컬 도구나 응답 메시지에서만 절대경로를 사용하고, 저장소 문서 본문에는 넣지 않는다.
 
+## stable source of truth의 task ID 규칙
+
+- `docs/product/`, `docs/exec-plans/`, GitHub Issue/PR 본문, baseline이나 historical snapshot처럼 tracking이 본질인 문서는 work item ID를 직접 써도 된다.
+- `docs/architecture/`, `docs/operations/`, `docs/domain/`, `docs/reliability/`, `docs/security/`, `docs/quality-score/` 같은 stable source of truth 문서에는 future work나 follow-up 설명을 위해 직접적인 work item ID를 남기지 않는다.
+- stable 문서에서 후속 확장을 가리킬 때는 task ID 대신 정책, registry, skill pack, guardrail 같은 자산 이름을 쓴다.
+- task 완료 시 stable 문서에 임시로 넣었던 work item ID는 제거하거나 서술형 이름으로 치환한다.
+- Issue ID 형식, 브랜치명 규칙처럼 식별자 형식 자체를 설명하는 문맥은 예외다.
+
 ## Issue/PR 단위 규칙
 
 - 원칙적으로 `Issue 1개 = PR 1개`
 - 하나의 PR은 하나의 목표만 해결한다
 - 한 PR에서 여러 저장소를 동시에 건드리는 경우는 피한다
 - cross-repo 작업은 `workflow 문서 PR`과 `앱 코드 PR`로 나눈다
+
+## 요청 intake 규칙
+
+- 작업 시작 전 [request-routing-policy.md](request-routing-policy.md)로 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류한다.
+- `즉시 실행 가능한 작업`만 GitHub issue와 exec plan을 만든다.
+- `모호한 요청`은 source of truth로 줄일 수 있는 ambiguity를 먼저 제거하고, 남는 blocker만 interview 질문으로 다룬다.
+- `대화` 또는 `Rejected` close-out인 요청은 파일 편집을 시작하지 않는다.
 
 ## 각 Issue에 반드시 들어가야 할 내용
 
@@ -66,7 +81,7 @@
 
 ## GitHub Issue/PR 운영 규칙
 
-- 작업 시작 전 대상 저장소에 `gh issue create`로 이슈를 만든다.
+- `즉시 실행 가능한 작업`으로 판정된 뒤 대상 저장소에 `gh issue create`로 이슈를 만든다.
 - 이슈와 PR 본문은 대상 저장소의 Issue/PR template 형식을 따른다.
 - GitHub 본문은 먼저 파일로 작성한 뒤 `gh issue create --body-file <path>` 또는 `gh pr create --body-file <path>`로 보낸다.
 - workflow 저장소 Issue 본문은 `.codex/skills/issue-to-exec-plan/templates/github-issue-body.md`를 복사해 채운다.
@@ -84,12 +99,13 @@
 
 현재 기준 실행 순서:
 
-1. 대상 저장소의 `develop` 최신 상태를 기준으로 worktree 또는 branch를 만든다.
-2. body file을 준비한 뒤 `gh issue create --body-file ...`로 대상 저장소 이슈를 만든다.
-3. 이슈 번호를 브랜치명과 exec plan에 연결한다.
-4. 작업 후 PR body file을 준비하고 `gh pr create --base develop --body-file ...`로 PR을 연다.
-5. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
-6. PR 본문에 검증 결과, 독립 review 결과, 문서 반영 여부, 남은 리스크를 채운다.
+1. [request-routing-policy.md](request-routing-policy.md)로 요청을 분류하고, `즉시 실행 가능한 작업`만 다음 단계로 보낸다.
+2. 대상 저장소의 `develop` 최신 상태를 기준으로 worktree 또는 branch를 만든다.
+3. body file을 준비한 뒤 `gh issue create --body-file ...`로 대상 저장소 이슈를 만든다.
+4. 이슈 번호를 브랜치명과 exec plan에 연결한다.
+5. 작업 후 PR body file을 준비하고 `gh pr create --base develop --body-file ...`로 PR을 연다.
+6. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
+7. PR 본문에 검증 결과, 독립 review 결과, 문서 반영 여부, 남은 리스크를 채운다.
 
 ## 문서, SKILL, exec plan의 역할
 
@@ -141,6 +157,7 @@
 - 검증 명령이 PR이나 exec plan에 남아 있다
 - 후속 작업의 전제조건이 명확하다
 - source of truth 문서가 함께 업데이트되었거나, 업데이트 불필요 사유가 명시되어 있다
+- stable source of truth 문서에 남긴 임시 work item ID가 있다면 close-out 전에 제거되었거나 planning/history 문서로 이동했다
 - 동일 작업이 반복될 가능성이 높다면 skill화 여부가 검토되었거나, 아직 만들지 않는 이유가 남아 있다
 
 하네스 관련 작업은 아래 항목도 추가로 본다.

@@ -69,5 +69,5 @@
 
 ## Harness Notes
 
-- `GRC-03` 이후 frontend build는 local font와 필수 `NEXT_PUBLIC_*` env를 전제로 반복 실행 가능해야 한다.
+- frontend build는 local font와 필수 `NEXT_PUBLIC_*` env를 전제로 반복 실행 가능해야 한다.
 - ranking harness는 backend API, GitHub avatar CDN, proxy locale redirect를 함께 고려해야 한다.
