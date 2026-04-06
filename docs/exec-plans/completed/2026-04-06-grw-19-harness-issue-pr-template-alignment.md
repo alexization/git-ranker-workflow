@@ -1,7 +1,7 @@
 # 2026-04-06-grw-19-harness-issue-pr-template-alignment
 
 - Issue ID: `GRW-19`
-- GitHub Issue: `TBD`
+- GitHub Issue: `#29`
 - Status: `Completed`
 - Repository: `git-ranker-workflow`
 - Branch Name: `feat/grw-19-harness-issue-pr-template-alignment`

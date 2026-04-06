@@ -1,7 +1,7 @@
 # 2026-04-06-grw-10-harness-foundation-alignment
 
 - Issue ID: `GRW-10`
-- GitHub Issue: `TBD`
+- GitHub Issue: `#30`
 - Status: `Ready`
 - Repository: `git-ranker-workflow`
 - Branch Name: `feat/grw-10-harness-foundation-alignment`
