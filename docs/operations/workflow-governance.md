@@ -34,7 +34,7 @@
 - 이번 PR의 범위와 비범위
 - write scope
 - 산출물
-- 검증 명령과 결과
+- 검증 명령, 최종 상태, 핵심 evidence
 - 독립 review 결과
 - feedback 또는 후속 guardrail 후보
 - 남은 리스크
@@ -44,7 +44,7 @@
 
 하네스 관련 PR에서는 가능하면 아래 증거를 남긴다.
 
-- 명령 실행 결과 요약
+- 명령 실행 결과 요약 또는 artifact 위치
 - 브라우저 증거: screenshot, trace, video
 - 로그 증거: LogQL 결과 또는 로그 요약
 - 메트릭 증거: PromQL 결과 또는 지표 캡처
@@ -71,7 +71,8 @@
 - GitHub 본문은 먼저 파일로 작성한 뒤 `gh issue create --body-file <path>` 또는 `gh pr create --body-file <path>`로 보낸다.
 - workflow 저장소 Issue 본문은 `.codex/skills/issue-to-exec-plan/templates/github-issue-body.md`를 복사해 채운다.
 - workflow 저장소 PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md`를 복사한 임시 파일을 기준으로 채운다.
-- PR의 `6) Verification Contract`는 section block 형식으로 작성한다.
+- PR의 `6) Verification Contract`는 카테고리별 section 아래에 check별 block 형식으로 작성한다.
+- 성공한 검증은 최종 상태와 핵심 evidence만 짧게 적고, 실패, 재시도, 예외만 상세히 남긴다.
 - 생성 직후에는 `gh issue view --json body` 또는 `gh pr view --json body`로 본문이 예상한 줄바꿈과 섹션을 유지하는지 확인한다.
 - Issue template은 최소한 `문제`, `왜 지금`, `범위/비범위`, `write scope`, `context source`, `verification plan`, `open questions`를 포함해야 한다.
 - PR template은 최소한 `연결된 issue`, `범위/비범위`, `write scope`, `verification 결과`, `독립 review 결과`, `feedback follow-up`, `문서 반영`, `리스크`를 포함해야 한다.
@@ -109,7 +110,7 @@
 - 선행조건이 충족되지 않았으면 임의로 우회 구현하지 말고 blocker를 먼저 정리한다.
 - 허용된 write scope 밖의 파일은 수정하지 않는다.
 - source of truth 문서를 함께 업데이트하거나, 업데이트가 불필요한 이유를 남긴다.
-- 검증 명령과 결과를 반드시 남긴다.
+- 검증 명령과 최종 상태를 반드시 남기고, 실패나 예외가 있었다면 요약을 남긴다.
 - 새로 생긴 반복 절차가 있다면 skill 후보로 제안하되, 이번 Issue 범위를 넘는 구현은 하지 않는다.
 - 모호한 선택지가 여러 개면 [docs/product/work-item-catalog.md](../product/work-item-catalog.md)의 기본 결정을 따른다.
 - 실행 중 예상치 못한 dirty change가 있으면 되돌리지 말고 영향 여부만 확인한다.

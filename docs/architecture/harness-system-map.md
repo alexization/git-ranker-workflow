@@ -38,7 +38,7 @@
 | Request record | 사용자 요청과 초기 분류 결과 | Issue 본문 또는 작업 대화 |
 | Exec plan | scope, non-scope, write scope, verification contract | `docs/exec-plans/` |
 | Context pack | 이번 작업에 허용된 최소 문서와 write scope | exec plan과 후속 policy |
-| Verification report | 실행 명령, 결과, 실패 요약 | exec plan, PR 본문, `.artifacts/` 필요 시 |
+| Verification report | 실행 명령, 최종 상태, 핵심 evidence, 실패/예외 요약 | exec plan, PR 본문, `.artifacts/` 필요 시 |
 | Review verdict | reviewer 승인 또는 수정 요청 | PR 본문, review comment, exec plan 요약 |
 | Feedback entry | 반복 실패와 guardrail 승격 여부 | exec plan, 후속 policy 또는 ledger |
 

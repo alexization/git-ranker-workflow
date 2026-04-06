@@ -23,23 +23,45 @@
 
 ## 6) Verification Contract
 
-`Verification Contract`는 아래 section block 형식으로 작성합니다. 각 block에는 `Command / Check`와 `Result`를 기록합니다.
+`Verification Contract`는 카테고리별 section 아래에 check block을 나눠 작성합니다.
+성공한 검증은 `Final Status`와 핵심 `Evidence`만 짧게 적고, 실패, 재시도, 예외가 있었던 경우에만 `Failure / Exception`에 서술합니다.
+검증이 여러 개면 같은 `####` block을 복제해 항목별로 구분합니다.
 
 ### Docs / Policy
+
+#### Check Item
+- Name:
 - Command / Check:
-- Result:
+- Final Status: `PASS | N/A | FAIL | BLOCKED`
+- Evidence:
+- Failure / Exception:
 
 ### Type / Lint / Test / Build
+
+#### Check Item
+- Name:
 - Command / Check:
-- Result:
+- Final Status: `PASS | N/A | FAIL | BLOCKED`
+- Evidence:
+- Failure / Exception:
 
 ### Manual Check
+
+#### Check Item
+- Name:
 - Command / Check:
-- Result:
+- Final Status: `PASS | N/A | FAIL | BLOCKED`
+- Evidence:
+- Failure / Exception:
 
 ### Other Task-Specific Contract
+
+#### Check Item
+- Name:
 - Command / Check:
-- Result:
+- Final Status: `PASS | N/A | FAIL | BLOCKED`
+- Evidence:
+- Failure / Exception:
 
 ## 7) Independent Review
 - Implementer:
@@ -53,7 +75,7 @@
 - 업데이트하지 않은 문서와 사유:
 
 ## 9) Feedback / Guardrail Follow-up
-- 이번 작업에서 드러난 실패 또는 취약 지점:
+- 이번 작업에서 실제로 발생한 실패 / 예외 / 취약 지점:
 - 새 guardrail 후보:
 - 후속 Issue 또는 TODO:
 
@@ -65,7 +87,7 @@
 - [ ] 연결된 Issue가 있다
 - [ ] Scope / Out of Scope가 적혀 있다
 - [ ] Write Scope가 적혀 있다
-- [ ] Verification 결과가 기입되어 있다
+- [ ] Verification 최종 상태와 예외가 기입되어 있다
 - [ ] Implementer와 Reviewer가 분리되어 있다
 - [ ] Source of Truth 반영 여부가 적혀 있다
 - [ ] Feedback 또는 후속 guardrail 후보가 적혀 있다
