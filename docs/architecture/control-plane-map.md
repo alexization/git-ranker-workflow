@@ -18,13 +18,15 @@
 ## 읽기 우선순위
 
 1. 루트 인덱스: `AGENTS.md`, `PLANS.md`
-2. 공통 운영 규칙: `docs/operations/workflow-governance.md`
-3. 실행 순서와 작업 카탈로그: `docs/product/*.md`
-4. 해당 작업의 exec plan: `docs/exec-plans/active/*.md` 또는 `docs/exec-plans/completed/*.md`
-5. 도메인/운영 상세 문서
+2. 아키텍처 기준: `docs/architecture/control-plane-map.md`, `docs/architecture/harness-system-map.md`
+3. 공통 운영 규칙: `docs/operations/workflow-governance.md`
+4. 실행 순서와 작업 카탈로그: `docs/product/*.md`
+5. 해당 작업의 exec plan: `docs/exec-plans/active/*.md` 또는 `docs/exec-plans/completed/*.md`
+6. 도메인/운영 상세 문서
 
 ## 이관 원칙
 
-- `docs/plans/git-ranker-harness-issue-pr-roadmap.md`는 초기 분해 문서로 유지한다.
+- `docs/references/git-ranker-harness-issue-pr-roadmap.md`는 초기 분해를 보관하는 역사 문서다.
+- 현재 계획 source of truth는 `docs/product/`와 `docs/exec-plans/`에 둔다.
 - 이후 작업 지시는 원칙적으로 `docs/product/`, `docs/operations/`, `docs/exec-plans/`에서 읽는다.
 - 새 문서가 생기면 이 구조를 깨지 않도록 가장 가까운 목적 디렉터리에 추가한다.
