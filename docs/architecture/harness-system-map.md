@@ -111,7 +111,7 @@
 
 - Issue는 최소한 `Received`에서 `Planned`까지의 상태를 설명해야 한다.
 - exec plan은 `Planned` 상태의 공식 기록이며, 구현을 시작하기 전에 존재해야 한다.
-- PR은 `Implementing` 이후의 산출물과 `Verifying`, `Reviewing`, `Feedback Pending` 증거를 담는 컨테이너다.
+- PR은 기본적으로 local `Verifying`, `Reviewing`, `Feedback Pending` 결과를 정리한 뒤 publish하는 컨테이너다. 사용자가 예외적으로 요청하지 않았다면 open PR로 게시한다.
 - `Completed` 판정은 PR의 verification 결과와 reviewer verdict, exec plan의 close-out이 함께 있어야 성립한다.
 - 완료된 exec plan은 `docs/exec-plans/completed/`로 옮기고, 후속 Issue가 이 문서를 전제조건으로 참조한다.
 

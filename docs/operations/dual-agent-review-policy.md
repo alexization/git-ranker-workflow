@@ -8,6 +8,7 @@
 
 - implementer와 reviewer는 반드시 서로 다른 agent 또는 사람이어야 한다.
 - review는 latest verification report의 overall status가 `passed`이고 reviewer handoff minimum이 채워진 뒤에만 시작할 수 있다.
+- PR 존재 여부는 review의 선행조건이 아니다. 기본 publish 흐름은 local diff와 verification 결과를 먼저 review하고, 그 verdict를 PR에 싣는 순서다.
 - reviewer는 diff만 보지 않고 exec plan, latest verification report, 남은 리스크를 함께 읽어야 한다.
 - reviewer는 현재 issue의 scope, write scope, verification contract, source of truth를 기준으로 판단한다. 새 목표 추가나 범위 확장은 review 단계에서 승인하지 않는다.
 - review evidence는 필수 산출물이다. verdict만 있고 reviewer input이나 finding 근거가 없으면 `Completed` 판정으로 보지 않는다.
@@ -17,14 +18,14 @@
 
 | Role | Must Do | Must Not Do | Required Output |
 | --- | --- | --- | --- |
-| Implementer | exec plan 범위 안에서 변경을 만들고 latest verification report를 준비한다. reviewer에게 diff summary, touched doc, 남은 리스크, conditional command 생략 사유를 넘긴다. review finding이 blocking이면 수정 후 관련 명령을 다시 실행한다. | 자기 결과를 최종 승인하지 않는다. review 전에 verification report 없이 완료를 주장하지 않는다. blocking finding을 non-blocking note로 축소하지 않는다. | diff, latest verification report, reviewer handoff input |
-| Reviewer | implementer와 분리된 관점으로 scope, verification, diff, source-of-truth update, residual risk를 검토한다. finding을 blocking과 non-blocking으로 구분하고 verdict를 남긴다. | implementer 역할까지 겸해 자기 손으로 수정하며 review를 종료하지 않는다. verification이 비어 있는데 승인하지 않는다. 범위 밖 작업을 구두로 끼워 넣지 않는다. | review verdict, findings, review evidence |
+| Implementer | exec plan 범위 안에서 변경을 만들고 latest verification report를 준비한다. reviewer에게 diff summary, touched doc, 남은 리스크, conditional command 생략 사유를 넘긴다. review finding이 blocking이면 수정 후 관련 명령을 다시 실행한다. review verdict가 나오면 그 최신 결과를 PR body에 실어 publish한다. | 자기 결과를 최종 승인하지 않는다. review 전에 verification report 없이 완료를 주장하지 않는다. blocking finding을 non-blocking note로 축소하지 않는다. | diff, latest verification report, reviewer handoff input, publish-ready PR body |
+| Reviewer | implementer와 분리된 관점으로 scope, verification, diff, source-of-truth update, residual risk를 검토한다. finding을 blocking과 non-blocking으로 구분하고 verdict를 남긴다. | implementer 역할까지 겸해 자기 손으로 수정하며 review를 종료하지 않는다. verification이 비어 있는데 승인하지 않는다. 범위 밖 작업을 구두로 끼워 넣지 않는다. PR이 아직 없다는 이유로 review를 미루지 않는다. | review verdict, findings, review evidence |
 
 ## Reviewer Minimum Context
 
 reviewer는 최소한 아래 입력을 받아야 한다.
 
-- exec plan 경로와 linked issue 또는 PR
+- exec plan 경로와 linked issue. PR이 이미 있다면 링크를 추가하고, 아직 없으면 생략 가능하다.
 - latest verification report
 - touched diff summary와 touched file 또는 doc 목록
 - source-of-truth update 목록 또는 "업데이트 불필요" 사유
@@ -127,6 +128,7 @@ review verdict는 PR 본문, review comment, exec plan close-out 중 최소 한 
 - `approved`면 blocking finding이 없다는 점이 드러나야 한다.
 - `changes-requested`면 어떤 수정이 필요한지와 re-run 대상이 드러나야 한다.
 - 문서 전용 issue라도 review evidence를 생략하지 않는다. artifact가 없을 뿐, verdict 근거는 남겨야 한다.
+- PR을 나중에 publish하면 latest review verdict를 그대로 옮겨 적는다. PR 생성이 verdict 시점을 뒤로 미루는 근거가 되지 않는다.
 
 ## Draft Checklist
 

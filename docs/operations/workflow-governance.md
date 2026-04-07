@@ -105,6 +105,7 @@
 - GitHub 본문은 먼저 파일로 작성한 뒤 `gh issue create --body-file <path>` 또는 `gh pr create --body-file <path>`로 보낸다.
 - workflow 저장소 Issue 본문은 `.codex/skills/issue-to-exec-plan/templates/github-issue-body.md`를 복사해 채운다.
 - workflow 저장소 PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md`를 복사한 임시 파일을 기준으로 채운다.
+- PR은 기본적으로 open으로 생성한다. draft PR은 사용자가 명시적으로 요청했거나, scope-complete 전 공유가 필요한 blocker를 body와 exec plan에 적을 때만 예외적으로 사용한다.
 - PR의 `6) Verification Contract`는 카테고리별 section 아래에 check별 block 형식으로 작성한다.
 - 성공한 검증은 최종 상태와 핵심 evidence만 짧게 적고, 실패, 재시도, 예외만 상세히 남긴다.
 - PR의 `7) Independent Review`는 [dual-agent-review-policy.md](dual-agent-review-policy.md)의 reviewer minimum context와 verdict vocabulary를 따른다.
@@ -123,9 +124,10 @@
 2. 대상 저장소의 `develop` 최신 상태를 기준으로 worktree 또는 branch를 만든다.
 3. body file을 준비한 뒤 `gh issue create --body-file ...`로 대상 저장소 이슈를 만든다.
 4. 이슈 번호를 브랜치명과 exec plan에 연결한다.
-5. 작업 후 PR body file을 준비하고 `gh pr create --base develop --body-file ...`로 PR을 연다.
-6. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
-7. PR 본문에 검증 결과, 독립 review 결과, 문서 반영 여부, 남은 리스크를 채운다.
+5. 작업 후 latest verification report를 만들고, reviewer minimum context를 준비한 뒤 independent review를 먼저 수행한다.
+6. PR body file에 검증 결과, independent review 결과, 문서 반영 여부, 남은 리스크를 먼저 채운다.
+7. 사용자가 draft를 명시적으로 요청하지 않았다면 `gh pr create --base develop --body-file ...`로 open PR을 연다.
+8. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
 
 ## 문서, SKILL, exec plan의 역할
 
@@ -148,6 +150,7 @@
 - network나 escalation이 필요하면 목적과 범위를 exec plan 또는 최종 close-out에 남긴다.
 - verification failure가 나면 registry의 retry budget 안에서만 repair loop를 돌리고, budget 초과나 missing canonical source는 `Blocked` 또는 후속 planning으로 넘긴다.
 - review 단계에 들어가기 전 latest verification report와 reviewer minimum context를 준비한다.
+- 사용자가 다르게 요청하지 않았다면 independent review를 끝낸 뒤 PR을 publish한다.
 - source of truth 문서를 함께 업데이트하거나, 업데이트가 불필요한 이유를 남긴다.
 - 검증 명령과 최종 상태를 반드시 남기고, 실패나 예외가 있었다면 요약을 남긴다.
 - 새로 생긴 반복 절차가 있다면 skill 후보로 제안하되, 이번 Issue 범위를 넘는 구현은 하지 않는다.
