@@ -111,6 +111,7 @@ review verdict는 PR 본문, review comment, exec plan close-out 중 최소 한 
   - Exec plan: `docs/exec-plans/...`
   - Latest verification report: `passed`
   - Diff summary: `<summary>`
+  - Source-of-truth update: `<updated docs or why not needed>`
   - Remaining risks / skipped checks: `<summary>`
 - Review Verdict: `approved | changes-requested | blocked`
 - Findings / Change Requests:
@@ -122,7 +123,7 @@ review verdict는 PR 본문, review comment, exec plan close-out 중 최소 한 
 필수 규칙:
 
 - `Implementer`, `Reviewer`, `Review Verdict`는 항상 적는다.
-- `Reviewer Input`에는 최소 컨텍스트 네 가지가 요약돼야 한다.
+- `Reviewer Input`에는 최소 컨텍스트 다섯 가지가 요약돼야 한다.
 - `approved`면 blocking finding이 없다는 점이 드러나야 한다.
 - `changes-requested`면 어떤 수정이 필요한지와 re-run 대상이 드러나야 한다.
 - 문서 전용 issue라도 review evidence를 생략하지 않는다. artifact가 없을 뿐, verdict 근거는 남겨야 한다.

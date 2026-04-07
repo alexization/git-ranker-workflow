@@ -291,6 +291,7 @@ reviewer에게 넘길 때는 최소한 아래 입력이 함께 있어야 한다.
 - exec plan 경로
 - latest verification report
 - touched diff 요약
+- source-of-truth update 목록 또는 업데이트 불필요 사유
 - 남은 리스크 또는 conditional command 생략 사유
 
 이 입력은 [dual-agent-review-policy.md](dual-agent-review-policy.md)의 `Reviewer Minimum Context`와 동일한 handoff surface다.
