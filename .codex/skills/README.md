@@ -8,6 +8,13 @@
 - 반복 작업을 매번 자연어로 다시 설명하지 않게 한다.
 - 문서, exec plan, evidence 규칙을 실행 절차와 연결한다.
 
+## Canonical Ownership
+
+- 정책, vocabulary, 상태 전이, 종료 조건, evidence minimum은 `docs/operations/`, `docs/architecture/`, `docs/product/`의 source of truth가 관리한다.
+- skill은 그 정책을 대체하지 않고, 한 단계의 반복 실행 절차와 handoff만 다룬다.
+- registry 문서는 "지금 어떤 skill이 있고 어떤 순서로 쓰는가"만 관리한다. roadmap task ID나 진행 상태는 여기서 추적하지 않는다.
+- policy와 skill이 충돌하면 skill에 새 규칙을 더하지 말고 canonical policy를 먼저 수정한 뒤 skill을 맞춘다.
+
 ## 기본 구조
 
 - 실제 skill은 `.codex/skills/<skill-name>/SKILL.md` 구조를 사용한다.
@@ -71,20 +78,31 @@
 
 현재 등록된 project skill은 아래와 같다.
 
-- `issue-to-exec-plan` (`GRW-S02`): 새 Issue를 `docs/exec-plans/active/*.md` 실행 문서로 고정할 때 사용
-- `parallel-work-split` (`GRW-S02`): 여러 agent가 같은 Issue를 나눠 작업하기 전에 ownership과 write set을 분리할 때 사용
-- `api-contract-sync` (`GRW-S02`): backend OpenAPI 변경을 client 타입과 workflow 문서에 동기화할 때 사용
-- `red` (`GRW-S05`): failing test file 하나만 남기는 TDD red turn
-- `green` (`GRW-S05`): test 수정 없이 최소 구현으로 green을 만드는 턴
-- `refactor` (`GRW-S05`): green 유지 하에 구조를 정리하는 refactor 턴
+- `request-intake`: 새 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류하고 다음 행동을 고정할 때 사용
+- `ambiguity-interview`: `모호한 요청`을 한 issue로 줄이거나 `Blocked`/`Rejected`로 닫을 때 사용
+- `issue-to-exec-plan`: 새 Issue를 `docs/exec-plans/active/*.md` 실행 문서로 고정할 때 사용
+- `parallel-work-split`: 여러 agent가 같은 Issue를 나눠 작업하기 전에 ownership과 write set을 분리할 때 사용
+- `api-contract-sync`: backend OpenAPI 변경을 client 타입과 workflow 문서에 동기화할 때 사용
+- `red`: failing test file 하나만 남기는 TDD red turn
+- `green`: test 수정 없이 최소 구현으로 green을 만드는 턴
+- `refactor`: green 유지 하에 구조를 정리하는 refactor 턴
 
 ## Recommended Use
 
-coordination skill은 구현 전에 먼저 쓴다.
+새 요청을 처음 받을 때의 기본 순서는 아래와 같다.
 
-1. `issue-to-exec-plan`
-2. `parallel-work-split`
-3. `api-contract-sync` if backend contract changed
+1. `request-intake`
+2. `ambiguity-interview` if route is `모호한 요청`
+3. `issue-to-exec-plan` if route is `즉시 실행 가능한 작업` or interview exits `Planned`
+4. `parallel-work-split` if more than one agent will work on the same issue
+
+아래 skill은 기본 진입 순서가 아니라 조건부 hook으로 사용한다.
+
+- `api-contract-sync` if backend contract changed
+
+close-out이 `Rejected`이거나 route가 `대화`로 끝나면 issue, exec plan, 파일 편집을 시작하지 않는다.
+
+범위가 이미 issue/exec plan 수준으로 잠긴 작업은 `issue-to-exec-plan`부터 시작해도 된다.
 
 구현 skill은 그 다음 slice에 맞춰 쓴다.
 
@@ -94,14 +112,7 @@ coordination skill은 구현 전에 먼저 쓴다.
 
 `api-contract-sync`의 canonical backend contract는 `git-ranker/docs/openapi/openapi.json`이다. workflow는 canonical spec을 복제해 소유하지 않고, sync 절차와 evidence를 관리한다.
 
-현재 등록된 skill은 그대로 유지하되, 후속 skill pack의 방향은 더 이상 ranking harness 중심으로 확장하지 않는다.
-
-후속 작업에서는 아래 순서로 새 skill pack을 채운다.
-
-- `GRW-S06`: `request-intake`, `ambiguity-interview`
-- `GRW-S07`: `context-pack-selection`, `boundary-check`
-- `GRW-S08`: `verification-contract-runner`, `repair-loop-triage`, `reviewer-handoff`
-- `GRW-S09`: `guardrail-ledger-update`, `failure-to-policy`
+새 skill을 추가할 때는 roadmap item이나 task ID가 아니라 asset 이름과 workflow 역할만 registry에 남긴다.
 
 구현 결과의 최종 승인은 구현 Agent가 아니라 별도 review Agent가 담당한다.
 

@@ -39,12 +39,12 @@ description: Use this skill when a roadmap item or GitHub issue must be turned i
 반복적으로 확인하는 기본 명령 예시:
 
 ```bash
-rg -n "GRW-S02|GRC-04|GRB-02" docs/product docs/exec-plans
+rg -n "<issue-id|task-slug|surface noun>" docs/product docs/exec-plans
 find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort
 cp .codex/skills/issue-to-exec-plan/templates/github-issue-body.md /tmp/<issue-id>-issue-body.md
 gh issue create --repo <owner>/<target-repo> --title "[Task] <issue-id> ..." --body-file /tmp/<issue-id>-issue-body.md
 gh issue view --repo <owner>/<target-repo> <issue-number> --json body
-git checkout -b feat/grw-s02-core-planning-skill-pack
+git checkout -b feat/<issue-id-lower>-<slug>
 ```
 
 명령 자체보다 중요한 것은 "어떤 문서를 읽고 어떤 범위를 고정했는지"를 exec plan에 남기는 것이다.
@@ -89,34 +89,34 @@ workflow 저장소에서 멀티라인 Issue 본문을 만들 때는 `.codex/skil
 
 ## Example Input
 
-- Issue: `GRC-04`
-- Goal: ranking read Playwright harness 도입
+- Issue: `<issue-id>`
+- Goal: target harness 도입
 - Relevant docs:
   - `docs/product/work-item-catalog.md`
-  - `docs/domain/frontend-data-flows.md`
-  - `docs/operations/frontend-runtime-reference.md`
-  - `docs/exec-plans/completed/2026-03-25-grw-04-frontend-routes-data-flow-docs.md`
+  - `docs/domain/<relevant-domain-doc>.md`
+  - `docs/operations/<relevant-runtime-doc>.md`
+  - `docs/exec-plans/completed/<previous-related-plan>.md`
 
 ## Example Output
 
 ```md
-# 2026-03-26-grc-04-ranking-read-playwright-harness
+# <date>-<issue-id-lower>-<slug>
 
-- Issue ID: `GRC-04`
+- Issue ID: `<issue-id>`
 - Status: `Ready`
 
 ## Scope
-- Playwright config 추가
-- ranking read spec 추가
+- target config 추가
+- target spec 추가
 - artifact 규칙 연결
 
 ## Non-scope
-- 인증 포함 전체 여정 자동화
+- unrelated full user journey automation
 - 디자인 변경
 
 ## Verification
-- `npm run playwright -- ranking-read`
-- trace/screenshot 생성 확인
+- `<verification-command>`
+- required artifact 생성 확인
 ```
 
 ## Handoff
