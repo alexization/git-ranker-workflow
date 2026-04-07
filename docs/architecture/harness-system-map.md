@@ -122,4 +122,4 @@
 - [../operations/tool-boundary-matrix.md](../operations/tool-boundary-matrix.md)는 `Context Ready`와 `Implementing` 단계의 허용 도구와 write scope 경계를 상세화한다.
 - [../operations/verification-contract-registry.md](../operations/verification-contract-registry.md)는 `Verifying`, `Repairing`, `Blocked` semantics와 retry budget을 명시한다.
 - [../operations/dual-agent-review-policy.md](../operations/dual-agent-review-policy.md)는 `Reviewing` 단계의 reviewer input, verdict, repair loop, evidence rule을 구체화한다.
-- feedback ledger/policy는 `Feedback Pending`과 guardrail 승격 규칙을 고정한다.
+- [../operations/failure-to-guardrail-feedback-loop.md](../operations/failure-to-guardrail-feedback-loop.md)는 `Feedback Pending` close-out, feedback ledger, guardrail 승격 규칙을 고정한다.

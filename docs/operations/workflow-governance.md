@@ -68,7 +68,7 @@
 - 산출물
 - 검증 명령, 최종 상태, 핵심 evidence
 - 독립 review 결과
-- feedback 또는 후속 guardrail 후보
+- feedback ledger entry 또는 `no new guardrail` 판단
 - 남은 리스크
 - 다음 Issue로 넘겨야 할 전제조건
 
@@ -79,6 +79,7 @@
 - 명령 실행 결과 요약 또는 artifact 위치
 - verification report 최소 필드: contract profile, command별 status, 핵심 evidence, failure summary, next action
 - review evidence 최소 필드: implementer, reviewer, reviewer input, verdict, blocking finding 또는 no-blocking note
+- feedback evidence 최소 필드: stage, failure class, promotion decision, follow-up asset 또는 `no new guardrail` 이유, 핵심 evidence
 - 브라우저 증거: screenshot, trace, video
 - 로그 증거: LogQL 결과 또는 로그 요약
 - 메트릭 증거: PromQL 결과 또는 지표 캡처
@@ -108,6 +109,7 @@
 - PR의 `6) Verification Contract`는 카테고리별 section 아래에 check별 block 형식으로 작성한다.
 - 성공한 검증은 최종 상태와 핵심 evidence만 짧게 적고, 실패, 재시도, 예외만 상세히 남긴다.
 - PR의 `7) Independent Review`는 [dual-agent-review-policy.md](dual-agent-review-policy.md)의 reviewer minimum context와 verdict vocabulary를 따른다.
+- PR의 `9) Feedback / Guardrail Follow-up`는 [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)와 [guardrail-ledger-template.md](guardrail-ledger-template.md)의 vocabulary와 최소 필드를 따른다.
 - 생성 직후에는 `gh issue view --json body` 또는 `gh pr view --json body`로 본문이 예상한 줄바꿈과 섹션을 유지하는지 확인한다.
 - Issue template은 최소한 `문제`, `왜 지금`, `범위/비범위`, `write scope`, `context source`, `verification plan`, `open questions`를 포함해야 한다.
 - PR template은 최소한 `연결된 issue`, `범위/비범위`, `write scope`, `verification 결과`, `독립 review 결과`, `feedback follow-up`, `문서 반영`, `리스크`를 포함해야 한다.

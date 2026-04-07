@@ -31,7 +31,7 @@
 5. Implementer Agent는 허용된 도구 경계 안에서만 작업한다.
 6. verification contract registry에 정의된 명령이 통과해야 다음 단계로 넘어간다.
 7. Reviewer Agent는 [../operations/dual-agent-review-policy.md](../operations/dual-agent-review-policy.md)에 따라 구현 diff와 검증 결과를 검토하고, 통과 또는 수정 요청을 결정한다.
-8. 실패한 작업은 feedback ledger에 남기고 다음 가드레일 후보로 전환한다.
+8. 실패한 작업은 [../operations/failure-to-guardrail-feedback-loop.md](../operations/failure-to-guardrail-feedback-loop.md)의 feedback ledger에 남기고 다음 가드레일 후보로 전환한다.
 
 ## 권장 실행 순서
 
@@ -80,3 +80,4 @@
 - 결정론적 검증 없이 Agent의 자기평가를 완료 근거로 삼지 않는다.
 - 구현 Agent는 자기 자신의 결과를 최종 승인하지 않는다.
 - 같은 실패가 반복되면 다음 턴에서는 가드레일이 하나 더 생겨야 한다.
+- `Feedback Pending` close-out에는 guardrail 승격 대상 또는 `no new guardrail` 이유가 남아야 한다.
