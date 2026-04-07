@@ -93,6 +93,8 @@
   - 결과: whitespace 또는 patch formatting 오류 없이 통과했다.
 - GitHub Issue `#56` body render 확인
   - 결과: Issue `#56` 본문이 섹션과 줄바꿈을 유지한 채 생성된 것을 확인했다.
+- post-PR review repair
+  - 결과: Codex review가 지적한 `workflow-docs` example의 required `rg` check 누락과 `reviewer-handoff`의 linked issue 누락을 각각 `verification-contract-runner`, `reviewer-handoff` skill 본문에 반영했다.
 
 ## Verification Report
 
@@ -165,6 +167,9 @@
   - `scope-and-governance` reviewer는 exec plan이 canonical `Verification Report`를 포함하고 skill pack이 `GRW-S08` write scope와 thin-layer policy reuse를 유지한다고 확인했다.
   - `verification-and-regression` reviewer인 `Poincare`는 verification report shape, retry semantics, reviewer minimum context, aggregation evidence가 canonical policy와 일치한다고 확인했다.
   - reviewer-coordinator는 두 필수 역할이 모두 `approved`를 반환했고 blocking finding이 없으므로 overall verdict를 `approved`로 집계했다.
+- Post-PR review repair:
+  - `scope-and-governance`: `McClintock`은 `verification-contract-runner` example output에 required `rg` hook check가 추가되고 `reviewer-handoff`가 linked issue를 minimum context에 포함해 policy drift 없이 review comment를 해소했다고 확인했다.
+  - `verification-and-regression`: `Hilbert`는 두 수정이 workflow-docs contract와 reviewer minimum context requirement를 정확히 복원했고 regression risk가 낮다고 확인했다.
 
 ## Feedback / Guardrail Follow-up
 

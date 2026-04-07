@@ -109,6 +109,9 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000 NEXT_PUBLIC_API_URL=http://localhost:
 - Command: `sed -n '1,260p' .codex/skills/reviewer-handoff/SKILL.md`
   - Status: `passed`
   - Evidence: reviewer minimum context와 aggregation 규칙이 포함됨
+- Command: `rg -n "reviewer-handoff|Reviewer Minimum Context|verification report" .codex/skills/reviewer-handoff/SKILL.md docs/operations`
+  - Status: `passed`
+  - Evidence: workflow-docs contract의 required hook grep이 canonical source와 함께 확인됨
 - Command: `git diff --check`
   - Status: `passed`
   - Evidence: whitespace 오류 없음
