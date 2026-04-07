@@ -94,6 +94,37 @@
 - GitHub Issue `#56` body render 확인
   - 결과: Issue `#56` 본문이 섹션과 줄바꿈을 유지한 채 생성된 것을 확인했다.
 
+## Verification Report
+
+- Contract profile: `workflow-docs`
+- Overall status: `passed`
+- Preconditions:
+  - workflow 저장소의 skill/doc 전용 변경
+  - active exec plan과 GitHub Issue `#56`이 이미 존재함
+- Command: `sed -n '1,260p' .codex/skills/verification-contract-runner/SKILL.md`
+  - Status: `passed`
+  - Evidence: selected contract profile, latest verification report shape, reviewer handoff input이 포함된 것을 확인했다.
+- Command: `sed -n '1,260p' .codex/skills/repair-loop-triage/SKILL.md`
+  - Status: `passed`
+  - Evidence: retry budget, rerun rule, `Blocked`/follow-up split 판단이 canonical policy와 맞는 것을 확인했다.
+- Command: `sed -n '1,300p' .codex/skills/reviewer-handoff/SKILL.md`
+  - Status: `passed`
+  - Evidence: reviewer minimum context 다섯 가지, role prompt focus, aggregation evidence 규칙이 포함된 것을 확인했다.
+- Command: `sed -n '1,240p' .codex/skills/README.md`
+  - Status: `passed`
+  - Evidence: skill registry와 구현 뒤 close-out hook 순서가 새 skill 3종을 반영한 것을 확인했다.
+- Command: `rg -n "verification-contract-runner|repair-loop-triage|reviewer-handoff|Reviewer Minimum Context|verification report|retry budget|role prompt|aggregation" .codex/skills docs/operations`
+  - Status: `passed`
+  - Evidence: skill 본문과 canonical source가 같은 vocabulary와 hook을 재사용하는 것을 확인했다.
+- Command: `gh issue view --repo alexization/git-ranker-workflow 56 --json body,title,number`
+  - Status: `passed`
+  - Evidence: Issue `#56` 본문이 섹션과 줄바꿈을 유지한 채 생성된 것을 확인했다.
+- Command: `git diff --check`
+  - Status: `passed`
+  - Evidence: whitespace 또는 patch formatting 오류 없이 통과했다.
+- Failure summary: 없음
+- Next action: reviewer handoff
+
 ## Evidence
 
 - skill 본문 3종
@@ -110,7 +141,6 @@
 - skill이 policy 표를 길게 복사하면 source of truth drift가 생길 수 있다.
 - reviewer-handoff가 minimum context를 과도하게 축약하면 canonical review path를 훼손할 수 있다.
 - timing breakdown은 first-pass 메모 수준이므로, 실제 개선 폭은 `GRW-18` pilot에서 다시 확인해야 한다.
-- independent review evidence는 아직 작성되지 않았다. 이 exec plan은 구현과 local verification까지 진행했고 review close-out은 다음 단계로 남아 있다.
 
 ## Next Preconditions
 
