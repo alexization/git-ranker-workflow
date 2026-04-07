@@ -1,93 +1,35 @@
-## 1) Summary
-- 무엇이 변경되었나요?
-- 왜 지금 필요한가요?
+<!--
+Reader-first PR body only.
+Keep raw verification commands, full file inventories, branch or exec plan filenames,
+review handoff dumps, and guardrail ledger details in exec plan or linked artifacts.
+If a section does not apply, write `없음`.
+-->
 
-## 2) Linked Issue
+## Summary
+- 무엇을 바꿨나요?
+- 왜 이 변경이 필요한가요?
+
+## Linked Issue
 - Closes #
-- Issue ID:
-- 대상 저장소:
+- Related:
 
-## 3) Harness Contract
-- Request Type:
-- Context / Source of Truth:
-- Write Scope:
-- Branch / Exec Plan:
+## Approach
+- 어떤 과정과 판단으로 결과물을 만들었나요?
+- 작업 중 부딪힌 이슈, trade-off, 되돌린 선택이 있으면 적어 주세요.
 
-## 4) Scope
-- In Scope:
-- Out of Scope:
+## Review Guide
+- 리뷰어가 먼저 봐야 할 포인트
+- 수동으로 확인하면 좋은 시나리오나 엣지 케이스
 
-## 5) Outputs
-- 변경된 문서 / 파일 / 디렉터리:
-- 후속 작업이 바로 참조할 산출물:
+## Validation
+- 어떤 기준으로 확인했고 결과가 어땠는지 요약해 주세요.
+- 아직 확인하지 못했거나 의도적으로 남긴 공백이 있으면 적어 주세요.
 
-## 6) Verification Contract
+## Dependencies / Impact
+- 새 라이브러리, 외부 서비스, 스키마, 설정, 환경 변수, 마이그레이션:
+- 사용자나 운영에 영향이 있으면 적어 주세요:
+- 배포, 롤백, 커뮤니케이션 시 주의점이 있으면 적어 주세요:
 
-`Verification Contract`는 카테고리별 section 아래에 check block을 나눠 작성합니다.
-성공한 검증은 `Final Status`와 핵심 `Evidence`만 짧게 적고, 실패, 재시도, 예외가 있었던 경우에만 `Failure / Exception`에 서술합니다.
-검증이 여러 개면 같은 `####` block을 복제해 항목별로 구분합니다.
-
-### Docs / Policy
-
-#### Check Item
-- Name:
-- Command / Check:
-- Final Status: `PASS | N/A | FAIL | BLOCKED`
-- Evidence:
-- Failure / Exception:
-
-### Type / Lint / Test / Build
-
-#### Check Item
-- Name:
-- Command / Check:
-- Final Status: `PASS | N/A | FAIL | BLOCKED`
-- Evidence:
-- Failure / Exception:
-
-### Manual Check
-
-#### Check Item
-- Name:
-- Command / Check:
-- Final Status: `PASS | N/A | FAIL | BLOCKED`
-- Evidence:
-- Failure / Exception:
-
-### Other Task-Specific Contract
-
-#### Check Item
-- Name:
-- Command / Check:
-- Final Status: `PASS | N/A | FAIL | BLOCKED`
-- Evidence:
-- Failure / Exception:
-
-## 7) Independent Review
-- Implementer:
-- Reviewer:
-- Reviewer Input:
-- Review Verdict:
-- Findings / Change Requests:
-
-## 8) Source of Truth Update
-- 업데이트한 문서:
-- 업데이트하지 않은 문서와 사유:
-
-## 9) Feedback / Guardrail Follow-up
-- 이번 작업에서 실제로 발생한 실패 / 예외 / 취약 지점:
-- 새 guardrail 후보:
-- 후속 Issue 또는 TODO:
-
-## 10) Risks and Rollback
-- Risks:
-- Rollback Plan:
-
-## 11) Checklist
-- [ ] 연결된 Issue가 있다
-- [ ] Scope / Out of Scope가 적혀 있다
-- [ ] Write Scope가 적혀 있다
-- [ ] Verification 최종 상태와 예외가 기입되어 있다
-- [ ] Implementer와 Reviewer가 분리되어 있다
-- [ ] Source of Truth 반영 여부가 적혀 있다
-- [ ] Feedback 또는 후속 guardrail 후보가 적혀 있다
+## Risks / Follow-up
+- 남아 있는 리스크
+- 후속 작업이나 별도 Issue

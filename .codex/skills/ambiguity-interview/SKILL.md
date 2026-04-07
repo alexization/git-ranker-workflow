@@ -34,7 +34,7 @@ description: Use this skill when request intake returns `모호한 요청` and y
 
 - 산출물은 interview exit summary다. 기본적으로 응답이나 작업 메모에 남기고, 종료 상태에 따라 다음 단계가 갈린다.
 - `Planned`
-  - issue 본문과 exec plan의 `Problem`, `Why Now`, `Scope`, `Non-scope`, `Write Scope`, `Verification`을 채울 수 있는 요약을 남긴다.
+  - issue의 reader-facing summary와 exec plan의 `Problem`, `Why Now`, `Scope`, `Non-scope`, `Write Scope`, `Verification`을 채울 수 있는 요약을 남긴다.
   - 다음 단계는 `issue-to-exec-plan`이다.
 - `Blocked`
   - 현재 issue 안에서 더 줄일 수 없는 blocker와 필요한 외부 입력을 남긴다.
@@ -60,7 +60,7 @@ sed -n '1,220p' <candidate-source-of-truth>
 - 실제로 사용자에게 던진 blocker 질문
 - interview exit status: `Planned`, `Blocked`, `Rejected`
 - 종료 근거
-  - `Planned`: 고정된 문제/범위/write scope/verification
+  - `Planned`: 고정된 문제/why now/범위/write scope/verification
   - `Blocked`: 어떤 canonical source나 응답이 비어 있는지
   - `Rejected`: `docs/operations/request-routing-policy.md`의 canonical close-out reason 중 무엇을 적용했는지
 
@@ -106,6 +106,7 @@ Interview question
 - Status: `Planned`
 - Primary repo: `git-ranker`
 - Problem: backend 인증 흐름 정리
+- Why Now: backend 인증 이슈 triage 전에 우선순위 근거를 문서화해야 함
 - Non-scope: client UI 수정
 - Next action: `issue-to-exec-plan`
 ```

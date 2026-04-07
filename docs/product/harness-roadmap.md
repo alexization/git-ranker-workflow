@@ -7,7 +7,7 @@
 1. 사용자 요청이 들어오면 먼저 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 라우팅한다.
 2. 실행 가능한 작업은 task type에 맞는 최소 컨텍스트와 명시적 write scope를 가진다.
 3. 구현 Agent는 결정론적 검증 명령을 통과하기 전까지 작업 완료를 주장할 수 없다.
-4. 코드 검토는 구현 Agent 자신이 아니라 별도의 review Agent 또는 session-isolated reviewer pool이 수행한다.
+4. 코드 검토는 구현 Agent 자신이 아니라, 현재 Codex 세션에서 분리 생성한 session-isolated sub-agent reviewer pool이 수행한다.
 5. 실패는 다음 문서, skill, 테스트, CI 가드레일로 축적된다.
 
 ## 이번 계획의 고정 결정
@@ -17,7 +17,7 @@
 - task type마다 읽을 문서와 수정 가능한 범위를 별도 context pack으로 고정한다.
 - 완료 판정은 `결정론적 검증 통과`와 `별도 review Agent 승인`이 함께 있어야 한다.
 - 구현 Agent와 review Agent는 역할을 분리한다.
-- review Agent는 model diversity보다 session/context separation을 우선한다. 필요하면 same-model session-isolated reviewer pool로 운영할 수 있다.
+- review는 MCP 기반 외부 reviewer runtime이 아니라 session-isolated sub-agent reviewer pool을 canonical runtime으로 사용한다.
 - source of truth는 `workflow 중심`으로 유지하되, 앱 동작의 canonical source는 각 앱 저장소 코드와 테스트에 둔다.
 - 현재 control plane source of truth는 `docs/architecture/`, `docs/operations/`, `docs/product/`, `docs/exec-plans/`로 한정한다.
 - 새 작업은 항상 exec plan으로 고정한 뒤 시작한다.
@@ -33,7 +33,7 @@
 4. task type에 맞는 context pack만 Agent에 제공한다.
 5. Implementer Agent는 허용된 도구 경계 안에서만 작업한다.
 6. verification contract registry에 정의된 명령이 통과해야 다음 단계로 넘어간다.
-7. Reviewer Agent 또는 reviewer pool coordinator는 [../operations/dual-agent-review-policy.md](../operations/dual-agent-review-policy.md)에 따라 단일 reviewer 또는 role-prompted reviewer pool로 구현 diff와 검증 결과를 검토하고, 통과 또는 수정 요청을 결정한다.
+7. reviewer sub-agent pool과 reviewer coordinator는 [../operations/dual-agent-review-policy.md](../operations/dual-agent-review-policy.md)에 따라 역할별로 구현 diff와 검증 결과를 검토하고, 통과 또는 수정 요청을 결정한다.
 8. 실패한 작업은 [../operations/failure-to-guardrail-feedback-loop.md](../operations/failure-to-guardrail-feedback-loop.md)의 feedback ledger에 남기고 다음 가드레일 후보로 전환한다.
 
 ## 권장 실행 순서
@@ -49,7 +49,7 @@
 7. `GRW-15` verification contract registry와 repair loop 기준 정의
 8. `GRW-16` dual-agent review policy 정의
 9. `GRW-17` failure-to-guardrail feedback loop 정의
-10. `GRW-21` same-model reviewer pool 기본값 정렬
+10. `GRW-21` sub-agent reviewer pool 기본값 정렬
 
 ### Phase 2. Skills and Pilot
 

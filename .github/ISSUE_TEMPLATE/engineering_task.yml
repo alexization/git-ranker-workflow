@@ -1,23 +1,15 @@
 name: "🛠️ Harness Engineering Task"
-description: Harness workflow에 따라 issue/PR 단위 작업을 기록합니다.
+description: 사람이 빠르게 이해할 수 있는 작업 배경과 목표를 기록합니다.
 title: "[Task] "
 labels: ["task", "triage"]
 body:
-  - type: dropdown
-    id: request_type
+  - type: markdown
     attributes:
-      label: 요청 유형
-      description: 이 작업을 어떤 흐름으로 처리해야 하는지 고릅니다.
-      options:
-        - policy/governance
-        - documentation/context
-        - architecture/control-plane
-        - skill/process
-        - verification-contract
-        - review-policy
-        - workflow-automation
-    validations:
-      required: true
+      value: |
+        이 템플릿은 사람이 읽는 작업 요약을 남기기 위한 용도입니다.
+
+        아래에는 문제, 배경, 결과, 범위, 리스크처럼 판단에 필요한 내용만 적어 주세요.
+        파일 목록, 브랜치 이름, exec plan 파일명, raw 검증 명령, 문서 inventory 같은 운영 상세는 exec plan이나 별도 증거에 둡니다.
 
   - type: dropdown
     id: target_repo
@@ -34,8 +26,8 @@ body:
   - type: textarea
     id: problem
     attributes:
-      label: 문제 정의
-      description: 지금 어떤 문제가 있고 무엇이 불명확하거나 불안정한지 적어 주세요.
+      label: 문제 / 배경
+      description: 지금 무엇이 문제인지, 무엇을 바꾸려는지 짧고 명확하게 적어 주세요.
     validations:
       required: true
 
@@ -50,7 +42,8 @@ body:
   - type: textarea
     id: expected_outcome
     attributes:
-      label: 기대 결과 / 완료 조건
+      label: 완료 조건 / 기대 결과
+      description: 이 작업이 끝났다고 판단할 수 있는 결과만 적어 주세요.
       placeholder: |
         - [ ] ...
         - [ ] ...
@@ -60,8 +53,8 @@ body:
   - type: textarea
     id: in_scope
     attributes:
-      label: 범위
-      description: 이번 Issue에서 다룰 변경만 적어 주세요.
+      label: 이번 이슈에서 다루는 것
+      description: 이번 작업에서 실제로 하려는 일만 적어 주세요.
       placeholder: |
         - ...
         - ...
@@ -71,8 +64,8 @@ body:
   - type: textarea
     id: out_of_scope
     attributes:
-      label: 비범위
-      description: 이번 Issue에서 의도적으로 다루지 않을 내용을 적어 주세요.
+      label: 이번 이슈에서 다루지 않는 것
+      description: 이번 이슈에 일부러 포함하지 않는 내용을 적어 주세요.
       placeholder: |
         - ...
         - ...
@@ -80,62 +73,41 @@ body:
       required: true
 
   - type: textarea
-    id: write_scope
+    id: approach_notes
     attributes:
-      label: Write Scope
-      description: 수정 가능한 디렉터리, 파일, 저장소를 적어 주세요.
+      label: 접근 메모
+      description: 어떤 방식으로 풀 계획인지, 주요 제약이나 판단 기준이 있으면 적어 주세요.
       placeholder: |
-        - `docs/product/`
-        - `docs/operations/`
-        - `.github/`
-    validations:
-      required: true
+        - 먼저 정리할 기준
+        - 비교할 대안
+        - 주의해야 할 제약
 
   - type: textarea
-    id: context_sources
+    id: impact
     attributes:
-      label: Context / Source of Truth
-      description: 먼저 읽어야 할 문서, 코드 경로, 기존 exec plan을 적어 주세요.
+      label: 영향 / 의존성
+      description: 새 라이브러리, 외부 서비스, 설정 변경, 마이그레이션, 선행조건이 있으면 적고 없으면 `없음`이라고 적어 주세요.
       placeholder: |
-        - `AGENTS.md`
-        - `PLANS.md`
-        - `docs/operations/workflow-governance.md`
-        - `docs/product/work-item-catalog.md`
-    validations:
-      required: true
+        - 새 의존성:
+        - 선행조건:
+        - 운영 영향:
 
   - type: textarea
-    id: verification_plan
+    id: risks_questions
     attributes:
-      label: Verification Contract / 검증 계획
-      description: 완료 판정에 사용할 명령이나 확인 방법을 적어 주세요.
+      label: 리스크 / 확인이 필요한 점
+      description: 남아 있는 리스크, 열린 질문, 리뷰어가 같이 봐야 할 점이 있으면 적어 주세요.
       placeholder: |
-        - `npm run lint`
-        - `./gradlew test`
-        - 문서 링크와 template 섹션 확인
-    validations:
-      required: true
+        - 리스크:
+        - 확인 포인트:
+        - 열린 질문:
 
   - type: textarea
-    id: review_expectation
+    id: references
     attributes:
-      label: 독립 리뷰 기대사항
-      description: 구현 이후 review Agent 또는 리뷰어가 무엇을 검토해야 하는지 적어 주세요.
+      label: 참고 자료
+      description: 관련 문서, 이슈, PR, 외부 참고 링크가 있으면 적어 주세요.
       placeholder: |
-        - 구현 Agent와 다른 리뷰어가 검토
-        - scope/non-scope 준수 여부 확인
-        - verification 결과와 diff 일치 여부 확인
-    validations:
-      required: true
-
-  - type: textarea
-    id: open_questions
-    attributes:
-      label: Open Questions / Blockers
-      description: 아직 모호하거나 막혀 있는 점이 있으면 적어 주세요.
-      placeholder: |
-        - 질문:
-        - blocker:
-        - 후속 작업:
-    validations:
-      required: false
+        - 관련 문서:
+        - 기존 이슈:
+        - 참고 링크:

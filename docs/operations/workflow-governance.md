@@ -2,6 +2,17 @@
 
 이 문서는 workflow 저장소를 기준으로 모든 Issue/PR 작업이 공유해야 하는 운영 규칙을 정의한다.
 
+## Reader-First Body 규칙
+
+- Issue와 PR 본문은 사람이 빠르게 맥락과 판단 포인트를 이해하기 위한 reader-first 문서로 쓴다.
+- 본문에는 문제, 배경, 접근, 영향, 검토 포인트, 남은 리스크처럼 사람이 바로 판단할 정보를 우선 적는다.
+- 아래 정보는 본문 필수 항목으로 강제하지 않는다.
+  - branch 이름, exec plan 파일명, 전체 파일 목록, 업데이트한 문서 inventory
+  - raw verification 명령과 명령별 상세 로그
+  - reviewer input dump, guardrail ledger field 전체, 내부 운영 체크리스트
+- 위 operational evidence는 exec plan, verification report, review comment, feedback ledger 같은 별도 close-out artifact에 남긴다.
+- 새 라이브러리, 외부 서비스, 스키마/설정/환경 변경, 마이그레이션, 배포 주의점은 사람이 놓치기 쉬우므로 본문에 명시한다.
+
 ## 문서 링크 규칙
 
 - 문서 내부 링크는 절대경로 대신 저장소 기준 상대경로를 사용한다.
@@ -48,41 +59,44 @@
 
 ## 각 Issue에 반드시 들어가야 할 내용
 
-- 문제 정의
+- 대상 저장소
+- 문제 또는 배경
 - 왜 지금 필요한지
 - 기대 결과 또는 완료 조건
 - 범위와 비범위
-- 대상 저장소와 write scope
-- 참조할 source of truth 또는 context source
-- verification contract 또는 검증 계획
-- 남아 있는 open question 또는 blocker
+- 접근 메모 또는 주요 제약
+- 남아 있는 리스크, open question, 참고 자료
 
 ## 각 PR에 반드시 들어가야 할 내용
 
 - 연결된 Issue
-- 문제 정의
-- 왜 지금 필요한지
-- 이번 PR의 범위와 비범위
-- write scope
-- 산출물
-- 검증 명령, 최종 상태, 핵심 evidence
-- 독립 review 결과
-- feedback ledger entry 또는 `no new guardrail` 판단
-- 남은 리스크
-- 다음 Issue로 넘겨야 할 전제조건
+- 무엇이 바뀌었는지와 왜 필요한지
+- 어떤 과정과 판단으로 결과물을 만들었는지
+- 리뷰어가 집중해서 볼 포인트
+- 검증 결과 요약과 남은 공백
+- 새 의존성, 외부 영향, 배포/롤백 주의점
+- 남은 리스크와 후속 작업
 
 ## 증거 규칙
 
 하네스 관련 PR에서는 가능하면 아래 증거를 남긴다.
 
+- human-facing Issue/PR 본문과 운영용 close-out artifact를 분리한다.
 - 명령 실행 결과 요약 또는 verification report 위치
 - verification report 최소 필드: contract profile, command별 status, 핵심 evidence, failure summary, next action
 - review evidence 최소 필드: implementer, reviewer, reviewer input, verdict, blocking finding 또는 no-blocking note
-- reviewer pool을 썼다면 final verdict owner와 추가 reviewer 또는 reviewer focus도 함께 남긴다
+- reviewer pool의 final verdict owner와 역할별 reviewer를 함께 남긴다
 - feedback evidence 최소 필드: stage, failure class, promotion decision, follow-up asset 또는 `no new guardrail` 이유, 핵심 evidence
 - 문서 업데이트: source of truth 반영 여부
 
-문서 전용 Issue에서는 어떤 문서를 바꿨고 무엇으로 검증했는지를 남긴다.
+문서 전용 작업도 무엇을 바꿨는지와 어떤 기준으로 확인했는지는 남겨야 한다. 다만 본문에는 판단에 필요한 요약만 적고, raw 명령이나 경로 inventory는 close-out artifact로 내린다.
+
+## Historical Record 규칙
+
+- `docs/exec-plans/completed/`의 문서는 당시 close-out 근거를 보존하는 historical record다.
+- completed exec plan의 reviewer 이름, runtime 설명, 검증 결과, 파일명은 후속 정책 변경에 맞춘다는 이유만으로 rewrite하지 않는다.
+- 현재 canonical runtime, 정책, 템플릿은 stable source of truth 문서인 `docs/operations/`, `docs/architecture/`, `docs/product/`, `.github/`, `.codex/skills/`에서 읽는다.
+- historical exec plan이 현재 정책과 어휘가 다를 수 있다는 사실 자체는 drift가 아니라 이력이다. 현재 규칙과의 관계는 stable source of truth에서 설명한다.
 
 ## 브랜치와 슬러그 규칙
 
@@ -104,14 +118,13 @@
 - workflow 저장소 Issue 본문은 `.codex/skills/issue-to-exec-plan/templates/github-issue-body.md`를 복사해 채운다.
 - workflow 저장소 PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md`를 복사한 임시 파일을 기준으로 채운다.
 - PR은 기본적으로 open으로 생성한다. draft PR은 사용자가 명시적으로 요청했거나, scope-complete 전 공유가 필요한 blocker를 body와 exec plan에 적을 때만 예외적으로 사용한다.
-- PR의 `6) Verification Contract`는 카테고리별 section 아래에 check별 block 형식으로 작성한다.
-- 성공한 검증은 최종 상태와 핵심 evidence만 짧게 적고, 실패, 재시도, 예외만 상세히 남긴다.
-- PR의 `7) Independent Review`는 [dual-agent-review-policy.md](dual-agent-review-policy.md)의 reviewer minimum context와 verdict vocabulary를 따른다.
-- independent review는 단일 reviewer 또는 session-isolated reviewer pool로 수행할 수 있다. 외부 reviewer runtime이 불안정하면 same-model reviewer pool을 기본 fallback으로 사용한다. reviewer pool을 쓰더라도 final verdict owner는 한 명이어야 하며, evidence block은 하나의 canonical verdict로 집계한다.
-- PR의 `9) Feedback / Guardrail Follow-up`는 [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)와 [guardrail-ledger-template.md](guardrail-ledger-template.md)의 vocabulary와 최소 필드를 따른다.
+- Issue/PR 본문에는 사람이 확인할 요약만 적고, detailed verification report, review evidence, feedback ledger는 exec plan이나 별도 close-out artifact에 남긴다.
+- 성공한 검증은 PR 본문에 고수준 결과만 짧게 적고, 실패, 재시도, 예외, skipped check 같은 운영 상세는 verification report로 내린다.
+- review verdict와 feedback decision은 PR 본문에 요약할 수 있지만, canonical evidence는 [dual-agent-review-policy.md](dual-agent-review-policy.md)와 [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)가 지정한 artifact에 남긴다.
+- independent review는 현재 Codex 세션에서 분리 생성한 session-isolated sub-agent reviewer pool로 수행한다. MCP 기반 외부 reviewer runtime이나 외부 모델 호출은 canonical review 경로가 아니다. reviewer pool의 final verdict owner는 한 명이어야 하며, evidence block은 하나의 canonical verdict로 집계한다.
 - 생성 직후에는 `gh issue view --json body` 또는 `gh pr view --json body`로 본문이 예상한 줄바꿈과 섹션을 유지하는지 확인한다.
-- Issue template은 최소한 `문제`, `왜 지금`, `범위/비범위`, `write scope`, `context source`, `verification plan`, `open questions`를 포함해야 한다.
-- PR template은 최소한 `연결된 issue`, `범위/비범위`, `write scope`, `verification 결과`, `독립 review 결과`, `feedback follow-up`, `문서 반영`, `리스크`를 포함해야 한다.
+- Issue template은 최소한 `대상 저장소`, `문제/배경`, `왜 지금`, `완료 조건`, `범위/비범위`, `접근 메모`, `리스크 또는 참고 자료`를 포함해야 한다.
+- PR template은 최소한 `요약`, `연결된 issue`, `접근`, `review guide`, `validation summary`, `dependencies/impact`, `risks/follow-up`을 포함해야 한다.
 - 커밋 메시지는 항상 루트의 `.gitmessage.ko.txt` 형식을 따른다.
 - 저장소별 작업은 각 저장소마다 별도 branch 또는 worktree에서 수행한다.
 - 모든 기능 브랜치는 대상 저장소의 `develop` 브랜치를 기준으로 분기한다.
@@ -124,8 +137,8 @@
 2. 대상 저장소의 `develop` 최신 상태를 기준으로 worktree 또는 branch를 만든다.
 3. body file을 준비한 뒤 `gh issue create --body-file ...`로 대상 저장소 이슈를 만든다.
 4. 이슈 번호를 브랜치명과 exec plan에 연결한다.
-5. 작업 후 latest verification report를 만들고, reviewer minimum context를 준비한 뒤 independent review를 먼저 수행한다. reviewer pool을 쓰면 공통 handoff surface를 각 reviewer에 fan-out하되, 역할별 focus에 맞는 subset만 줄 수 있고 final verdict owner 하나를 남긴다.
-6. PR body file에 검증 결과, independent review 결과, 문서 반영 여부, 남은 리스크를 먼저 채운다.
+5. 작업 후 latest verification report를 만들고, reviewer minimum context를 준비한 뒤 session-isolated sub-agent reviewer pool로 independent review를 먼저 수행한다. 공통 handoff surface를 각 reviewer에 fan-out하되, 역할별 focus에 맞는 subset만 줄 수 있고 final verdict owner 하나를 남긴다.
+6. PR body file에 작업 요약, 접근, review guide, validation summary, 영향, 남은 리스크를 먼저 채우고, detailed verification/review/feedback evidence는 close-out artifact에 정리한다.
 7. 사용자가 draft를 명시적으로 요청했거나, scope-complete 전 blocker 공유가 필요하면 draft PR을 연다. 그렇지 않다면 `gh pr create --base develop --body-file ...`로 open PR을 연다.
 8. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
 
@@ -150,11 +163,11 @@
 - network나 escalation이 필요하면 목적과 범위를 exec plan 또는 최종 close-out에 남긴다.
 - verification failure가 나면 registry의 retry budget 안에서만 repair loop를 돌리고, budget 초과나 missing canonical source는 `Blocked` 또는 후속 planning으로 넘긴다.
 - review 단계에 들어가기 전 latest verification report와 reviewer minimum context를 준비한다.
-- reviewer pool을 쓰더라도 reviewer별로 다른 최소 입력을 임의 정의하지 않는다. 역할 프롬프트는 focus를 더할 수 있어도 minimum context를 줄일 수는 없다.
-- same-model reviewer를 쓰더라도 implementer와 reviewer의 세션, prompt, output ownership을 섞지 않는다.
+- reviewer minimum context의 canonical handoff surface는 reviewer pool 전체에 공통이다. 역할별 reviewer는 focus에 맞는 subset만 읽을 수 있지만, implementer가 handoff 항목을 임의로 삭제하거나 final verdict owner의 추적 책임을 줄일 수는 없다.
+- independent review는 항상 session-isolated sub-agent reviewer들로 수행하고, implementer와 reviewer의 세션, prompt, output ownership을 섞지 않는다.
 - 사용자가 다르게 요청하지 않았다면 independent review를 끝낸 뒤 PR을 publish한다.
 - source of truth 문서를 함께 업데이트하거나, 업데이트가 불필요한 이유를 남긴다.
-- 검증 명령과 최종 상태를 반드시 남기고, 실패나 예외가 있었다면 요약을 남긴다.
+- 검증 명령과 최종 상태는 close-out artifact에 반드시 남기고, PR 본문에는 필요한 요약만 남긴다.
 - 새로 생긴 반복 절차가 있다면 skill 후보로 제안하되, 이번 Issue 범위를 넘는 구현은 하지 않는다.
 - 모호한 선택지가 여러 개면 [docs/product/work-item-catalog.md](../product/work-item-catalog.md)의 기본 결정을 따른다.
 - 실행 중 예상치 못한 dirty change가 있으면 되돌리지 말고 영향 여부만 확인한다.
@@ -165,7 +178,7 @@
 
 - 왜 이 작업이 필요한지 문서나 PR 본문에 남아 있다
 - 변경 범위가 한 가지 목표에 집중되어 있다
-- 검증 명령이 PR이나 exec plan에 남아 있다
+- 검증 결과가 exec plan이나 다른 close-out artifact에 남아 있다
 - 후속 작업의 전제조건이 명확하다
 - source of truth 문서가 함께 업데이트되었거나, 업데이트 불필요 사유가 명시되어 있다
 - stable source of truth 문서에 남긴 임시 work item ID가 있다면 close-out 전에 제거되었거나 planning/history 문서로 이동했다

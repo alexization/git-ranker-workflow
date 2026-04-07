@@ -120,7 +120,7 @@ feedback entry를 쓰기 전 failure를 아래 순서로 정리한다.
 
 ## Feedback Close-Out Minimum
 
-`Feedback Pending`을 `Completed`로 넘길 때는 PR 본문, review comment, exec plan close-out 중 최소 한 곳에 아래가 있어야 한다.
+`Feedback Pending`을 `Completed`로 넘길 때는 exec plan close-out, review note, follow-up artifact 중 최소 한 곳에 아래가 있어야 한다. PR 본문에는 필요하면 요약만 남긴다.
 
 - latest verification 상태 또는 `Blocked` 이유
 - latest review verdict 또는 review 불가 사유
@@ -128,7 +128,7 @@ feedback entry를 쓰기 전 failure를 아래 순서로 정리한다.
 - promotion decision 근거
 - follow-up asset, issue, 또는 "없음" 사유
 
-`Feedback / Guardrail Follow-up` 섹션이 비어 있으면 완료로 보지 않는다.
+feedback close-out artifact가 비어 있으면 완료로 보지 않는다.
 
 ## Representative Classification
 
