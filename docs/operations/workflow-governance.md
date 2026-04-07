@@ -41,6 +41,7 @@
 ## Tool Boundary 규칙
 
 - context pack을 고른 뒤 구현 전 [tool-boundary-matrix.md](tool-boundary-matrix.md)로 task type별 read boundary, write boundary, network, escalation class를 잠근다.
+- verification 단계에 들어가기 전 [verification-contract-registry.md](verification-contract-registry.md)에서 primary contract profile을 고르고, conditional command나 repo-specific override는 exec plan에 적는다.
 - exec plan에는 최소한 primary repo, allowed write paths, control-plane artifact, explicitly forbidden path, network 필요 여부, escalation trigger를 적는다.
 - prompt나 follow-up 메모로 범위를 넓히지 않는다. issue와 exec plan에 없는 저장소 쓰기나 broad network access가 필요해지면 planning으로 되돌린다.
 - cross-repo planning은 여러 저장소를 읽을 수 있어도 app repo code write는 열지 않는다. app 구현이 필요하면 저장소별 issue/PR로 분리한다.
@@ -76,6 +77,7 @@
 하네스 관련 PR에서는 가능하면 아래 증거를 남긴다.
 
 - 명령 실행 결과 요약 또는 artifact 위치
+- verification report 최소 필드: contract profile, command별 status, 핵심 evidence, failure summary, next action
 - 브라우저 증거: screenshot, trace, video
 - 로그 증거: LogQL 결과 또는 로그 요약
 - 메트릭 증거: PromQL 결과 또는 지표 캡처
@@ -142,6 +144,7 @@
 - 선행조건이 충족되지 않았으면 임의로 우회 구현하지 말고 blocker를 먼저 정리한다.
 - 허용된 write scope 밖의 파일은 수정하지 않는다.
 - network나 escalation이 필요하면 목적과 범위를 exec plan 또는 최종 close-out에 남긴다.
+- verification failure가 나면 registry의 retry budget 안에서만 repair loop를 돌리고, budget 초과나 missing canonical source는 `Blocked` 또는 후속 planning으로 넘긴다.
 - source of truth 문서를 함께 업데이트하거나, 업데이트가 불필요한 이유를 남긴다.
 - 검증 명령과 최종 상태를 반드시 남기고, 실패나 예외가 있었다면 요약을 남긴다.
 - 새로 생긴 반복 절차가 있다면 skill 후보로 제안하되, 이번 Issue 범위를 넘는 구현은 하지 않는다.

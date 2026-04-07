@@ -174,7 +174,7 @@
 - 저장소: `git-ranker`
 - 선행조건: `GRW-15`
 - 권장 write scope: backend 검증 문서, build/test entrypoint, 필요 최소한의 preflight
-- 기본 결정: 행동 변경 없이 검증 명령과 실패 의미를 명확히 하는 것이 우선이다.
+- 기본 결정: 행동 변경 없이 검증 명령과 실패 의미를 명확히 하는 것이 우선이다. 상위 completion semantics는 verification contract registry를 따른다.
 - 핵심 작업: 현재 backend 검증 명령, fail-fast 조건, 환경 전제, 결과 해석 기준을 contract에 맞게 정리한다.
 - 비범위: 새 기능 구현
 - 산출물: backend verification contract, 필요한 문서/스크립트 정리
@@ -187,7 +187,7 @@
 - 저장소: `git-ranker-client`
 - 선행조건: `GRW-15`
 - 권장 write scope: frontend 검증 문서, build/lint/typecheck entrypoint
-- 기본 결정: `lint`, `typecheck`, `build`를 안정적인 완료 조건으로 먼저 고정한다.
+- 기본 결정: `lint`, `typecheck`, `build`를 안정적인 완료 조건으로 먼저 고정한다. 상위 completion semantics는 verification contract registry를 따른다.
 - 핵심 작업: 현재 frontend 검증 명령, 필수 env, 실패 의미, 수동 확인이 필요한 공백을 contract에 맞게 정리한다.
 - 비범위: UI 개편
 - 산출물: frontend verification contract, 필요한 문서/스크립트 정리
