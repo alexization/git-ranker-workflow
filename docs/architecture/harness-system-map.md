@@ -28,7 +28,7 @@
 | Context Pack | task type에 맞는 최소 문서와 write scope를 고정한다. | exec plan, task type, source docs | bounded context pack |
 | Implementer | 허용된 저장소와 파일 범위 안에서 변경을 만든다. | context pack, exec plan | diff, change notes |
 | Verification | 명시된 verification contract를 실행하고 pass/fail을 기록한다. | diff, verification contract | verification report |
-| Reviewer | 구현과 분리된 관점으로 diff와 검증 결과를 검토한다. | diff, verification report, exec plan | review verdict |
+| Reviewer | 구현과 분리된 단일 reviewer 또는 session-isolated reviewer pool 관점으로 diff와 검증 결과를 검토한다. 필요 시 role-prompted reviewer pool finding을 집계해 final review verdict를 남긴다. | diff, verification report, exec plan | review verdict, aggregated findings |
 | Feedback | 실패와 취약 지점을 guardrail 후보로 분류하고 close-out을 남긴다. | review verdict, failure notes, exec plan | feedback entry, next follow-up |
 
 ## Canonical Artifacts
@@ -103,6 +103,7 @@
 
 - Implementer는 자기 결과를 최종 승인할 수 없다.
 - Reviewer는 diff만이 아니라 verification report와 exec plan을 함께 읽어야 한다.
+- reviewer가 같은 base model을 쓰더라도 implementer와 세션, 컨텍스트, 역할 프롬프트, output ownership이 분리돼 있어야 한다.
 - verification이 끝나기 전에는 review verdict를 final로 선언할 수 없다.
 - feedback 단계는 성공 경로와 실패 경로 모두에 필요하다. 성공 시에는 `no new guardrail`도 하나의 명시적 판단으로 남긴다.
 - task type별 세부 정책은 후속 Issue가 확장하더라도, `Router -> Interview -> Context Pack -> Implementer -> Verification -> Reviewer -> Feedback` 순서는 바꾸지 않는다.
