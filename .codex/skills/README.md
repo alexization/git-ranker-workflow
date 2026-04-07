@@ -83,6 +83,9 @@
 - `issue-to-exec-plan`: 새 Issue를 `docs/exec-plans/active/*.md` 실행 문서로 고정할 때 사용
 - `parallel-work-split`: 여러 agent가 같은 Issue를 나눠 작업하기 전에 ownership과 write set을 분리할 때 사용
 - `api-contract-sync`: backend OpenAPI 변경을 client 타입과 workflow 문서에 동기화할 때 사용
+- `verification-contract-runner`: selected verification contract profile을 실행하고 latest verification report를 정리할 때 사용
+- `repair-loop-triage`: verification 실패나 review change request를 retry budget 기준으로 분류할 때 사용
+- `reviewer-handoff`: reviewer minimum context를 reviewer pool에 fan-out하고 aggregated review evidence를 남길 때 사용
 - `red`: failing test file 하나만 남기는 TDD red turn
 - `green`: test 수정 없이 최소 구현으로 green을 만드는 턴
 - `refactor`: green 유지 하에 구조를 정리하는 refactor 턴
@@ -109,6 +112,12 @@ close-out이 `Rejected`이거나 route가 `대화`로 끝나면 issue, exec plan
 1. `red`
 2. `green`
 3. `refactor`
+
+구현 뒤 close-out 순서는 아래 hook을 따른다.
+
+1. `verification-contract-runner`
+2. `repair-loop-triage` if verification failed or review requested changes
+3. `reviewer-handoff` once latest verification report is `passed`
 
 `api-contract-sync`의 canonical backend contract는 `git-ranker/docs/openapi/openapi.json`이다. workflow는 canonical spec을 복제해 소유하지 않고, sync 절차와 evidence를 관리한다.
 
