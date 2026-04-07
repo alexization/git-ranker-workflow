@@ -34,7 +34,7 @@ description: Use this skill when request intake returns `모호한 요청` and y
 
 - 산출물은 interview exit summary다. 기본적으로 응답이나 작업 메모에 남기고, 종료 상태에 따라 다음 단계가 갈린다.
 - `Planned`
-  - issue 본문과 exec plan의 `Problem`, `Why Now`, `Scope`, `Non-scope`, `Write Scope`, `Verification`을 채울 수 있는 요약을 남긴다.
+  - issue의 reader-facing summary와 exec plan의 `Problem`, `Why Now`, `Scope`, `Non-scope`, `Write Scope`, `Verification`을 채울 수 있는 요약을 남긴다.
   - 다음 단계는 `issue-to-exec-plan`이다.
 - `Blocked`
   - 현재 issue 안에서 더 줄일 수 없는 blocker와 필요한 외부 입력을 남긴다.

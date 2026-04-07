@@ -16,8 +16,8 @@
 - 저장소: `git-ranker-workflow`
 - 선행조건: 없음
 - 권장 write scope: `.github/`, `docs/operations/`, `docs/product/`, `docs/exec-plans/`
-- 기본 결정: Issue/PR template은 앞으로 사용할 하네스 기준만 담는다. 요청 intake, write scope, verification contract, 독립 review, feedback follow-up을 공통 필드로 강제한다.
-- 핵심 작업: workflow Issue template, PR template, governance 문서, roadmap/catalog 선행 순서를 현재 하네스 기준으로 정렬한다.
+- 기본 결정: Issue/PR template은 reader-first 문서로 유지한다. 사람에게 필요한 문제/배경/결과/리뷰 포인트/영향을 우선 적고, write scope, detailed verification, review/feedback evidence는 exec plan과 supporting artifact에 둔다.
+- 핵심 작업: workflow Issue template, PR template, governance 문서, issue body template를 현재 reader-first 기준으로 정렬한다.
 - 비범위: backend/frontend 코드 변경, GitHub Actions 구현
 - 산출물: 업데이트된 GitHub templates, 관련 governance/source of truth 반영
 - 검증: template 본문 리뷰와 필수 섹션 grep 확인
@@ -110,16 +110,16 @@
 - 산출물: feedback loop policy, guardrail ledger template
 - 검증: 과거 실패 사례 2~3개를 분류해 ledger에 적합한지 확인
 
-### GRW-21. same-model reviewer pool 기본값 정렬
+### GRW-21. sub-agent reviewer pool 기본값 정렬
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-16`
 - 권장 write scope: `docs/operations`, `docs/architecture`, `docs/product`, `docs/exec-plans/`
-- 기본 결정: 독립 review의 핵심은 model diversity보다 session/context/prompt isolation이다. 외부 reviewer runtime이 불안정하면 same-model session-isolated reviewer pool을 기본 fallback으로 쓴다.
-- 핵심 작업: same-model reviewer pool 허용 조건, role prompt focus, reviewer minimum context fan-out, verdict aggregation 규칙을 source of truth에 반영한다.
-- 비범위: 외부 MCP timeout 자체의 인프라 수정, 자동 PR review bot 구현, backend/frontend 앱 코드 변경
+- 기본 결정: 독립 review의 canonical runtime은 session-isolated sub-agent reviewer pool이다. MCP 기반 외부 reviewer runtime이나 외부 모델 호출은 쓰지 않는다.
+- 핵심 작업: sub-agent reviewer pool의 필수 역할, reviewer minimum context fan-out, verdict aggregation 규칙을 source of truth에 반영한다.
+- 비범위: 외부 reviewer runtime 자체의 인프라 수정, 자동 PR review bot 구현, backend/frontend 앱 코드 변경
 - 산출물: updated review policy와 architecture/product hook, `GRW-21` exec plan
-- 검증: role prompt, reviewer pool, verdict aggregation 관련 hook grep과 independent review evidence 확인
+- 검증: role prompt, sub-agent reviewer pool, verdict aggregation 관련 hook grep과 independent review evidence 확인
 
 ### GRW-18. workflow repo pilot issue로 새 흐름 1회 검증
 
@@ -161,7 +161,7 @@
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-15`, `GRW-16`
 - 권장 write scope: `.codex/skills/` 하위만
-- 기본 결정: 구현 완료 선언보다 검증과 review handoff를 우선한다. 저장소별 명령은 contract registry가 canonical source고, review runtime 기본값은 same-model session-isolated reviewer pool을 우선 재사용한다.
+- 기본 결정: 구현 완료 선언보다 검증과 review handoff를 우선한다. 저장소별 명령은 contract registry가 canonical source고, review runtime 기본값은 session-isolated sub-agent reviewer pool이다.
 - 핵심 작업: `verification-contract-runner`, `repair-loop-triage`, `reviewer-handoff` skill 작성
 - 비범위: 테스트 프레임워크 추가
 - 산출물: skill 문서 3개

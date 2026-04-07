@@ -1,6 +1,6 @@
 # Guardrail Ledger Template
 
-이 문서는 [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)의 canonical ledger entry 형식을 제공한다. PR 본문이나 exec plan close-out 어디에 남기든 아래 최소 필드는 유지한다.
+이 문서는 [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)의 canonical ledger entry 형식을 제공한다. PR 본문에는 요약만 둘 수 있고, canonical entry는 exec plan close-out, review note, follow-up artifact 중 하나에 아래 최소 필드로 남긴다.
 
 ## Entry Template
 
