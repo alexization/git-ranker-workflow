@@ -2,7 +2,7 @@
 
 이 문서는 [../architecture/harness-system-map.md](../architecture/harness-system-map.md)의 `Verifying`, `Repairing`, `Blocked` semantics를 실제 실행 규약으로 고정한다. [tool-boundary-matrix.md](tool-boundary-matrix.md)가 "어떤 도구를 어디까지 쓸 수 있는가"를 잠근다면, 이 문서는 "무슨 명령을 어떤 증거와 함께 통과해야 다음 상태로 갈 수 있는가"를 잠근다.
 
-관련 운영 규칙은 [workflow-governance.md](workflow-governance.md), workflow runtime 기준은 [workflow-verification-runtime.md](workflow-verification-runtime.md)를 따른다.
+관련 운영 규칙은 [workflow-governance.md](workflow-governance.md), workflow runtime 기준은 [workflow-verification-runtime.md](workflow-verification-runtime.md), review verdict 규칙은 [dual-agent-review-policy.md](dual-agent-review-policy.md)를 따른다.
 
 ## Registry Invariants
 
@@ -291,6 +291,9 @@ reviewer에게 넘길 때는 최소한 아래 입력이 함께 있어야 한다.
 - exec plan 경로
 - latest verification report
 - touched diff 요약
+- source-of-truth update 목록 또는 업데이트 불필요 사유
 - 남은 리스크 또는 conditional command 생략 사유
+
+이 입력은 [dual-agent-review-policy.md](dual-agent-review-policy.md)의 `Reviewer Minimum Context`와 동일한 handoff surface다.
 
 이 입력이 비어 있으면 review 단계로 넘어간 것으로 보지 않는다.

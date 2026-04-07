@@ -1,0 +1,144 @@
+# Dual-Agent Review Policy
+
+이 문서는 [../architecture/harness-system-map.md](../architecture/harness-system-map.md)의 `Reviewing`, `Repairing`, `Feedback Pending` semantics를 실제 운영 규칙으로 고정한다. [verification-contract-registry.md](verification-contract-registry.md)가 reviewer handoff 전의 verification 완료 조건을 잠근다면, 이 문서는 reviewer가 어떤 입력을 읽고 어떤 verdict를 남기며 어떤 경우에 repair 또는 `Blocked`로 되돌리는지를 잠근다.
+
+관련 운영 규칙은 [workflow-governance.md](workflow-governance.md), verification handoff minimum은 [verification-contract-registry.md](verification-contract-registry.md)를 따른다.
+
+## Policy Invariants
+
+- implementer와 reviewer는 반드시 서로 다른 agent 또는 사람이어야 한다.
+- review는 latest verification report의 overall status가 `passed`이고 reviewer handoff minimum이 채워진 뒤에만 시작할 수 있다.
+- reviewer는 diff만 보지 않고 exec plan, latest verification report, 남은 리스크를 함께 읽어야 한다.
+- reviewer는 현재 issue의 scope, write scope, verification contract, source of truth를 기준으로 판단한다. 새 목표 추가나 범위 확장은 review 단계에서 승인하지 않는다.
+- review evidence는 필수 산출물이다. verdict만 있고 reviewer input이나 finding 근거가 없으면 `Completed` 판정으로 보지 않는다.
+- future skill, template, checklist는 이 문서를 압축해서 재사용할 수 있지만, 이 문서를 대체하거나 override할 수는 없다.
+
+## Role Split
+
+| Role | Must Do | Must Not Do | Required Output |
+| --- | --- | --- | --- |
+| Implementer | exec plan 범위 안에서 변경을 만들고 latest verification report를 준비한다. reviewer에게 diff summary, touched doc, 남은 리스크, conditional command 생략 사유를 넘긴다. review finding이 blocking이면 수정 후 관련 명령을 다시 실행한다. | 자기 결과를 최종 승인하지 않는다. review 전에 verification report 없이 완료를 주장하지 않는다. blocking finding을 non-blocking note로 축소하지 않는다. | diff, latest verification report, reviewer handoff input |
+| Reviewer | implementer와 분리된 관점으로 scope, verification, diff, source-of-truth update, residual risk를 검토한다. finding을 blocking과 non-blocking으로 구분하고 verdict를 남긴다. | implementer 역할까지 겸해 자기 손으로 수정하며 review를 종료하지 않는다. verification이 비어 있는데 승인하지 않는다. 범위 밖 작업을 구두로 끼워 넣지 않는다. | review verdict, findings, review evidence |
+
+## Reviewer Minimum Context
+
+reviewer는 최소한 아래 입력을 받아야 한다.
+
+- exec plan 경로와 linked issue 또는 PR
+- latest verification report
+- touched diff summary와 touched file 또는 doc 목록
+- source-of-truth update 목록 또는 "업데이트 불필요" 사유
+- 남은 리스크, skipped conditional command, follow-up 필요 사항
+
+선택 입력:
+
+- screenshot, trace, video, log 요약, metric evidence
+- 이전 repair attempt 요약
+- 관련 review comment thread 링크
+
+reviewer는 아래 중 하나라도 있으면 verdict를 `blocked`로 둔다.
+
+- latest verification report가 없거나 latest가 아니다
+- latest verification report의 overall status가 `passed`가 아니다
+- exec plan이나 write scope를 확인할 수 없다
+- diff summary와 실제 변경 범위가 맞지 않아 검토 기준을 고정할 수 없다
+- canonical source가 없어 reviewer가 새 정책을 발명해야만 verdict를 낼 수 있다
+
+## Review Read Order
+
+1. exec plan에서 문제 정의, scope, non-scope, write scope, verification contract를 확인한다.
+2. latest verification report에서 required command 결과와 skipped 이유를 확인한다.
+3. diff와 touched source-of-truth를 읽고 실제 변경이 issue 목표와 일치하는지 본다.
+4. 남은 리스크와 follow-up을 읽고 이번 issue 안에서 닫히는지, 다음 issue로 넘겨야 하는지를 판단한다.
+
+이 순서를 건너뛰어도 되는 경우는 없다. reviewer는 최소 컨텍스트를 읽기 전에 verdict를 먼저 선언하지 않는다.
+
+## Verdict Vocabulary
+
+| Verdict | Meaning | Required Consequence |
+| --- | --- | --- |
+| `approved` | implementer/reviewer 분리가 지켜졌고 latest verification report, diff, source-of-truth update, 남은 리스크를 검토한 결과 blocking finding이 없다 | `Feedback Pending`으로 진행한다 |
+| `changes-requested` | 현재 issue 범위 안에서 수리 가능한 blocking finding이 하나 이상 있다 | `Repairing`으로 되돌린다 |
+| `blocked` | 별도 reviewer 부재, missing canonical source, missing review input, boundary conflict처럼 현재 issue 안에서 review를 닫을 수 없다 | `Blocked` 또는 follow-up planning으로 전환한다 |
+
+추가 규칙:
+
+- non-blocking note는 `approved`와 함께 남길 수 있다.
+- implementer와 reviewer가 동일하면 기본 verdict는 `changes-requested`다. 별도 reviewer를 배정할 수 없는 상황까지 확인되면 `blocked`로 올린다.
+- reviewer는 `approved`를 주면서 blocking finding을 함께 남기지 않는다.
+
+## Finding Classification
+
+### Blocking Finding
+
+아래 중 하나라도 해당하면 `changes-requested` 또는 `blocked` 사유가 된다.
+
+- issue scope 또는 write scope를 벗어난 변경
+- verification report 누락, stale report, diff와 report 불일치
+- required command 재실행이 필요한데 latest report가 갱신되지 않음
+- source-of-truth update가 필요하지만 빠져 있음
+- correctness, regression, contract, security, reliability에 직접 영향을 주는 문제
+- reviewer separation invariant 위반
+
+### Non-Blocking Note
+
+아래는 기본적으로 approval을 막지 않는다.
+
+- naming, wording, comment 정리
+- 후속 issue로 넘겨도 되는 guardrail 후보
+- 현재 목표와 무관한 선택적 refactor 제안
+
+non-blocking note도 기록은 남겨야 하지만, implementer가 같은 턴에서 반드시 해결해야 하는 의무로 바꾸지 않는다.
+
+## Review Repair Loop
+
+- `changes-requested` verdict에는 최소한 blocking finding, 기대 next action, 다시 확인할 command 또는 문서가 들어가야 한다.
+- implementer는 blocking finding을 줄이는 실제 수정 하나 이상을 남기고, 영향을 받은 required command를 다시 실행한 뒤 latest verification report를 갱신한다.
+- baseline command가 영향을 받았으면 conditional command 성공을 유지로 간주하지 않는다. latest report에 다시 적어야 한다.
+- reviewer는 stale finding 대신 latest report와 현재 diff를 기준으로 다시 판단한다.
+- 같은 root cause가 두 번의 repair 뒤에도 남아 있으면 더 길게 밀어붙이지 말고 `blocked` 또는 follow-up issue split으로 전환한다.
+- review 단계에서 새 범위가 드러나면 기존 issue에 끼워 넣지 않고 exec plan 갱신 또는 새 issue 분해로 되돌린다.
+
+## Review Evidence Rule
+
+review verdict는 PR 본문, review comment, exec plan close-out 중 최소 한 곳에 아래 필드를 남긴다.
+
+```md
+## Independent Review
+- Implementer: `agent-or-name`
+- Reviewer: `agent-or-name`
+- Reviewer Input:
+  - Exec plan: `docs/exec-plans/...`
+  - Latest verification report: `passed`
+  - Diff summary: `<summary>`
+  - Source-of-truth update: `<updated docs or why not needed>`
+  - Remaining risks / skipped checks: `<summary>`
+- Review Verdict: `approved | changes-requested | blocked`
+- Findings / Change Requests:
+  - `<blocking finding or no-blocking-notes>`
+- Evidence:
+  - `<why this verdict is justified>`
+```
+
+필수 규칙:
+
+- `Implementer`, `Reviewer`, `Review Verdict`는 항상 적는다.
+- `Reviewer Input`에는 최소 컨텍스트 다섯 가지가 요약돼야 한다.
+- `approved`면 blocking finding이 없다는 점이 드러나야 한다.
+- `changes-requested`면 어떤 수정이 필요한지와 re-run 대상이 드러나야 한다.
+- 문서 전용 issue라도 review evidence를 생략하지 않는다. artifact가 없을 뿐, verdict 근거는 남겨야 한다.
+
+## Draft Checklist
+
+- implementer와 reviewer가 분리돼 있는가
+- exec plan의 scope, non-scope, write scope가 현재 diff와 일치하는가
+- latest verification report가 존재하고 overall status가 `passed`인가
+- skipped conditional command와 remaining risk가 reviewer input에 기록돼 있는가
+- diff와 verification report, source-of-truth update가 서로 모순되지 않는가
+- blocking finding과 non-blocking note가 명확히 구분돼 있는가
+- verdict와 next action이 state machine의 `Feedback Pending`, `Repairing`, `Blocked` 중 하나로 자연스럽게 이어지는가
+
+## Relationship To Skills
+
+- future `reviewer-handoff` skill은 이 문서의 `Reviewer Minimum Context`, `Review Read Order`, `Review Evidence Rule`을 얇게 재사용한다.
+- template와 checklist는 future skill 폴더 안에 둘 수 있지만, verdict vocabulary와 blocking 기준은 계속 이 문서가 canonical source다.
