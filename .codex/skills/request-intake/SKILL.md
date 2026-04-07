@@ -7,7 +7,7 @@ description: Use this skill when a new request arrives and you must classify it 
 
 ## Purpose
 
-새 요청을 intake 단계에서 `대화`, `모호한 요청`, `즉시 실행 가능한 작업` 중 하나로 고정하고, route에 맞는 다음 행동만 남긴다. 목표는 구현 아이디어를 늘리는 것이 아니라 "지금 실행을 시작해도 되는가"를 같은 기준으로 판정하는 것이다.
+새 요청을 intake 단계에서 `대화`, `모호한 요청`, `즉시 실행 가능한 작업` 중 하나로 고정하고, route에 맞는 다음 행동만 남긴다. 실행을 계속하지 않는 경우에는 terminal close-out인 `Rejected` reason도 함께 남긴다. 목표는 구현 아이디어를 늘리는 것이 아니라 "지금 실행을 시작해도 되는가"를 같은 기준으로 판정하는 것이다.
 
 ## Trigger
 
@@ -36,9 +36,10 @@ description: Use this skill when a new request arrives and you must classify it 
 
 - 산출물은 route decision summary다. 기본적으로 응답이나 작업 메모에 남긴다.
 - route별 다음 행동은 canonical policy를 그대로 따르되, skill output에는 아래 handoff만 남긴다.
-  - `대화`: 답변만 제공하고 종료
+  - `대화`: 답변만 제공하고 terminal close-out reason `conversation-only`를 남긴다.
   - `모호한 요청`: 남아 있는 ambiguity signal과 첫 interview blocker를 정리해 `ambiguity-interview`로 넘김
   - `즉시 실행 가능한 작업`: 문제, 범위, write scope, verification 요약을 정리해 `issue-to-exec-plan`으로 넘김
+- intake 단계에서 사용자가 취소했거나, 범위 밖 요청이거나, canonical source가 없어 실행을 계속하지 않기로 결정했다면 `Rejected` close-out reason을 함께 남긴다.
 
 ## Standard Commands
 
@@ -57,11 +58,13 @@ find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort
 
 - 어떤 source of truth 문서를 읽었는지
 - 최종 route: `대화`, `모호한 요청`, `즉시 실행 가능한 작업`
+- intake 단계에서 실행을 종료했다면 terminal close-out reason: `conversation-only`, `cancelled`, `out-of-scope`, `missing-canonical-source`
 - 남아 있는 ambiguity signal 또는 제거된 ambiguity 근거
 - 다음 행동
-  - `대화`: 답변만 제공하고 종료
+  - `대화`: 답변만 제공하고 `conversation-only`로 종료
   - `모호한 요청`: `ambiguity-interview`
   - `즉시 실행 가능한 작업`: `issue-to-exec-plan`
+  - intake에서 종료: `Rejected` close-out reason과 종료 근거
 - `즉시 실행 가능한 작업`이 아니면 왜 issue/exec plan을 만들지 않았는지
 
 ## Forbidden Shortcuts
@@ -106,7 +109,8 @@ Route: `모호한 요청`
 route에 따라 아래처럼 넘긴다.
 
 - `대화`
-  - 답변만 제공하고 종료
+  - 답변만 제공
+  - terminal close-out: `conversation-only`
 - `모호한 요청`
   - 남아 있는 ambiguity signal 목록
   - source of truth로 이미 해소한 내용
@@ -117,3 +121,7 @@ route에 따라 아래처럼 넘긴다.
   - write scope
   - verification 초안
   - 다음 단계: `issue-to-exec-plan`
+- `Rejected` close-out
+  - canonical close-out reason
+  - intake 단계에서 실행을 종료하는 근거
+  - issue, exec plan, 파일 편집을 시작하지 않았다는 점

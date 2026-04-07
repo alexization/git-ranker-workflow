@@ -72,7 +72,7 @@
 - `find .codex/skills -maxdepth 2 -type f | sort`
   - 결과: `.codex/skills/request-intake/SKILL.md`, `.codex/skills/ambiguity-interview/SKILL.md`가 registry 문서와 함께 기대 경로에 생성된 것을 확인했다.
 - `sed -n '1,260p' .codex/skills/request-intake/SKILL.md`
-  - 결과: route classification, required evidence, forbidden shortcuts, example input/output, `issue-to-exec-plan` handoff가 포함된 것을 확인했다.
+  - 결과: route classification, `Rejected` close-out reason 기록, required evidence, forbidden shortcuts, example input/output, `issue-to-exec-plan` handoff가 포함된 것을 확인했다.
 - `sed -n '1,280p' .codex/skills/ambiguity-interview/SKILL.md`
   - 결과: blocker 중심 질문 규칙, `Planned`/`Blocked`/`Rejected` exit summary, canonical close-out reason 참조, example interview output이 포함된 것을 확인했다.
 - `sed -n '1,220p' .codex/skills/authoring-rules.md`
@@ -91,6 +91,8 @@
   - 결과: `request-intake`는 "랭킹 화면 좀 개선해줘"를 `모호한 요청`으로 분류하고 `ambiguity-interview` handoff를 남길 수 있었고, `ambiguity-interview`는 multi-repo 요청을 primary repo 질문 하나로 줄여 `Planned` summary 예시를 만들 수 있었다.
 - `git diff --check`
   - 결과: whitespace 또는 conflict marker 문제 없이 통과했다.
+- `gh api repos/alexization/git-ranker-workflow/pulls/48/comments`
+  - 결과: automated review가 `request-intake`의 `Rejected` close-out 누락을 지적했고, skill output과 handoff에 terminal close-out reason 기록을 추가해 정책과 맞췄다.
 
 ## Evidence
 
@@ -111,7 +113,8 @@
   - blocking finding 없음
   - non-blocking note였던 `api-contract-sync` 추천 순서 문구는 조건부 hook으로 다시 정리했다.
 - Evidence:
-  - reviewer는 request routing policy, workflow governance, dual-agent review policy, exec plan, changed skill 문서를 기준으로 scope drift, policy contradiction, verification mismatch 여부를 검토했고 `approved` verdict를 남겼다.
+- reviewer는 request routing policy, workflow governance, dual-agent review policy, exec plan, changed skill 문서를 기준으로 scope drift, policy contradiction, verification mismatch 여부를 검토했고 `approved` verdict를 남겼다.
+- 후속 PR review에서 `request-intake`의 `Rejected` close-out 누락이 지적됐고, 이번 수정으로 `conversation-only`, `cancelled`, `out-of-scope`, `missing-canonical-source` 기록 규칙을 skill output에 반영했다.
 
 ## Risks or Blockers
 
