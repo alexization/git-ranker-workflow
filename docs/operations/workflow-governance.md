@@ -11,7 +11,7 @@
 ## stable source of truth의 task ID 규칙
 
 - `docs/product/`, `docs/exec-plans/`, GitHub Issue/PR 본문, baseline이나 historical snapshot처럼 tracking이 본질인 문서는 work item ID를 직접 써도 된다.
-- `docs/architecture/`, `docs/operations/`, `docs/domain/`, `docs/reliability/`, `docs/security/`, `docs/quality-score/` 같은 stable source of truth 문서에는 future work나 follow-up 설명을 위해 직접적인 work item ID를 남기지 않는다.
+- `docs/architecture/`, `docs/operations/`, `docs/product/` 같은 stable source of truth 문서에는 future work나 follow-up 설명을 위해 직접적인 work item ID를 남기지 않는다.
 - stable 문서에서 후속 확장을 가리킬 때는 task ID 대신 정책, registry, skill pack, guardrail 같은 자산 이름을 쓴다.
 - task 완료 시 stable 문서에 임시로 넣었던 work item ID는 제거하거나 서술형 이름으로 치환한다.
 - Issue ID 형식, 브랜치명 규칙처럼 식별자 형식 자체를 설명하는 문맥은 예외다.
@@ -35,7 +35,6 @@
 - active exec plan이 생기면 구현 전 [../architecture/context-pack-registry.md](../architecture/context-pack-registry.md)에서 primary context pack 하나를 고른다.
 - 모든 pack은 required docs만 먼저 읽고, optional docs는 issue, exec plan, hot file 탐색이 trigger를 줄 때만 연다.
 - 서로 다른 pack의 required docs까지 동시에 필요해지면 ad-hoc으로 pack을 합치지 말고 issue 분해 또는 exec plan 갱신을 먼저 한다.
-- `docs/references/`와 generated snapshot은 default context가 아니다. 현재 source of truth가 부족하거나 생성 계약을 확인할 때만 연다.
 - target repo entry 문서나 worktree가 없으면 `Context Ready`를 선언하지 않고 `Blocked` 또는 준비 작업으로 되돌린다.
 
 ## Tool Boundary 규칙
@@ -76,17 +75,14 @@
 
 하네스 관련 PR에서는 가능하면 아래 증거를 남긴다.
 
-- 명령 실행 결과 요약 또는 artifact 위치
+- 명령 실행 결과 요약 또는 verification report 위치
 - verification report 최소 필드: contract profile, command별 status, 핵심 evidence, failure summary, next action
 - review evidence 최소 필드: implementer, reviewer, reviewer input, verdict, blocking finding 또는 no-blocking note
 - reviewer pool을 썼다면 final verdict owner와 추가 reviewer 또는 reviewer focus도 함께 남긴다
 - feedback evidence 최소 필드: stage, failure class, promotion decision, follow-up asset 또는 `no new guardrail` 이유, 핵심 evidence
-- 브라우저 증거: screenshot, trace, video
-- 로그 증거: LogQL 결과 또는 로그 요약
-- 메트릭 증거: PromQL 결과 또는 지표 캡처
 - 문서 업데이트: source of truth 반영 여부
 
-문서 전용 Issue에서는 브라우저, 로그, 메트릭 증거가 필수는 아니다. 대신 어떤 문서를 바꿨고 무엇으로 검증했는지를 남긴다.
+문서 전용 Issue에서는 어떤 문서를 바꿨고 무엇으로 검증했는지를 남긴다.
 
 ## 브랜치와 슬러그 규칙
 
@@ -163,23 +159,6 @@
 - 모호한 선택지가 여러 개면 [docs/product/work-item-catalog.md](../product/work-item-catalog.md)의 기본 결정을 따른다.
 - 실행 중 예상치 못한 dirty change가 있으면 되돌리지 말고 영향 여부만 확인한다.
 
-## `.artifacts/` 보관 규칙
-업 증거는 기본적으로 `.artifacts/<task-slug>/`
-작아래에 남긴다.
-
-권장 구조:
-
-- `.artifacts/<task-slug>/browser/`
-- `.artifacts/<task-slug>/logs/`
-- `.artifacts/<task-slug>/metrics/`
-- `.artifacts/<task-slug>/summary.md`
-
-보관 원칙:
-
-- 산출물은 로컬 증거로 취급하고 git에는 커밋하지 않는다
-- exec plan 또는 PR에는 산출 위치와 핵심 요약만 남긴다
-- 문서 전용 작업은 `.artifacts/` 없이 명령 결과 요약만 남겨도 된다
-
 ## 공통 Definition of Done
 
 각 작업은 아래 항목을 최대한 충족해야 한다.
@@ -191,9 +170,3 @@
 - source of truth 문서가 함께 업데이트되었거나, 업데이트 불필요 사유가 명시되어 있다
 - stable source of truth 문서에 남긴 임시 work item ID가 있다면 close-out 전에 제거되었거나 planning/history 문서로 이동했다
 - 동일 작업이 반복될 가능성이 높다면 skill화 여부가 검토되었거나, 아직 만들지 않는 이유가 남아 있다
-
-하네스 관련 작업은 아래 항목도 추가로 본다.
-
-- 브라우저, 로그, 메트릭 중 이번 PR에서 다룬 신호가 무엇인지 명확하다
-- 증거 산출 위치가 정해져 있다
-- 실패 시 어떤 루프로 다시 수정할지 문서화되어 있다

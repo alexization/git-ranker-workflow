@@ -15,17 +15,11 @@
 ## 디렉터리 맵
 
 - [docs/architecture](architecture/README.md): 저장소 구조, cross-repo 경계, 문서 배치 규칙
-- [docs/domain](domain/README.md): 도메인 규칙과 계약 설명
 - [docs/product](product/README.md): 로드맵, 작업 카탈로그, 단계별 우선순위
 - [docs/operations](operations/README.md): 작업 운영 규칙, evidence, 실행 runbook
-- [docs/reliability](reliability/README.md): 장애 대응과 장기 검증 루프
-- [docs/security](security/README.md): 보안 정책과 경계
-- [docs/quality-score](quality-score/README.md): readiness와 품질 점수 기록
 - [docs/exec-plans](exec-plans/README.md): Issue 단위 실행 문서
-- [docs/generated](generated/README.md): 생성 산출물
-- [docs/references](references/README.md): 참고 자료와 과거 문서
 
 ## 우선순위
 
-- 역사 roadmap 문서는 이관 전 기준과 배경을 보관하는 참고 자료다.
-- 현재 작업 지시와 운영 기준은 `docs/` 아래 문서를 우선한다.
+- 현재 workflow는 Harness control plane 문서만 유지한다.
+- 앱 동작과 계약의 canonical source는 각 앱 저장소의 `AGENTS.md`, `README.md`, 코드, 테스트를 우선한다.

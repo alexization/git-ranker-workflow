@@ -1,5 +1,2 @@
 .gitignore
 .idea/
-.artifacts/*
-!.artifacts/.gitkeep
-runtime/.env

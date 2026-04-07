@@ -46,7 +46,6 @@
 - Control-plane artifacts:
   - `docs/exec-plans/active/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
   - `docs/exec-plans/completed/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
-  - `.artifacts/2026-04-07-grw-17-failure-to-guardrail-feedback-loop/` 필요 시
 - Explicitly forbidden:
   - sibling app repo code write
   - `.github/` template 구조 변경

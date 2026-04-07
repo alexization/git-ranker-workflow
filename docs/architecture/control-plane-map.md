@@ -6,14 +6,11 @@
 
 | 항목 | 공식 위치 | 설명 |
 | --- | --- | --- |
-| 작업 운영 규칙 | `docs/operations/` | Issue/PR 규칙, evidence, 아티팩트 보관 규칙 |
+| 컨트롤 플레인 구조 | `docs/architecture/` | 하네스 구성요소, 상태 전이, context pack 정의 |
+| 작업 운영 규칙 | `docs/operations/` | Issue/PR 규칙, evidence, close-out 규칙 |
 | 실행 순서와 backlog | `docs/product/` | 단계별 우선순위와 작업 카탈로그 |
 | 실행 문서 | `docs/exec-plans/` | 현재 작업 계획과 완료 기록 |
-| 도메인 규칙 | `docs/domain/` | 점수, 티어, API 계약, 흐름 설명 |
-| 품질 기준선 | `docs/quality-score/` | readiness 점수와 상태표 |
-| 생성 산출물 | `docs/generated/` | OpenAPI, export snapshot 같은 기계 생성 결과 |
-| 참고 자료 | `docs/references/` | 외부 자료, 이관 전 역사 문서, 임시 참고 링크 |
-| 작업 증거 | `.artifacts/<task-slug>/` | 브라우저, 로그, 메트릭, 요약 결과 |
+| 앱별 canonical source | 각 앱 저장소 | `AGENTS.md`, `README.md`, 코드, 테스트, 저장소별 계약 문서 |
 
 ## 읽기 우선순위
 
@@ -22,11 +19,11 @@
 3. 공통 운영 규칙: `docs/operations/workflow-governance.md`
 4. 실행 순서와 작업 카탈로그: `docs/product/*.md`
 5. 해당 작업의 exec plan: `docs/exec-plans/active/*.md` 또는 `docs/exec-plans/completed/*.md`
-6. 도메인/운영 상세 문서
+6. 앱 저장소 엔트리 문서와 해당 코드/테스트
 
 ## 이관 원칙
 
-- `docs/references/git-ranker-harness-issue-pr-roadmap.md`는 초기 분해를 보관하는 역사 문서다.
-- 현재 계획 source of truth는 `docs/product/`와 `docs/exec-plans/`에 둔다.
-- 이후 작업 지시는 원칙적으로 `docs/product/`, `docs/operations/`, `docs/exec-plans/`에서 읽는다.
+- 현재 control plane source of truth는 `docs/architecture/`, `docs/operations/`, `docs/product/`, `docs/exec-plans/`로 한정한다.
+- readiness/history/generated/runtime 전용 자산은 현재 Harness 범위에 포함하지 않는다.
+- 앱 동작 설명이 필요하면 workflow 복제 문서 대신 대상 저장소의 문서와 코드를 직접 읽는다.
 - 새 문서가 생기면 이 구조를 깨지 않도록 가장 가까운 목적 디렉터리에 추가한다.
