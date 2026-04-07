@@ -296,4 +296,8 @@ reviewer에게 넘길 때는 최소한 아래 입력이 함께 있어야 한다.
 
 이 입력은 [dual-agent-review-policy.md](dual-agent-review-policy.md)의 `Reviewer Minimum Context`와 동일한 handoff surface다.
 
+single reviewer뿐 아니라 session-isolated reviewer pool을 쓸 때도 이 handoff surface를 그대로 fan-out한다. role prompt는 이 surface 위에 추가되는 focus일 뿐, minimum context를 없애거나 final verdict owner의 확인 책임을 덜어내는 근거가 아니다.
+
+각 reviewer는 자기 역할에 필요한 subset만 읽을 수 있지만, final verdict owner는 latest verification report와 reviewer finding을 같은 revision 기준으로 정렬해야 한다.
+
 이 입력이 비어 있으면 review 단계로 넘어간 것으로 보지 않는다.

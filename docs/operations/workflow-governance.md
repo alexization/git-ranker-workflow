@@ -79,6 +79,7 @@
 - 명령 실행 결과 요약 또는 artifact 위치
 - verification report 최소 필드: contract profile, command별 status, 핵심 evidence, failure summary, next action
 - review evidence 최소 필드: implementer, reviewer, reviewer input, verdict, blocking finding 또는 no-blocking note
+- reviewer pool을 썼다면 final verdict owner와 추가 reviewer 또는 reviewer focus도 함께 남긴다
 - feedback evidence 최소 필드: stage, failure class, promotion decision, follow-up asset 또는 `no new guardrail` 이유, 핵심 evidence
 - 브라우저 증거: screenshot, trace, video
 - 로그 증거: LogQL 결과 또는 로그 요약
@@ -110,6 +111,7 @@
 - PR의 `6) Verification Contract`는 카테고리별 section 아래에 check별 block 형식으로 작성한다.
 - 성공한 검증은 최종 상태와 핵심 evidence만 짧게 적고, 실패, 재시도, 예외만 상세히 남긴다.
 - PR의 `7) Independent Review`는 [dual-agent-review-policy.md](dual-agent-review-policy.md)의 reviewer minimum context와 verdict vocabulary를 따른다.
+- independent review는 단일 reviewer 또는 session-isolated reviewer pool로 수행할 수 있다. 외부 reviewer runtime이 불안정하면 same-model reviewer pool을 기본 fallback으로 사용한다. reviewer pool을 쓰더라도 final verdict owner는 한 명이어야 하며, evidence block은 하나의 canonical verdict로 집계한다.
 - PR의 `9) Feedback / Guardrail Follow-up`는 [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)와 [guardrail-ledger-template.md](guardrail-ledger-template.md)의 vocabulary와 최소 필드를 따른다.
 - 생성 직후에는 `gh issue view --json body` 또는 `gh pr view --json body`로 본문이 예상한 줄바꿈과 섹션을 유지하는지 확인한다.
 - Issue template은 최소한 `문제`, `왜 지금`, `범위/비범위`, `write scope`, `context source`, `verification plan`, `open questions`를 포함해야 한다.
@@ -126,7 +128,7 @@
 2. 대상 저장소의 `develop` 최신 상태를 기준으로 worktree 또는 branch를 만든다.
 3. body file을 준비한 뒤 `gh issue create --body-file ...`로 대상 저장소 이슈를 만든다.
 4. 이슈 번호를 브랜치명과 exec plan에 연결한다.
-5. 작업 후 latest verification report를 만들고, reviewer minimum context를 준비한 뒤 independent review를 먼저 수행한다.
+5. 작업 후 latest verification report를 만들고, reviewer minimum context를 준비한 뒤 independent review를 먼저 수행한다. reviewer pool을 쓰면 공통 handoff surface를 각 reviewer에 fan-out하되, 역할별 focus에 맞는 subset만 줄 수 있고 final verdict owner 하나를 남긴다.
 6. PR body file에 검증 결과, independent review 결과, 문서 반영 여부, 남은 리스크를 먼저 채운다.
 7. 사용자가 draft를 명시적으로 요청했거나, scope-complete 전 blocker 공유가 필요하면 draft PR을 연다. 그렇지 않다면 `gh pr create --base develop --body-file ...`로 open PR을 연다.
 8. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
@@ -152,6 +154,8 @@
 - network나 escalation이 필요하면 목적과 범위를 exec plan 또는 최종 close-out에 남긴다.
 - verification failure가 나면 registry의 retry budget 안에서만 repair loop를 돌리고, budget 초과나 missing canonical source는 `Blocked` 또는 후속 planning으로 넘긴다.
 - review 단계에 들어가기 전 latest verification report와 reviewer minimum context를 준비한다.
+- reviewer pool을 쓰더라도 reviewer별로 다른 최소 입력을 임의 정의하지 않는다. 역할 프롬프트는 focus를 더할 수 있어도 minimum context를 줄일 수는 없다.
+- same-model reviewer를 쓰더라도 implementer와 reviewer의 세션, prompt, output ownership을 섞지 않는다.
 - 사용자가 다르게 요청하지 않았다면 independent review를 끝낸 뒤 PR을 publish한다.
 - source of truth 문서를 함께 업데이트하거나, 업데이트가 불필요한 이유를 남긴다.
 - 검증 명령과 최종 상태를 반드시 남기고, 실패나 예외가 있었다면 요약을 남긴다.
@@ -160,8 +164,8 @@
 - 실행 중 예상치 못한 dirty change가 있으면 되돌리지 말고 영향 여부만 확인한다.
 
 ## `.artifacts/` 보관 규칙
-
-작업 증거는 기본적으로 `.artifacts/<task-slug>/` 아래에 남긴다.
+업 증거는 기본적으로 `.artifacts/<task-slug>/`
+작아래에 남긴다.
 
 권장 구조:
 

@@ -110,6 +110,17 @@
 - 산출물: feedback loop policy, guardrail ledger template
 - 검증: 과거 실패 사례 2~3개를 분류해 ledger에 적합한지 확인
 
+### GRW-21. same-model reviewer pool 기본값 정렬
+
+- 저장소: `git-ranker-workflow`
+- 선행조건: `GRW-16`
+- 권장 write scope: `docs/operations`, `docs/architecture`, `docs/product`, `docs/exec-plans/`
+- 기본 결정: 독립 review의 핵심은 model diversity보다 session/context/prompt isolation이다. 외부 reviewer runtime이 불안정하면 same-model session-isolated reviewer pool을 기본 fallback으로 쓴다.
+- 핵심 작업: same-model reviewer pool 허용 조건, role prompt focus, reviewer minimum context fan-out, verdict aggregation 규칙을 source of truth에 반영한다.
+- 비범위: 외부 MCP timeout 자체의 인프라 수정, 자동 PR review bot 구현, backend/frontend 앱 코드 변경
+- 산출물: updated review policy와 architecture/product hook, `GRW-21` exec plan
+- 검증: role prompt, reviewer pool, verdict aggregation 관련 hook grep과 independent review evidence 확인
+
 ### GRW-18. workflow repo pilot issue로 새 흐름 1회 검증
 
 - 저장소: `git-ranker-workflow`
@@ -150,7 +161,7 @@
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-15`, `GRW-16`
 - 권장 write scope: `.codex/skills/` 하위만
-- 기본 결정: 구현 완료 선언보다 검증과 review handoff를 우선한다. 저장소별 명령은 contract registry가 canonical source다.
+- 기본 결정: 구현 완료 선언보다 검증과 review handoff를 우선한다. 저장소별 명령은 contract registry가 canonical source고, review runtime 기본값은 same-model session-isolated reviewer pool을 우선 재사용한다.
 - 핵심 작업: `verification-contract-runner`, `repair-loop-triage`, `reviewer-handoff` skill 작성
 - 비범위: 테스트 프레임워크 추가
 - 산출물: skill 문서 3개
