@@ -83,11 +83,11 @@ git -C git-ranker-client status --short
 
 ## Example Input
 
-- Issue: `GRC-04`
-- Goal: ranking read Playwright harness
+- Issue: `<issue-id>`
+- Goal: route-level E2E harness
 - Known write scope:
-  - `git-ranker-client/playwright.config.*`
-  - `git-ranker-client/tests/**`
+  - `<target-repo>/<config-file>`
+  - `<target-repo>/<test-dir>/**`
   - 최소 test hook 후보 파일
   - workflow 문서의 artifact 규칙
 
@@ -96,12 +96,12 @@ git -C git-ranker-client status --short
 ```md
 | owner | repo | goal | write set | handoff |
 | --- | --- | --- | --- | --- |
-| main | git-ranker-client | Playwright base config | `playwright.config.ts`, package script | config green 후 spec owner로 전달 |
-| agent-a | git-ranker-client | ranking read spec | `tests/ranking-read.spec.ts` | config merge 기준에 맞춰 spec 작성 |
-| agent-b | git-ranker-workflow | artifact/doc 연결 | `docs/exec-plans/...`, workflow artifact note | spec path와 artifact path 확인 후 문서 반영 |
+| main | `<target-repo>` | base config | `<config-file>`, package script | config green 후 spec owner로 전달 |
+| agent-a | `<target-repo>` | route spec | `<test-spec-file>` | config merge 기준에 맞춰 spec 작성 |
+| agent-b | `git-ranker-workflow` | artifact/doc 연결 | `docs/exec-plans/...`, workflow artifact note | spec path와 artifact path 확인 후 문서 반영 |
 ```
 
-이 예시에서 `playwright.config.ts`는 main owner만 수정한다. config가 고정되기 전에는 spec과 workflow artifact 문서를 병렬로 밀어붙이지 않는다.
+이 예시에서 `<config-file>`은 main owner만 수정한다. config가 고정되기 전에는 spec과 workflow artifact 문서를 병렬로 밀어붙이지 않는다.
 
 ## Handoff
 

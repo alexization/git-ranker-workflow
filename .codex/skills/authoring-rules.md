@@ -10,6 +10,14 @@
 - 후속 에이전트가 같은 절차를 재사용할 수 있을 정도로만 구체적으로 쓴다.
 - 구조보다 판단 기준과 금지 사항을 우선 명확히 쓴다.
 
+## Policy / Skill Boundary
+
+- 상태 이름, taxonomy, stop condition, evidence minimum, close-out reason 같은 canonical rule은 `docs/` 아래 source of truth가 소유한다.
+- skill은 그 rule을 "어떤 순서로 적용하고 무엇을 handoff할지"만 operationalize한다.
+- skill이 policy 표나 vocabulary를 길게 다시 쓰기 시작하면 중복 신호로 보고 줄인다.
+- 새 규칙이 필요하면 skill에서 발명하지 말고 policy 문서를 먼저 갱신한 뒤 skill을 맞춘다.
+- `.codex/skills/README.md`와 `authoring-rules.md` 같은 관리 문서는 roadmap task ID나 진행 상태를 추적하지 않는다.
+
 ## Required Coverage
 
 각 `SKILL.md`는 섹션 이름이 완전히 같을 필요는 없지만, 아래 항목을 반드시 다뤄야 한다.
@@ -28,6 +36,7 @@
 - 서두에서 관련 source of truth 문서를 먼저 읽게 한다.
 - 모든 skill에 같은 boilerplate `Read First` 섹션을 반복하지 않는다. 실제로 이 skill에서만 꼭 읽어야 하는 문서가 있을 때만 적는다.
 - `workflow governance`, `authoring rules` 같은 공통 문서는 필요할 때 precondition이나 relevant docs로 간단히 언급하고, 매 skill마다 기계적으로 복붙하지 않는다.
+- policy 표나 종료 조건 목록을 통째로 복사하지 말고, canonical 문서를 참조한 뒤 skill에 필요한 operational hook만 남긴다.
 - 명령은 실제로 반복 실행 가능한 수준으로 구체적으로 적는다.
 - 증거 규칙은 "가능하면"이 아니라 "최소 무엇은 남겨야 한다" 수준으로 적는다.
 - 금지 사항은 모호하게 쓰지 말고, 어떤 우회를 막는지 분명히 적는다.
@@ -60,6 +69,7 @@ description: One-line trigger and purpose summary.
 - 현재 Issue의 write scope를 넘는 파일 변경을 skill에서 정당화하지 않는다.
 - "언젠가 필요할 수도 있는" 절차까지 미리 넣지 않는다.
 - source of truth 문서 업데이트가 필요한 경우, 해당 문서 반영 또는 반영 불필요 사유를 함께 남긴다.
+- registry나 management 문서에 현재 task ID, 진행 상태, 후속 roadmap 순서를 직접 남기지 않는다.
 
 ## Review Checklist
 
