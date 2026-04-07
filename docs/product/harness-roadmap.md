@@ -29,7 +29,7 @@
 3. 실행 가능한 작업만 exec plan으로 고정하고, 저장소와 write scope를 명시한다.
 4. task type에 맞는 context pack만 Agent에 제공한다.
 5. Implementer Agent는 허용된 도구 경계 안에서만 작업한다.
-6. 정해진 verification contract의 명령이 통과해야 다음 단계로 넘어간다.
+6. verification contract registry에 정의된 명령이 통과해야 다음 단계로 넘어간다.
 7. Reviewer Agent는 구현 diff와 검증 결과를 검토하고, 통과 또는 수정 요청을 결정한다.
 8. 실패한 작업은 feedback ledger에 남기고 다음 가드레일 후보로 전환한다.
 
