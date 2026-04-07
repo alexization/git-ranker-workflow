@@ -17,7 +17,7 @@
 
 - 현재 planning source of truth는 [docs/product/harness-roadmap.md](../product/harness-roadmap.md), [docs/product/work-item-catalog.md](../product/work-item-catalog.md), [docs/exec-plans/](../exec-plans/README.md)다.
 - 작업 순서와 backlog는 `docs/product/`가, task별 범위와 검증은 `docs/exec-plans/`가 맡는다.
-- 이관 전 전체 분해 문서와 초기 아이디어는 `docs/references/`에 둔다. 역사 문서는 현재 작업 지시를 내리는 planning source가 아니다.
+- 현재 control plane은 별도 history/reference 트리를 유지하지 않는다. 앱 동작의 canonical source는 각 앱 저장소 문서와 코드/테스트다.
 
 ## System Components
 
@@ -38,7 +38,7 @@
 | Request record | 사용자 요청과 초기 분류 결과 | Issue 본문 또는 작업 대화 |
 | Exec plan | scope, non-scope, write scope, verification contract | `docs/exec-plans/` |
 | Context pack | 이번 작업에 허용된 최소 문서와 write scope | exec plan과 후속 policy |
-| Verification report | 실행 명령, 최종 상태, 핵심 evidence, 실패/예외 요약 | exec plan, PR 본문, `.artifacts/` 필요 시 |
+| Verification report | 실행 명령, 최종 상태, 핵심 evidence, 실패/예외 요약 | exec plan, PR 본문 |
 | Review verdict | reviewer 승인 또는 수정 요청 | PR 본문, review comment, exec plan 요약 |
 | Feedback entry | 반복 실패와 guardrail 승격 여부 | exec plan, 후속 policy 또는 ledger |
 

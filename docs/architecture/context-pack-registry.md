@@ -10,9 +10,9 @@
 - 모든 pack은 공통 base context를 먼저 읽고, 그 다음 pack별 required docs를 연다.
 - optional docs는 issue, exec plan, hot file 탐색이 명시한 trigger가 있을 때만 연다.
 - 다른 pack의 required docs까지 필요해지면 임의로 pack을 합치지 않고 issue를 쪼개거나 exec plan을 갱신한다.
-- context pack selection만으로 tool/network/escalation 권한이 자동으로 열리지는 않는다. 구현 전에는 operations의 tool boundary policy로 access class를 따로 잠근다.
-- `docs/references/`와 generated snapshot은 default context가 아니다. 현재 source of truth가 부족하거나 생성 계약을 확인할 때만 연다.
+- workflow 저장소는 현재 Harness control plane 문서만 유지한다. 앱 동작과 계약의 canonical source는 각 앱 저장소의 엔트리 문서와 코드/테스트다.
 - target repo의 entrypoint 문서나 worktree가 없으면 `Context Ready`를 선언하지 않는다. 이 경우 worktree 준비 또는 `Blocked` 판단이 먼저다.
+- primary repo, task type, write scope가 하나로 잠기지 않으면 `request-routing` 또는 planning으로 되돌린다.
 
 ## Common Base Context
 
@@ -32,28 +32,11 @@
 - primary repo가 `git-ranker-workflow`가 아니면 target repo의 root entry 문서를 먼저 연다. 기본값은 `AGENTS.md`가 있으면 그것을, 없으면 `README.md`를 entrypoint로 사용한다.
 - 현재 issue나 exec plan이 이미 특정 source of truth를 named input으로 적었다면, 해당 문서는 base context 다음 순서로 연다.
 
-## Surface Cue Selector
-
-backend/frontend pack은 issue에 적힌 surface cue에 따라 workflow 저장소의 domain/operations 문서를 추가한다. 아래 표는 eager load가 아니라 "어떤 cue가 보일 때 어떤 문서를 연다"는 selector다.
-
-| Surface cue | 우선 열 문서 | 보조 문서 |
-| --- | --- | --- |
-| ranking API, pagination, tier filter, ranking page | [../domain/ranking-read-flow.md](../domain/ranking-read-flow.md) | [frontend-route-map.md](frontend-route-map.md), [../domain/frontend-data-flows.md](../domain/frontend-data-flows.md) |
-| user profile, user detail modal, auth callback, locale route | [frontend-route-map.md](frontend-route-map.md) | [../domain/frontend-data-flows.md](../domain/frontend-data-flows.md), [../operations/frontend-runtime-reference.md](../operations/frontend-runtime-reference.md) |
-| score, refresh, batch score rebuild, activity stats | [../domain/scoring.md](../domain/scoring.md) | [../domain/tiering.md](../domain/tiering.md), [../operations/observability-reference.md](../operations/observability-reference.md) |
-| tier, percentile, rank recomputation, ranking recalculation | [../domain/tiering.md](../domain/tiering.md) | [../domain/ranking-read-flow.md](../domain/ranking-read-flow.md), [../operations/observability-reference.md](../operations/observability-reference.md) |
-| badge, SVG, cache header, preview badge | [../domain/badge-serving-flow.md](../domain/badge-serving-flow.md) | [../operations/observability-reference.md](../operations/observability-reference.md) |
-| env, CSP, analytics, image host, frontend build/runtime | [../operations/frontend-runtime-reference.md](../operations/frontend-runtime-reference.md) | [frontend-route-map.md](frontend-route-map.md) |
-| logs, metrics, actuator, Prometheus, Loki, evidence query | [../operations/observability-reference.md](../operations/observability-reference.md) | [../operations/workflow-verification-runtime.md](../operations/workflow-verification-runtime.md) |
-| OpenAPI, generated schema, export snapshot | [../generated/README.md](../generated/README.md) | 생성 명령을 설명하는 source 문서와 active exec plan |
-
-하나의 cue에 해당하는 문서를 모두 여는 것이 기본은 아니다. primary pack이 요구하는 최소 문서 한두 개를 먼저 열고, 남는 ambiguity가 있을 때만 보조 문서를 추가한다.
-
 ## Task-To-Context Mapping
 
 | Task type | Primary repo | Primary pack | 기본 목표 | 기본 금지 |
 | --- | --- | --- | --- | --- |
-| `workflow 문서 수정` | `git-ranker-workflow` | `workflow-docs` | harness 문서, template, skill, exec plan을 같은 용어와 규칙으로 수정 | sibling app repo code tree, 역사 문서 eager load |
+| `workflow 문서 수정` | `git-ranker-workflow` | `workflow-docs` | harness 문서, template, skill, exec plan을 같은 용어와 규칙으로 수정 | sibling app repo code tree, retired 문서군 eager load |
 | `backend 수정` | `git-ranker` | `backend-change` | backend 코드, 테스트, 스크립트, 설정을 한 저장소 범위 안에서 수정 | frontend 전체 pack, unrelated workflow docs eager load |
 | `frontend 수정` | `git-ranker-client` | `frontend-change` | client route, UI, state, config를 한 저장소 범위 안에서 수정 | backend 내부 구현 탐색, unrelated workflow docs eager load |
 | `cross-repo planning` | `git-ranker-workflow` | `cross-repo-planning` | 여러 저장소 작업을 issue/PR 단위로 분해하고 contract만 정렬 | app code 구현 착수, multi-repo code diff 동시 작성 |
@@ -79,13 +62,12 @@ Optional docs:
 
 - primary 문서에서 직접 링크한 adjacent source of truth
 - stage semantics를 바꾸는 경우 [harness-system-map.md](harness-system-map.md)
-- 배경 비교가 꼭 필요할 때만 `docs/references/*`
 
 Forbidden context:
 
 - sibling `git-ranker`, `git-ranker-client` 코드 트리를 "혹시 필요할까" 수준으로 먼저 여는 것
-- 현재 issue와 무관한 domain/runtime 문서를 전부 읽는 것
-- generated 산출물을 canonical policy처럼 취급하는 것
+- 현재 issue와 무관한 앱 동작 설명이나 운영 세부사항을 workflow에 새로 복제하는 것
+- 현재 control plane 범위 밖으로 정리된 retired 디렉터리를 근거로 삼는 것
 
 Hot file exploration:
 
@@ -103,26 +85,26 @@ Required docs:
 
 - target repo entrypoint 문서: `AGENTS.md`가 있으면 우선, 없으면 `README.md`
 - active exec plan과 issue에 적힌 backend write scope
-- `Surface Cue Selector`에서 현재 issue와 가장 직접적으로 맞는 workflow 문서 최소 1개
+- target repo의 build/test/contract entrypoint 중 현재 issue가 직접 건드리는 문서나 파일
 
 Optional docs:
 
-- public contract를 바꾸는 경우 consumer-facing workflow 문서 1개
-- observability/runtime evidence가 필요한 경우 [../operations/observability-reference.md](../operations/observability-reference.md) 또는 [../operations/workflow-verification-runtime.md](../operations/workflow-verification-runtime.md)
+- verification, write scope, repair semantics를 다시 확인해야 하면 [../operations/verification-contract-registry.md](../operations/verification-contract-registry.md) 또는 [../operations/tool-boundary-matrix.md](../operations/tool-boundary-matrix.md)
+- 직접 영향 받는 public contract 설명이 target repo에 따로 있으면 해당 문서 1개
 - 같은 surface를 다룬 최근 completed exec plan
 
 Forbidden context:
 
 - frontend route/component/state 전체 pack
 - backend와 무관한 workflow policy 문서 전체 eager load
-- `docs/references/*`를 현재 동작 spec처럼 사용하는 것
+- workflow 저장소 안에 앱 동작 복제 문서를 새 canonical source처럼 취급하는 것
 
 Hot file exploration:
 
-1. issue에 적힌 endpoint, class, package, batch step, env var로 target repo를 `rg -n` 한다.
+1. issue에 적힌 endpoint, class, package, env var, test 이름으로 target repo를 `rg -n` 한다.
 2. entry handler, service, nearest test를 first ring으로 연다.
 3. 필요한 경우 repository, DTO, config처럼 인접한 한 단계만 확장한다.
-4. consumer 영향이 보이면 frontend pack 전체를 열지 말고 contract surface 문서만 추가한다.
+4. consumer 영향이 보이면 workflow 복제 문서를 만들기보다 target repo contract와 exec plan evidence를 먼저 갱신한다.
 
 ### `frontend-change`
 
@@ -134,26 +116,26 @@ Required docs:
 
 - target repo entrypoint 문서: `AGENTS.md`가 있으면 우선, 없으면 `README.md`
 - active exec plan과 issue에 적힌 frontend write scope
-- `Surface Cue Selector`에서 현재 issue와 가장 직접적으로 맞는 workflow 문서 최소 1개
+- target repo의 `package.json`, `README.md`, `.env.example`처럼 현재 issue가 직접 의존하는 entrypoint 문서나 파일
 
 Optional docs:
 
-- route-level 행동을 다루면 [frontend-route-map.md](frontend-route-map.md)와 [../domain/frontend-data-flows.md](../domain/frontend-data-flows.md) 중 필요한 문서만 추가
-- backend contract를 소비하는 UI면 [../domain/ranking-read-flow.md](../domain/ranking-read-flow.md) 또는 generated contract 문서
-- runtime/env 이슈면 [../operations/frontend-runtime-reference.md](../operations/frontend-runtime-reference.md)
+- verification, write scope, repair semantics를 다시 확인해야 하면 [../operations/verification-contract-registry.md](../operations/verification-contract-registry.md) 또는 [../operations/tool-boundary-matrix.md](../operations/tool-boundary-matrix.md)
+- 직접 영향 받는 backend contract를 target repo가 소비하는 위치
+- 같은 surface를 다룬 최근 completed exec plan
 
 Forbidden context:
 
 - backend 내부 service/repository 구현까지 한꺼번에 읽는 것
 - workflow 문서 트리를 근거 없이 전부 여는 것
-- duplicate/legacy route를 canonical route보다 먼저 근거로 삼는 것
+- workflow 저장소 안에 frontend 동작 복제 문서를 새 canonical source처럼 만드는 것
 
 Hot file exploration:
 
 1. issue의 route segment, component 이름, hook 이름, env var로 target repo를 `rg -n` 한다.
 2. page/layout 또는 entry component, data hook/service, nearest test를 first ring으로 연다.
 3. import chain은 한 hop씩만 확장한다.
-4. backend 동작을 알아야 하면 backend 내부 구현 대신 workflow의 contract/domain 문서를 먼저 추가한다.
+4. backend 동작을 알아야 하면 backend 내부 구현보다 backend repo의 공식 contract surface를 먼저 추가한다.
 
 ### `cross-repo-planning`
 
@@ -171,9 +153,8 @@ Required docs:
 
 Optional docs:
 
-- repo별 write scope를 좁히기 위한 domain/runtime 문서
-- background 비교가 필요할 때만 `docs/references/*`
-- machine-generated contract가 canonical input일 때만 [../generated/README.md](../generated/README.md)와 해당 산출물
+- repo별 write scope를 좁히기 위한 manifest, verification entrypoint, 공식 contract 문서
+- verification/reporting semantics를 다시 확인해야 하면 [../operations/verification-contract-registry.md](../operations/verification-contract-registry.md)
 
 Forbidden context:
 
@@ -191,9 +172,9 @@ Hot file exploration:
 
 | 대표 요청 | 선택 pack | 먼저 열 문서 | 나중에 여는 문서 | 열지 않는 문서 |
 | --- | --- | --- | --- | --- |
-| "하네스 정책 문서를 작성한다" | `workflow-docs` | `AGENTS.md`, `docs/README.md`, `PLANS.md`, [../operations/workflow-governance.md](../operations/workflow-governance.md), active exec plan, 관련 product/precedent docs | [harness-system-map.md](harness-system-map.md), 직접 링크된 adjacent docs | sibling app code tree |
-| "ranking API tier filter 버그를 backend에서 수정한다" | `backend-change` | target repo entry docs, active exec plan, [../domain/ranking-read-flow.md](../domain/ranking-read-flow.md) | [../domain/tiering.md](../domain/tiering.md), [../operations/observability-reference.md](../operations/observability-reference.md) | frontend route/component tree |
-| "ranking page pagination 동작을 frontend에서 수정한다" | `frontend-change` | target repo entry docs, active exec plan, [frontend-route-map.md](frontend-route-map.md) 또는 [../domain/frontend-data-flows.md](../domain/frontend-data-flows.md) 중 직접적인 문서 1개 | [../domain/ranking-read-flow.md](../domain/ranking-read-flow.md), [../operations/frontend-runtime-reference.md](../operations/frontend-runtime-reference.md) | backend service/repository internals |
-| "backend와 client 사이 API contract rename 작업을 먼저 분해한다" | `cross-repo-planning` | [control-plane-map.md](control-plane-map.md), [harness-system-map.md](harness-system-map.md), active exec plan, 두 저장소 entry docs | [../generated/README.md](../generated/README.md), 관련 domain 문서 | 두 저장소 code tree의 광범위한 동시 탐색 |
+| "하네스 정책 문서를 정리한다" | `workflow-docs` | `AGENTS.md`, `docs/README.md`, `PLANS.md`, [../operations/workflow-governance.md](../operations/workflow-governance.md), active exec plan, 관련 product/precedent docs | [harness-system-map.md](harness-system-map.md), 직접 링크된 adjacent docs | sibling app code tree |
+| "backend verification command를 정리한다" | `backend-change` | target repo entry docs, active exec plan, backend build/test entrypoint | [../operations/verification-contract-registry.md](../operations/verification-contract-registry.md), target repo contract 문서 | frontend route/component tree |
+| "frontend build contract를 정리한다" | `frontend-change` | target repo entry docs, active exec plan, `package.json` 또는 `.env.example` | [../operations/verification-contract-registry.md](../operations/verification-contract-registry.md), nearest test or config | backend service/repository internals |
+| "backend와 client 사이 작업을 먼저 분해한다" | `cross-repo-planning` | [control-plane-map.md](control-plane-map.md), [harness-system-map.md](harness-system-map.md), active exec plan, 두 저장소 entry docs | verification entrypoint 문서, repo manifest | 두 저장소 code tree의 광범위한 동시 탐색 |
 
-이 시뮬레이션에서 핵심은 "필수 문서 전체를 한 번에 최대화하지 않는다"는 점이다. 필요한 판단이 남아 있으면 selector와 hot file rule을 따라 한 단계씩만 확장한다.
+이 시뮬레이션에서 핵심은 "필수 문서 전체를 한 번에 최대화하지 않는다"는 점이다. 필요한 판단이 남아 있으면 hot file rule을 따라 한 단계씩만 확장한다.

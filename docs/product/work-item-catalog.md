@@ -26,8 +26,8 @@
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-19`
-- 권장 write scope: `docs/product`, `docs/architecture`, `docs/operations`, `.codex/skills/README`, `docs/exec-plans`
-- 기본 결정: 현재 기준 문서는 앞으로 사용할 하네스 흐름만 설명한다. 구현 Agent와 review Agent의 역할 분리를 초기 기준으로 넣는다.
+- 권장 write scope: `docs/product`, `docs/architecture`, `docs/operations`, `.codex/skills/`, `docs/exec-plans`
+- 기본 결정: 현재 기준 문서는 앞으로 사용할 하네스 흐름만 설명한다. 구현 Agent와 review Agent의 역할 분리를 초기 기준으로 넣고, control plane 범위 밖의 readiness/reference/runtime 성격 문서는 현재 source of truth에서 제외한다.
 - 핵심 작업: roadmap, catalog, index, 운영 문서의 방향을 현재 하네스 기준으로 정렬하고 다음 Issue 진입 기준을 고정한다.
 - 비범위: backend/frontend 코드 변경, CI 구현
 - 산출물: 업데이트된 source of truth와 후속 Issue 진입 기준
@@ -59,8 +59,8 @@
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-11`, `GRW-12`
-- 권장 write scope: `docs/architecture`, `docs/domain`, `docs/operations`
-- 기본 결정: 컨텍스트는 task type 기준으로 최소 공개한다. `backend 수정`, `frontend 수정`, `workflow 문서 수정`, `cross-repo planning`은 서로 다른 context pack을 사용한다.
+- 권장 write scope: `docs/architecture`, `docs/operations`, `docs/product`
+- 기본 결정: 컨텍스트는 task type 기준으로 최소 공개한다. `backend 수정`, `frontend 수정`, `workflow 문서 수정`, `cross-repo planning`은 서로 다른 context pack을 사용하고, 앱 동작은 workflow 복제 문서 대신 각 저장소 엔트리 문서와 코드/테스트를 우선 읽는다.
 - 핵심 작업: task type별 필수 문서, 선택 문서, 금지 컨텍스트, hot file 탐색 기준을 정의한다.
 - 비범위: 자동 context loader 구현
 - 산출물: context pack registry, task-to-context mapping 표
@@ -103,7 +103,7 @@
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-12`, `GRW-14`, `GRW-15`, `GRW-16`
-- 권장 write scope: `docs/operations`, `.codex/skills`, 필요 시 `docs/references`
+- 권장 write scope: `docs/operations`, `.codex/skills`
 - 기본 결정: 반복 실패는 반드시 `문서 규칙`, `skill`, `테스트`, `CI`, `template` 중 하나로 승격할지 판단한다.
 - 핵심 작업: 실패 taxonomy, feedback ledger 포맷, 가드레일 후보 승격 규칙, no-op 기준을 정의한다.
 - 비범위: 자동 PR 생성, 자동 복구
@@ -125,7 +125,7 @@
 
 - 저장소: `git-ranker-workflow`
 - 선행조건: `GRW-12`, `GRW-13`, `GRW-14`, `GRW-15`, `GRW-16`
-- 권장 write scope: pilot 대상 문서, `docs/exec-plans`, `.artifacts/` 필요 시
+- 권장 write scope: pilot 대상 문서, `docs/exec-plans`
 - 기본 결정: 첫 pilot은 문서 또는 규칙 변경처럼 브라우저 자동화가 없어도 되는 작업으로 시작한다.
 - 핵심 작업: 실제 Issue 하나를 새 라우팅, context pack, boundary, verification, review, feedback 흐름으로 끝까지 수행한다.
 - 비범위: backend/frontend 기능 개발

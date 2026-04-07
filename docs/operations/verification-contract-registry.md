@@ -2,7 +2,7 @@
 
 이 문서는 [../architecture/harness-system-map.md](../architecture/harness-system-map.md)의 `Verifying`, `Repairing`, `Blocked` semantics를 실제 실행 규약으로 고정한다. [tool-boundary-matrix.md](tool-boundary-matrix.md)가 "어떤 도구를 어디까지 쓸 수 있는가"를 잠근다면, 이 문서는 "무슨 명령을 어떤 증거와 함께 통과해야 다음 상태로 갈 수 있는가"를 잠근다.
 
-관련 운영 규칙은 [workflow-governance.md](workflow-governance.md), workflow runtime 기준은 [workflow-verification-runtime.md](workflow-verification-runtime.md), review verdict 규칙은 [dual-agent-review-policy.md](dual-agent-review-policy.md)를 따른다.
+관련 운영 규칙은 [workflow-governance.md](workflow-governance.md), review verdict 규칙은 [dual-agent-review-policy.md](dual-agent-review-policy.md)를 따른다.
 
 ## Registry Invariants
 
@@ -30,10 +30,11 @@
 
 - `workflow 문서 수정`은 `workflow-docs`를 기본으로 쓴다.
 - `cross-repo planning`은 `cross-repo-planning`을 기본으로 쓴다.
-- workflow 저장소가 runtime, compose, observability wiring을 직접 바꾸면 `workflow-runtime`을 쓴다.
 - `git-ranker` 코드/테스트/설정 변경은 `backend-change`를 쓴다.
 - `git-ranker-client` route/UI/state/config 변경은 `frontend-change`를 쓴다.
 - 하나의 issue에서 둘 이상의 profile이 동시에 필요해지면 contract를 합치지 말고 issue 분해 또는 exec plan 갱신으로 되돌린다.
+
+현재 control plane은 workflow 소유 runtime/orchestration 프로필을 유지하지 않는다. 이런 작업이 다시 범위에 들어오면 그때 별도 contract profile을 추가한다.
 
 ## Contract Profiles
 
@@ -100,37 +101,6 @@ Evidence minimum:
 - impacted repo별로 읽은 entry doc 또는 remote source
 - workflow planning hook 검토 결과
 - `git diff --check` 결과
-
-### `workflow-runtime`
-
-대상:
-
-- `runtime/`, runtime runbook, compose wiring, cross-repo observability/runtime 문서 변경
-
-Required commands:
-
-- `docker compose --env-file runtime/.env.example -f runtime/compose.yaml config`
-- `./runtime/grw-runtime verify`
-
-Conditional commands:
-
-- stack이 기동되어 있지 않으면 `./runtime/grw-runtime start` 후 `verify`를 실행한다.
-- runtime 정리까지 이번 issue의 완료 조건에 포함되면 `./runtime/grw-runtime stop` 결과를 남긴다.
-
-Pass signal:
-
-- compose config 해석이 성공하고, runtime verify가 backend actuator, public API, client root, Prometheus ready, Loki ready를 통과한다.
-
-Blocked triggers:
-
-- sibling repo submodule/worktree가 비어 있어 runtime preflight를 만족할 수 없는 경우
-- Docker, 포트, compose 접근이 현재 task boundary 밖 환경 의존으로 막히는 경우
-
-Evidence minimum:
-
-- config 해석 결과 요약
-- `verify` endpoint 결과 요약
-- 필요 시 `start`/`stop` 실행 여부와 상태
 
 ### `backend-change`
 
@@ -207,7 +177,7 @@ Source notes:
 
 ## Verification Report Shape
 
-verification report는 exec plan, PR 본문, `.artifacts/<task-slug>/summary.md` 중 최소 한 곳에 아래 필드를 남긴다.
+verification report는 exec plan이나 PR 본문 중 최소 한 곳에 아래 필드를 남긴다.
 
 ```md
 ## Verification Report
