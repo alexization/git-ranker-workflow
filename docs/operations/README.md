@@ -9,6 +9,8 @@
 - [tool-boundary-matrix.md](tool-boundary-matrix.md)
 - [verification-contract-registry.md](verification-contract-registry.md)
 - [dual-agent-review-policy.md](dual-agent-review-policy.md)
+- [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)
+- [guardrail-ledger-template.md](guardrail-ledger-template.md)
 - [workflow-verification-runtime.md](workflow-verification-runtime.md)
 - [manual-refresh-flow.md](manual-refresh-flow.md)
 - [daily-batch-flow.md](daily-batch-flow.md)
