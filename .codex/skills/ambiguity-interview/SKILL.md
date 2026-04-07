@@ -60,7 +60,7 @@ sed -n '1,220p' <candidate-source-of-truth>
 - 실제로 사용자에게 던진 blocker 질문
 - interview exit status: `Planned`, `Blocked`, `Rejected`
 - 종료 근거
-  - `Planned`: 고정된 문제/범위/write scope/verification
+  - `Planned`: 고정된 문제/why now/범위/write scope/verification
   - `Blocked`: 어떤 canonical source나 응답이 비어 있는지
   - `Rejected`: `docs/operations/request-routing-policy.md`의 canonical close-out reason 중 무엇을 적용했는지
 
@@ -106,6 +106,7 @@ Interview question
 - Status: `Planned`
 - Primary repo: `git-ranker`
 - Problem: backend 인증 흐름 정리
+- Why Now: backend 인증 이슈 triage 전에 우선순위 근거를 문서화해야 함
 - Non-scope: client UI 수정
 - Next action: `issue-to-exec-plan`
 ```
