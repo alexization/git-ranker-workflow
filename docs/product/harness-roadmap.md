@@ -19,6 +19,7 @@
 - 구현 Agent와 review Agent는 역할을 분리한다.
 - source of truth는 `workflow 중심`으로 유지하되, 앱 동작의 canonical source는 각 앱 저장소 코드와 테스트에 둔다.
 - 새 작업은 항상 exec plan으로 고정한 뒤 시작한다.
+- 사용자가 다르게 요청하지 않으면 PR은 independent review와 feedback evidence를 먼저 채운 뒤 open 상태로 publish한다.
 
 ## 목표 상태
 
