@@ -84,6 +84,9 @@
   - 결과: issue 본문이 섹션과 줄바꿈을 유지한 채 생성된 것을 확인했다.
 - independent review
   - 결과: `Gemini CLI (gemini-2.5-flash)` reviewer가 diff와 touched policy 문서를 검토했고 `approved` verdict를 남겼다. blocking inconsistency는 없고, open-by-default와 pre-PR review semantics가 일관되게 반영됐다고 확인했다.
+- post-PR review repair
+  - 결과: `docs/operations/workflow-governance.md`의 numbered step 7에 blocker-driven draft 예외를 추가해 상단 publish policy와 numbered runbook의 충돌을 해소했다.
+  - 결과: `Gemini CLI (gemini-2.5-flash)` 재검토에서 runbook step과 surrounding policy 사이에 남은 모순이 없다고 확인했다.
 
 ## Evidence
 
@@ -92,6 +95,7 @@
 - publish/review ordering policy 본문
 - hook 문서 갱신 결과
 - independent review evidence
+- post-PR review repair evidence
 - `git diff --check` 결과
 - GitHub issue body render 확인 결과
 

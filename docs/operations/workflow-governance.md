@@ -126,7 +126,7 @@
 4. 이슈 번호를 브랜치명과 exec plan에 연결한다.
 5. 작업 후 latest verification report를 만들고, reviewer minimum context를 준비한 뒤 independent review를 먼저 수행한다.
 6. PR body file에 검증 결과, independent review 결과, 문서 반영 여부, 남은 리스크를 먼저 채운다.
-7. 사용자가 draft를 명시적으로 요청하지 않았다면 `gh pr create --base develop --body-file ...`로 open PR을 연다.
+7. 사용자가 draft를 명시적으로 요청했거나, scope-complete 전 blocker 공유가 필요하면 draft PR을 연다. 그렇지 않다면 `gh pr create --base develop --body-file ...`로 open PR을 연다.
 8. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
 
 ## 문서, SKILL, exec plan의 역할
