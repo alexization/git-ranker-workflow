@@ -10,4 +10,6 @@
 - [verification-contract-registry.md](verification-contract-registry.md)
 - [dual-agent-review-policy.md](dual-agent-review-policy.md)
 - [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)
+- [continuous-quality-feedback-loop.md](continuous-quality-feedback-loop.md)
 - [guardrail-ledger-template.md](guardrail-ledger-template.md)
+- [quality-sweep-report-template.md](quality-sweep-report-template.md)

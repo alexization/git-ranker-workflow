@@ -144,4 +144,6 @@ feedback close-out artifact가 비어 있으면 완료로 보지 않는다.
 - verification 재시도, budget, `Blocked` 전환은 계속 [verification-contract-registry.md](verification-contract-registry.md)가 canonical source다.
 - reviewer verdict vocabulary와 blocking finding 기준은 계속 [dual-agent-review-policy.md](dual-agent-review-policy.md)가 canonical source다.
 - 이 문서는 verification과 review의 최신 결과가 나온 뒤, 그 결과를 다음 guardrail 자산으로 연결하는 close-out 규칙만 맡는다.
+- recurring lint drift, duplication, unused code sweep과 cleanup candidate handoff는 [continuous-quality-feedback-loop.md](continuous-quality-feedback-loop.md)가 맡는다.
+- quality sweep에서 detector gap이나 repeated drift가 guardrail follow-up으로 좁혀지면, promotion decision vocabulary는 다시 이 문서를 따른다.
 - 후속 skill pack과 template는 이 문서를 압축해 재사용할 수 있지만, 승격 대상 vocabulary와 `no-new-guardrail` 기준은 계속 이 문서가 canonical source다.

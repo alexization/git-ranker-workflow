@@ -33,6 +33,7 @@
 - 하나의 PR은 하나의 목표만 해결한다
 - 한 PR에서 여러 저장소를 동시에 건드리는 경우는 피한다
 - cross-repo 작업은 `workflow 문서 PR`과 `앱 코드 PR`로 나눈다
+- quality sweep에서 나온 cleanup/refactor/unused code 후보도 원본 issue/PR에 끼워 넣지 않고 별도 issue/PR로 분리한다
 
 ## 요청 intake 규칙
 
@@ -87,6 +88,7 @@
 - review evidence 최소 필드: implementer, reviewer, reviewer input, verdict, blocking finding 또는 no-blocking note
 - reviewer pool의 final verdict owner와 역할별 reviewer를 함께 남긴다
 - feedback evidence 최소 필드: stage, failure class, promotion decision, follow-up asset 또는 `no new guardrail` 이유, 핵심 evidence
+- quality sweep evidence 최소 필드: trigger mode, scan scope, signal class, disposition, follow-up asset 또는 `no-action` 이유, 핵심 evidence
 - 문서 업데이트: source of truth 반영 여부
 
 문서 전용 작업도 무엇을 바꿨는지와 어떤 기준으로 확인했는지는 남겨야 한다. 다만 본문에는 판단에 필요한 요약만 적고, raw 명령이나 경로 inventory는 close-out artifact로 내린다.
@@ -168,6 +170,7 @@
 - 사용자가 다르게 요청하지 않았다면 independent review를 끝낸 뒤 PR을 publish한다.
 - source of truth 문서를 함께 업데이트하거나, 업데이트가 불필요한 이유를 남긴다.
 - 검증 명령과 최종 상태는 close-out artifact에 반드시 남기고, PR 본문에는 필요한 요약만 남긴다.
+- quality sweep에서 나온 non-blocking cleanup candidate는 current issue에 섞지 말고 별도 work item으로 넘긴다.
 - 새로 생긴 반복 절차가 있다면 skill 후보로 제안하되, 이번 Issue 범위를 넘는 구현은 하지 않는다.
 - 모호한 선택지가 여러 개면 [docs/product/work-item-catalog.md](../product/work-item-catalog.md)의 기본 결정을 따른다.
 - 실행 중 예상치 못한 dirty change가 있으면 되돌리지 말고 영향 여부만 확인한다.

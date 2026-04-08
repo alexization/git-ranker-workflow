@@ -1,6 +1,6 @@
 # Work Item Catalog
 
-이 문서는 현재 하네스 시스템 구축을 위한 작업 카탈로그다. 모든 작업은 `요청 라우팅`, `컨텍스트 제한`, `도구 경계`, `결정론적 검증`, `구현/리뷰 Agent 분리`, `실패의 가드레일화`를 차례로 고정하는 방향으로 진행한다.
+이 문서는 현재 하네스 시스템 구축을 위한 작업 카탈로그다. 모든 작업은 `요청 라우팅`, `컨텍스트 제한`, `도구 경계`, `결정론적 검증`, `구현/리뷰 Agent 분리`, `실패의 가드레일화`, `non-blocking quality drift의 cleanup 분리`를 차례로 고정하는 방향으로 진행한다.
 
 ## 사용 순서
 
@@ -132,6 +132,17 @@
 - 산출물: pilot exec plan, verification 결과, review 결과, feedback ledger entry
 - 검증: 새 흐름만으로 작업이 끝까지 닫히는지 확인
 
+### GRW-23. continuous quality feedback loop 정렬
+
+- 저장소: `git-ranker-workflow`
+- 선행조건: `GRW-15`, `GRW-16`, `GRW-17`, `GRW-S09`
+- 권장 write scope: `docs/operations`, `docs/architecture`, `docs/product`, `.codex/skills/`, `docs/exec-plans`
+- 기본 결정: quality sweep은 verification completion gate가 아니라 `Completed` 뒤 recurring surface다. non-blocking lint drift, duplication, unused code는 original issue를 다시 열지 않고 separate cleanup issue/PR candidate로 분리한다. detector나 gate 부재가 반복되면 guardrail follow-up으로 승격한다.
+- 핵심 작업: continuous quality feedback loop policy, quality sweep report template, signal taxonomy, cleanup handoff rule, thin-layer skill을 source of truth와 registry에 반영한다.
+- 비범위: repo-specific detector 구현, 실제 automation runtime, backend/frontend 앱 코드 cleanup
+- 산출물: quality sweep policy, report template, skill, 관련 roadmap/system map/governance hook, `GRW-23` exec plan
+- 검증: 문서 본문 리뷰, hook grep, representative quality signal simulation
+
 ## Skill Track
 
 ### GRW-S06. intake/ambiguity skill pack
@@ -191,6 +202,17 @@
 - 산출물: backend verification contract, 필요한 문서/스크립트 정리
 - 검증: contract에 적힌 명령과 실제 실행 결과 대조
 
+### GRB-05. backend GC baseline 정렬
+
+- 저장소: `git-ranker`
+- 선행조건: `GRB-04`, `GRW-23`
+- 권장 write scope: `build.gradle`, backend static analysis config, `.github/workflows/`, backend README 또는 verification entry docs
+- 기본 결정: backend GC는 workflow repo가 아니라 backend repo의 Gradle task와 GitHub Actions가 소유한다. PR gate에는 low-noise static analysis만 넣고, duplication/wide dead code scan은 scheduled quality sweep으로 분리한다. Spring wiring, reflection, batch registration 영향이 큰 dead code removal은 issue-first를 기본으로 한다.
+- 핵심 작업: repo-local GC command surface를 추가하고, existing `quality-gate.yml`과 scheduled workflow에 blocking lane / sweep lane을 분리하며, cleanup candidate와 guardrail follow-up evidence를 `GRW-23` policy 형식에 맞춘다.
+- 비범위: workflow repo policy 재설계, broad auto-delete, frontend repo 변경
+- 산출물: backend GC command, CI/scheduled workflow, repo-local docs update, `GRB-05` exec plan
+- 검증: PR gate command 통과, scheduled sweep artifact shape 확인, representative duplication/unused signal triage
+
 ## Client Track
 
 ### GRC-05. frontend verification contract 정규화
@@ -203,6 +225,17 @@
 - 비범위: UI 개편
 - 산출물: frontend verification contract, 필요한 문서/스크립트 정리
 - 검증: contract에 적힌 명령과 실제 실행 결과 대조
+
+### GRC-06. frontend GC baseline 정렬
+
+- 저장소: `git-ranker-client`
+- 선행조건: `GRC-05`, `GRW-23`
+- 권장 write scope: `package.json`, frontend static analysis config, `.github/workflows/`, frontend README 또는 repo entry docs
+- 기본 결정: frontend GC는 repo-local npm scripts와 GitHub Actions가 소유한다. 기존 `lint/build` PR gate 위에 unused export/file/dependency detector를 추가하되, duplication scan과 wide cleanup은 scheduled sweep lane으로 분리한다. auto-generated cleanup PR은 lint autofix나 high-confidence unused code fix처럼 low-risk surface에만 제한한다.
+- 핵심 작업: repo-local GC scripts, PR blocking lane, scheduled sweep lane, cleanup candidate handoff, autofix boundary를 current frontend structure에 맞게 추가한다.
+- 비범위: backend repo 변경, workflow repo policy 재설계, high-risk refactor auto-merge
+- 산출물: frontend GC scripts/workflows/docs, `GRC-06` exec plan
+- 검증: PR gate command 통과, scheduled sweep report shape 확인, representative unused/duplication signal triage
 
 ## 참고
 
