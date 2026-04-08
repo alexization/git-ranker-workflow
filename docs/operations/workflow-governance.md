@@ -117,7 +117,7 @@
 - `즉시 실행 가능한 작업`으로 판정된 뒤 대상 저장소에 `gh issue create`로 이슈를 만든다.
 - 이슈와 PR 본문은 대상 저장소의 Issue/PR template 형식을 따른다.
 - GitHub 본문은 먼저 파일로 작성한 뒤 `gh issue create --body-file <path>` 또는 `gh pr create --body-file <path>`로 보낸다.
-- workflow 저장소 Issue 본문은 `.codex/skills/issue-to-exec-plan/templates/github-issue-body.md`를 복사해 채운다.
+- workflow 저장소 Issue 본문은 `.codex/skills/issue-to-exec-plan/assets/github-issue-body.md`를 복사해 채운다.
 - workflow 저장소 PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md`를 복사한 임시 파일을 기준으로 채운다.
 - PR은 기본적으로 open으로 생성한다. draft PR은 사용자가 명시적으로 요청했거나, scope-complete 전 공유가 필요한 blocker를 body와 exec plan에 적을 때만 예외적으로 사용한다.
 - Issue/PR 본문에는 사람이 확인할 요약만 적고, detailed verification report, review evidence, feedback ledger는 exec plan이나 별도 close-out artifact에 남긴다.
