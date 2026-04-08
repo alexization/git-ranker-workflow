@@ -12,6 +12,7 @@ feedback close-out 전에 아래를 확인한다. 이 checklist는 `docs/operati
 
 ## Entry Quality
 
+- [ ] `Date`, `Task / Exec Plan`, `Existing guardrail` 또는 `없음`을 먼저 적었다.
 - [ ] root cause 하나당 entry 하나만 쓴다.
 - [ ] `Trigger signal`과 `Root cause`를 구분했다.
 - [ ] `Failure class`를 canonical vocabulary에서 골랐다.
@@ -19,6 +20,7 @@ feedback close-out 전에 아래를 확인한다. 이 checklist는 `docs/operati
 - [ ] `Current issue disposition`을 현재 상태에 맞게 적었다.
 - [ ] `Promotion decision`과 `Guardrail status`를 둘 다 채웠다.
 - [ ] `Owner / next action`과 `Evidence`를 비우지 않았다.
+- [ ] `Notes`가 필요하면 생략 사유가 아니라 supplementary note로만 남겼다.
 
 ## Decision Guard
 

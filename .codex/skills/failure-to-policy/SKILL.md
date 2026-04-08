@@ -41,7 +41,10 @@ normalized root cause를 `docs-rule`, `skill`, `test`, `ci`, `template`, `no-new
   - decision rationale
   - guardrail change or follow-up asset
   - owner / next action
-- decision이 현재 issue 안에서 바로 적용되면 `applied-now`로, 후속 이슈나 자산이 필요하면 `follow-up-created` 또는 `deferred`로 적는다.
+- selected guardrail status는 canonical ledger template의 vocabulary를 그대로 따른다.
+  - current issue 안에서 바로 적용되면 `applied-now`
+  - 후속 이슈나 자산이 필요하면 `follow-up-created` 또는 `deferred`
+  - 새 guardrail이 필요 없다는 결론이면 `no-new-guardrail`
 
 ## Standard Commands
 
@@ -62,6 +65,7 @@ rg -n "Guardrail Ledger Entry|Failure class|Promotion decision|Root cause" docs/
 - recurrence가 `first-seen`, `repeated`, `systemic` 중 무엇인지와 근거
 - selected promotion decision과 selection rule 근거
 - `no-new-guardrail`이면 예외 사유
+- selected guardrail status와 canonical template vocabulary의 일치 여부
 - follow-up asset 또는 현재 issue 내 적용 자산
 
 ## Forbidden Shortcuts

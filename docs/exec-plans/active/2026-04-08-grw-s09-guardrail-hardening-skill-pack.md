@@ -79,15 +79,15 @@
 - `sed -n '1,260p' .codex/skills/guardrail-ledger-update/SKILL.md`
   - 결과: entry precondition, root cause normalization, output location, required evidence, `failure-to-policy` handoff가 포함된 것을 확인했다.
 - `sed -n '1,260p' .codex/skills/failure-to-policy/SKILL.md`
-  - 결과: failure taxonomy, recurrence 확인, promotion decision, `no-new-guardrail` 예외, follow-up handoff가 포함된 것을 확인했다.
+  - 결과: failure taxonomy, recurrence 확인, promotion decision, canonical `Guardrail status` vocabulary, `no-new-guardrail` 예외, follow-up handoff가 포함된 것을 확인했다.
 - `sed -n '1,220p' .codex/skills/guardrail-ledger-update/checklists/feedback-closeout-minimum.md`
-  - 결과: feedback close-out 입력, 누락 금지 항목, `no-new-guardrail` 판단 확인 포인트가 checklist로 재사용 가능한 것을 확인했다.
+  - 결과: feedback close-out 입력과 함께 `Date`, `Task / Exec Plan`, `Existing guardrail`, `Notes`를 포함한 ledger template 필수 필드 점검이 checklist로 재사용 가능한 것을 확인했다.
 - `sed -n '1,260p' .codex/skills/README.md`
   - 결과: 새 skill registry와 feedback 단계 hook이 반영된 것을 확인했다.
 - `rg -n "guardrail-ledger-update|failure-to-policy|guardrail ledger|feedback close-out|Promotion decision|no-new-guardrail" .codex/skills docs/operations`
   - 결과: skill 본문과 canonical source가 같은 vocabulary와 hook을 재사용하는 것을 확인했다.
 - representative failure 사례 수동 시뮬레이션 2건
-  - 결과: `GRW-19`의 template field 누락 사례는 `evidence-closeout -> template`로, `GRW-S08`의 verification/review handoff 수동 조립 사례는 `evidence-closeout -> skill`로 좁혀져 ledger entry와 promotion decision handoff를 재현할 수 있음을 확인했다.
+  - 결과: `GRW-19`의 template field 누락 사례는 `evidence-closeout -> template`로, `GRW-S08`의 verification/review handoff 수동 조립 사례는 `review-handoff -> skill`로 좁혀져 ledger entry와 promotion decision handoff를 재현할 수 있음을 확인했다.
 - `git diff --check`
   - 결과: whitespace 또는 patch formatting 오류가 없음을 확인했다.
 - `gh issue view --repo alexization/git-ranker-workflow 58 --json body,title,number`
@@ -108,10 +108,10 @@
   - Evidence: entry precondition, root cause normalization, ledger entry output, `failure-to-policy` handoff가 포함됐다.
 - Command: `sed -n '1,260p' .codex/skills/failure-to-policy/SKILL.md`
   - Status: `passed`
-  - Evidence: failure taxonomy, recurrence, promotion decision, `no-new-guardrail` 예외가 포함됐다.
+  - Evidence: failure taxonomy, recurrence, promotion decision, canonical `Guardrail status` vocabulary, `no-new-guardrail` 예외가 포함됐다.
 - Command: `sed -n '1,220p' .codex/skills/guardrail-ledger-update/checklists/feedback-closeout-minimum.md`
   - Status: `passed`
-  - Evidence: feedback close-out 입력, entry quality, decision guard, close-out hook이 checklist로 정리됐다.
+  - Evidence: feedback close-out 입력, `Date`, `Task / Exec Plan`, `Existing guardrail`, `Notes`를 포함한 entry quality, decision guard, close-out hook이 checklist로 정리됐다.
 - Command: `sed -n '1,260p' .codex/skills/README.md`
   - Status: `passed`
   - Evidence: 새 skill registry와 feedback 단계 hook이 반영됐다.
@@ -134,7 +134,7 @@
 - registry 업데이트 결과
 - representative failure 사례 수동 시뮬레이션 결과
   - `GRW-19`: template field 누락 문제를 `evidence-closeout -> template`로 재현할 수 있었다.
-  - `GRW-S08`: verification/review handoff 수동 조립 병목을 `evidence-closeout -> skill`로 재현할 수 있었다.
+  - `GRW-S08`: verification/review handoff 수동 조립 병목을 `review-handoff -> skill`로 재현할 수 있었다.
 - GitHub Issue `#58` body 확인 결과
 - `git diff --check` 결과
 
