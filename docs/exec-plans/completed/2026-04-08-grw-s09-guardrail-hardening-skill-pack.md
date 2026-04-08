@@ -2,7 +2,7 @@
 
 - Issue ID: `GRW-S09`
 - GitHub Issue: `#58`
-- Status: `In Progress`
+- Status: `Completed`
 - Repository: `git-ranker-workflow`
 - Branch Name: `feat/grw-s09-guardrail-hardening-skill-pack`
 - Task Slug: `2026-04-08-grw-s09-guardrail-hardening-skill-pack`
@@ -125,7 +125,7 @@
   - Status: `passed`
   - Evidence: whitespace 또는 patch formatting 오류가 없다.
 - Failure summary: 없음
-- Next action: independent review 준비
+- Next action: feedback close-out
 
 ## Evidence
 
@@ -138,12 +138,48 @@
 - GitHub Issue `#58` body 확인 결과
 - `git diff --check` 결과
 
+## Independent Review
+
+- Implementer: `Codex`
+- Reviewer: `reviewer-coordinator` (`Goodall`)
+- Additional Reviewers:
+  - `scope-and-governance`: `Raman`
+  - `verification-and-regression`: `Dewey`
+- Reviewer Roles / Prompt Focus:
+  - `scope-and-governance`
+  - `verification-and-regression`
+- Reviewer Input:
+  - Exec plan / linked issue / PR: `docs/exec-plans/completed/2026-04-08-grw-s09-guardrail-hardening-skill-pack.md`, `#58`, draft PR `#59`
+  - Latest verification report: `passed`
+  - Diff summary: feedback close-out skill 2종 추가, checklist 추가, skills registry 업데이트, active exec plan에 verification report와 representative simulation 정리
+  - Source-of-truth update: `.codex/skills/guardrail-ledger-update/SKILL.md`, `.codex/skills/guardrail-ledger-update/checklists/feedback-closeout-minimum.md`, `.codex/skills/failure-to-policy/SKILL.md`, `.codex/skills/README.md`
+  - Remaining risks / skipped checks: docs-only 범위라 runtime/build 계열 conditional command 없음, `GRW-18` pilot에서 실제 재사용성 확인 필요
+- Review Verdict: `approved`
+- Findings / Change Requests:
+  - `scope-and-governance`: blocking finding 없음
+  - `verification-and-regression`: blocking finding 없음
+- Evidence:
+  - `scope-and-governance` reviewer인 `Raman`은 current head `8f21beb3f75071869916f0ab78998ce828bb1a64` 기준으로 policy ownership, thin-layer boundary, write scope, draft PR 상태가 governance와 모순되지 않는다고 확인했다.
+  - `verification-and-regression` reviewer인 `Dewey`는 current head `8f21beb3f75071869916f0ab78998ce828bb1a64` 기준으로 `workflow-docs` verification report, repaired ledger fields/status vocabulary, representative simulation 분류가 canonical source와 일치한다고 확인했다.
+  - reviewer-coordinator인 `Goodall`은 두 필수 역할이 모두 `approved`를 반환했고 `blocked`나 blocking `changes-requested`가 없으므로 overall verdict를 `approved`로 집계했다.
+- Review repair:
+  - 초기 reviewer pass에서 ledger template 필수 필드(`Date`, `Task / Exec Plan`, `Existing guardrail`)와 canonical `Guardrail status` vocabulary 누락, representative simulation 분류 drift가 지적됐다.
+  - current head `8f21beb3f75071869916f0ab78998ce828bb1a64`에서 해당 항목을 모두 보정한 뒤 reviewer pool을 다시 실행해 최종 `approved`를 받았다.
+
+## Feedback / Guardrail Follow-up
+
+- Latest verification status: `passed`
+- Latest review verdict: `approved`
+- Promotion decision: `no-new-guardrail`
+- Decision rationale: 이번 issue 자체가 feedback close-out guardrail skill pack을 추가하는 작업이며, review에서 드러난 drift도 current issue 안에서 즉시 수정됐다. 따라서 현재 close-out에서 별도의 추가 guardrail asset을 새로 만들 필요는 없다.
+- Follow-up asset or issue: `GRW-18` pilot에서 실제 feedback close-out 재사용성 확인
+
 ## Risks or Blockers
 
 - skill이 policy 표를 길게 복사하면 source of truth drift가 생길 수 있다.
 - checklist가 template처럼 비대해지면 thin-layer skill pack 범위를 벗어날 수 있다.
 - recurrence rule과 `no-new-guardrail` 예외를 잘못 압축하면 승격 판단이 느슨해질 수 있다.
-- 현재 세션에서는 sub-agent reviewer pool을 아직 실행하지 않았으므로 `Completed` close-out용 independent review evidence는 아직 비어 있다.
+- 실제 feedback close-out 재사용성은 `GRW-18` pilot에서 다시 확인해야 한다.
 
 ## Next Preconditions
 
@@ -155,7 +191,7 @@
 - `.codex/skills/guardrail-ledger-update/checklists/feedback-closeout-minimum.md`
 - `.codex/skills/failure-to-policy/SKILL.md`
 - `.codex/skills/README.md`
-- `docs/exec-plans/active/2026-04-08-grw-s09-guardrail-hardening-skill-pack.md`
+- `docs/exec-plans/completed/2026-04-08-grw-s09-guardrail-hardening-skill-pack.md`
 
 ## Skill Consideration
 
