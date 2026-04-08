@@ -1,4 +1,4 @@
-# Feedback Close-Out Minimum Checklist
+# Feedback Close-Out Minimum
 
 feedback close-out 전에 아래를 확인한다. 이 checklist는 `docs/operations/failure-to-guardrail-feedback-loop.md`와 `docs/operations/guardrail-ledger-template.md`의 thin layer다.
 

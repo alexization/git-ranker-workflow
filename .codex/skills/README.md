@@ -26,11 +26,12 @@
 ```text
 .codex/skills/
   README.md
-  authoring-rules.md
+  skill-creator/
+    SKILL.md
+    references/
   issue-to-exec-plan/
     SKILL.md
-  ranking-read-harness/
-    SKILL.md
+    assets/
 ```
 
 ## Naming Rules
@@ -58,18 +59,17 @@
 
 실제 skill에 지원 파일이 필요할 때만 각 skill 폴더 아래에 아래 이름을 추가한다.
 
-- `templates/`: 반복해서 복사하는 문서 조각, summary 틀, PR 본문 틀
-- `queries/`: PromQL, LogQL, SQL, CLI query 예시
-- `examples/`: 입력/출력 예시, 시뮬레이션 예시
-- `checklists/`: 단계별 점검표, triage 체크리스트
+- `references/`: 길고 상세한 참고 문서, schema, variant별 가이드
+- `scripts/`: 반복되는 결정론적 작업을 위한 실행 코드
+- `assets/`: 템플릿, boilerplate, 재사용 파일
 
 예시:
 
 ```text
-.codex/skills/promql-logql-evidence/
+.codex/skills/skill-creator/
   SKILL.md
-  queries/
-  templates/
+  references/
+  scripts/
 ```
 
 이 디렉터리들은 선택 사항이다. 필요 없는 skill에는 만들지 않는다.
@@ -78,22 +78,25 @@
 
 현재 등록된 project skill은 아래와 같다.
 
-- `request-intake`: 새 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류하고 다음 행동을 고정할 때 사용
-- `ambiguity-interview`: `모호한 요청`을 한 issue로 줄이거나 `Blocked`/`Rejected`로 닫을 때 사용
-- `issue-to-exec-plan`: 새 Issue를 `docs/exec-plans/active/*.md` 실행 문서로 고정할 때 사용
-- `parallel-work-split`: 여러 agent가 같은 Issue를 나눠 작업하기 전에 ownership과 write set을 분리할 때 사용
-- `api-contract-sync`: backend OpenAPI 변경을 client 타입과 workflow 문서에 동기화할 때 사용
-- `verification-contract-runner`: selected verification contract profile을 실행하고 latest verification report를 정리할 때 사용
-- `repair-loop-triage`: verification 실패나 review change request를 retry budget 기준으로 분류할 때 사용
-- `reviewer-handoff`: reviewer minimum context를 reviewer pool에 fan-out하고 aggregated review evidence를 남길 때 사용
-- `guardrail-ledger-update`: latest verification/review 결과를 guardrail ledger entry와 feedback close-out evidence로 정리할 때 사용
-- `failure-to-policy`: normalized failure를 가장 작은 guardrail asset으로 승격하거나 `no-new-guardrail` 예외를 판단할 때 사용
-- `quality-sweep-triage`: periodic 또는 targeted quality sweep 결과를 cleanup candidate, guardrail follow-up, repair-now로 분류할 때 사용
-- `red`: failing test file 하나만 남기는 TDD red turn
-- `green`: test 수정 없이 최소 구현으로 green을 만드는 턴
-- `refactor`: green 유지 하에 구조를 정리하는 refactor 턴
+- `skill-creator`: 새 skill 생성, 기존 skill 리팩터링, trigger/structure/resource 설계에 사용
+- `request-intake`: 새 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 먼저 분류할 때 사용
+- `ambiguity-interview`: `모호한 요청`을 executable issue, `Blocked`, `Rejected` 중 하나로 수렴시킬 때 사용
+- `issue-to-exec-plan`: issue를 active exec plan으로 바꾸고 write scope와 verification을 잠글 때 사용
+- `parallel-work-split`: 여러 agent를 투입하기 전에 ownership과 disjoint write set을 고정할 때 사용
+- `api-contract-sync`: backend API 계약 변화가 client consumer와 workflow evidence에 미치는 영향을 맞출 때 사용
+- `verification-contract-runner`: selected verification contract profile을 실행하고 latest verification report를 쓸 때 사용
+- `repair-loop-triage`: verification 실패나 review 수리 요청 뒤 rerun, `Blocked`, split 중 하나를 정할 때 사용
+- `reviewer-handoff`: reviewer minimum context를 reviewer pool에 fan-out하고 review evidence를 남길 때 사용
+- `guardrail-ledger-update`: feedback close-out에서 guardrail ledger entry를 작성할 때 사용
+- `failure-to-policy`: normalized failure를 가장 작은 guardrail asset으로 연결할 때 사용
+- `quality-sweep-triage`: quality sweep signal을 cleanup candidate, guardrail follow-up, repair-now, no-action으로 분류할 때 사용
+- `red`: failing test 하나로 behavior slice를 잠글 때 사용
+- `green`: failing test를 production-side 최소 변경으로 green으로 만들 때 사용
+- `refactor`: green을 유지한 채 구조만 정리할 때 사용
 
 ## Recommended Use
+
+새 skill을 만들거나 기존 skill을 리팩터링할 때는 항상 `skill-creator`부터 사용한다.
 
 새 요청을 처음 받을 때의 기본 순서는 아래와 같다.
 
@@ -133,6 +136,6 @@ close-out이 `Rejected`이거나 route가 `대화`로 끝나면 issue, exec plan
 
 ## Related Docs
 
-- `.codex/skills/authoring-rules.md`
+- `.codex/skills/skill-creator/SKILL.md`
 - `docs/operations/workflow-governance.md`
 - `docs/product/work-item-catalog.md`

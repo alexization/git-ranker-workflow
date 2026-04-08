@@ -1,69 +1,61 @@
 ---
 name: issue-to-exec-plan
-description: Use this skill when a roadmap item or GitHub issue must be turned into an actionable exec plan before implementation starts.
+description: GitHub issue나 roadmap item을 실행 가능한 exec plan으로 바꾸고, 구현 전에 범위와 verification을 잠근다. write scope, non-scope, 검증 명령을 먼저 고정해야 할 planning 단계에서 이 skill을 사용한다.
 ---
 
 # Issue To Exec Plan
 
-## Purpose
+이 skill은 issue를 문서화하는 것이 아니라 구현 가능한 범위로 잠그는 데 초점을 둔다. exec plan이 준비되면 이후 agent들이 같은 scope와 같은 verification을 재사용할 수 있어야 한다.
 
-새 Issue나 roadmap 항목을 `docs/exec-plans/active/*.md`의 실행 문서로 고정한다. 목적은 구현 아이디어를 늘리는 것이 아니라, 범위, 비범위, write scope, 검증, evidence, 다음 전제조건을 먼저 잠그는 것이다.
+## 언제 사용하나
 
-## Trigger
+- 새 GitHub issue를 시작한다.
+- `docs/product/work-item-catalog.md` 항목을 실제 작업으로 착수한다.
+- 후속 agent에게 넘길 기준 문서가 아직 없다.
+- 작업이 여러 문서나 여러 저장소로 번질 위험이 있어 먼저 write scope를 잠가야 한다.
 
-- 새 GitHub Issue를 시작한다.
-- `docs/product/work-item-catalog.md`의 항목을 실제 작업으로 착수한다.
-- 작업 대상이 여러 저장소나 여러 문서로 퍼질 수 있어 먼저 write scope를 좁혀야 한다.
-- 후속 agent에게 같은 범위를 전달할 기준 문서가 아직 없다.
+## 먼저 확인할 것
 
-## Inputs and Preconditions
+- `AGENTS.md`
+- `PLANS.md`
+- `docs/operations/workflow-governance.md`
+- 관련 `docs/product/*.md`, source of truth, 완료된 exec plan
 
-- `AGENTS.md`, `PLANS.md`, `docs/operations/workflow-governance.md`를 먼저 확인한다.
-- 관련 `docs/product/*.md`, 완료된 exec plan, source of truth 문서를 읽는다.
-- 대상 Issue ID, 저장소, 권장 브랜치/slug, 왜 지금 필요한지 알고 있어야 한다.
-- 관련 GitHub Issue가 없으면 governance 규칙에 따라 먼저 만든다.
-- 요구사항이나 canonical source가 애매하면 exec plan을 쓰기 전에 사용자에게 질문한다.
+요구사항이나 canonical source가 애매하면 plan을 쓰기 전에 질문부터 다시 정리한다.
 
-## Output and Artifact Location
+## 작업 방식
 
-- 산출물은 `docs/exec-plans/active/YYYY-MM-DD-<issue-id-lower>-<slug>.md` 문서다.
-- 문서에는 최소한 아래를 남긴다.
-  - Issue ID, GitHub Issue, Status, Repository, Branch Name, Task Slug
-  - Problem, Why Now, Scope, Non-scope, Write Scope
-  - Outputs, Verification, Evidence, Risks or Blockers
-  - Next Preconditions, Docs Updated, Skill Consideration
-- 작업이 끝나면 `Completed`로 갱신하고 `docs/exec-plans/completed/`로 이동한다.
+1. 문제, why now, scope, non-scope를 먼저 고정한다.
+2. 허용 write scope와 forbidden path를 적는다.
+3. verification 명령과 evidence surface를 미리 적는다.
+4. GitHub issue가 없으면 먼저 만들고 줄바꿈까지 확인한다.
+5. `docs/exec-plans/active/YYYY-MM-DD-<issue-id-lower>-<slug>.md`를 작성한다.
 
-## Standard Commands
+## 결과
 
-반복적으로 확인하는 기본 명령 예시:
+산출물은 active exec plan 문서다. 최소한 아래가 바로 읽혀야 한다.
+
+- Issue ID, GitHub issue, 저장소, 브랜치명, task slug
+- Problem, Why Now, Scope, Non-scope, Write Scope
+- Outputs, Verification, Evidence, Risks or Blockers
+- Next Preconditions, Docs Updated, Skill Consideration
+
+작업이 끝나면 `Completed`로 갱신하고 `docs/exec-plans/completed/`로 옮긴다.
+
+## 빠른 점검 명령
 
 ```bash
 rg -n "<issue-id|task-slug|surface noun>" docs/product docs/exec-plans
 find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort
-cp .codex/skills/issue-to-exec-plan/templates/github-issue-body.md /tmp/<issue-id>-issue-body.md
+cp .codex/skills/issue-to-exec-plan/assets/github-issue-body.md /tmp/<issue-id>-issue-body.md
 gh issue create --repo <owner>/<target-repo> --title "[Task] <issue-id> ..." --body-file /tmp/<issue-id>-issue-body.md
 gh issue view --repo <owner>/<target-repo> <issue-number> --json body
 git checkout -b feat/<issue-id-lower>-<slug>
 ```
 
-명령 자체보다 중요한 것은 "어떤 문서를 읽고 어떤 범위를 고정했는지"를 exec plan에 남기는 것이다.
+workflow 저장소에서 멀티라인 issue body를 만들 때는 [github-issue-body.md](assets/github-issue-body.md)를 복사해 채운다.
 
-`gh issue create`의 `--repo`는 항상 대상 저장소와 맞아야 한다. 예를 들어 `GRW-*`는 `alexization/git-ranker-workflow`, `GRB-*`는 `alexization/git-ranker`, `GRC-*`는 `alexization/git-ranker-client`를 쓴다.
-
-workflow 저장소에서 멀티라인 Issue 본문을 만들 때는 `.codex/skills/issue-to-exec-plan/templates/github-issue-body.md`를 복사해 채운다. shell 인라인 `--body`, escaped `\n`, `$'...'` 문자열은 줄바꿈이 깨질 수 있으므로 쓰지 않는다.
-
-## Required Evidence
-
-- 어떤 source of truth 문서를 읽었는지
-- 이 Issue의 scope와 non-scope를 어떻게 고정했는지
-- 허용 write scope
-- 예정된 verification 명령
-- 남아 있는 질문이나 blocker
-- 관련 GitHub Issue와 branch/slug
-- stable source of truth 문서에 임시 work item ID를 남겨야 하는지 여부와, 남긴다면 close-out 전에 제거하거나 planning/history 문서로 이동할 계획
-
-## Forbidden Shortcuts
+## 피해야 할 것
 
 - exec plan 없이 바로 코드나 문서를 수정하지 않는다.
 - roadmap 문장을 그대로 복사하고 write scope나 검증을 비워두지 않는다.
@@ -73,57 +65,3 @@ workflow 저장소에서 멀티라인 Issue 본문을 만들 때는 `.codex/skil
 - `docs/architecture/`, `docs/operations/`, `docs/product/` 같은 stable source of truth 문서에 현재/후속 work item ID를 설명용 문장으로 남기지 않는다.
 - 멀티라인 GitHub Issue 본문을 `gh issue create --body '...'` 또는 escaped `\n` 문자열로 직접 보내지 않는다.
 - Issue 생성 후 `gh issue view --json body` 확인 없이 줄바꿈이 정상이라고 가정하지 않는다.
-
-## Parallel Ownership Rule
-
-- exec plan 파일 편집 ownership은 한 agent만 가진다.
-- 다른 agent가 관련 문서를 읽고 요약할 수는 있지만, plan 본문 최종 통합은 plan owner가 한다.
-- 동일 작업의 scope/non-scope를 여러 agent가 따로 정의하지 않는다.
-- plan owner가 고정한 write scope 없이 병렬 구현 작업을 시작하지 않는다.
-
-## Parallel Execution Don'ts
-
-- 같은 exec plan 파일을 여러 agent가 동시에 수정하지 않는다.
-- unanswered question이 남아 있는 상태에서 agent마다 다른 가정을 두고 병렬 탐색하지 않는다.
-- GitHub Issue 번호, 브랜치명, slug를 agent별로 다르게 기록하지 않는다.
-
-## Example Input
-
-- Issue: `<issue-id>`
-- Goal: target harness 도입
-- Relevant docs:
-  - `docs/product/work-item-catalog.md`
-  - `docs/operations/<relevant-policy-doc>.md`
-  - `<target-repo-entry-doc>`
-  - `docs/exec-plans/completed/<previous-related-plan>.md`
-
-## Example Output
-
-```md
-# <date>-<issue-id-lower>-<slug>
-
-- Issue ID: `<issue-id>`
-- Status: `Ready`
-
-## Scope
-- target config 추가
-- target spec 추가
-- artifact 규칙 연결
-
-## Non-scope
-- unrelated full user journey automation
-- 디자인 변경
-
-## Verification
-- `<verification-command>`
-- required artifact 생성 확인
-```
-
-## Handoff
-
-구현 단계로 넘길 때는 아래를 함께 전달한다.
-
-- active exec plan 경로
-- 확정된 write scope
-- verification 명령
-- 남은 open question 또는 blocker
