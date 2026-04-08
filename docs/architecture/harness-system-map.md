@@ -11,7 +11,7 @@
 3. 도구 경계와 write scope 통제
 4. 결정론적 검증
 5. 구현 Agent와 review Agent 분리
-6. 실패의 가드레일화
+6. 실패의 가드레일화와 quality drift의 cleanup 분리
 
 ## Planning Boundary
 
@@ -29,7 +29,7 @@
 | Implementer | 허용된 저장소와 파일 범위 안에서 변경을 만든다. | context pack, exec plan | diff, change notes |
 | Verification | 명시된 verification contract를 실행하고 pass/fail을 기록한다. | diff, verification contract | verification report |
 | Reviewer | 구현과 분리된 session-isolated sub-agent reviewer pool이 역할별로 diff와 검증 결과를 검토하고, reviewer coordinator가 finding을 집계해 final review verdict를 남긴다. | diff, verification report, exec plan | review verdict, aggregated findings |
-| Feedback | 실패와 취약 지점을 guardrail 후보로 분류하고 close-out을 남긴다. | review verdict, failure notes, exec plan | feedback entry, next follow-up |
+| Feedback | 실패와 quality drift를 guardrail 후보 또는 cleanup candidate로 분류하고 close-out을 남긴다. | review verdict, failure notes, exec plan, quality sweep signal | feedback entry, quality sweep report, next follow-up |
 
 ## Canonical Artifacts
 
@@ -41,6 +41,7 @@
 | Verification report | 실행 명령, 최종 상태, 핵심 evidence, 실패/예외 요약 | exec plan, verification artifact |
 | Review verdict | reviewer 승인 또는 수정 요청 | review comment, exec plan 요약 |
 | Feedback entry | 반복 실패와 guardrail 승격 여부 | exec plan, 후속 policy 또는 ledger |
+| Quality sweep report | lint drift, duplication, unused code 같은 non-blocking quality signal과 cleanup handoff | exec plan, sweep artifact, 후속 issue/PR |
 
 ## Canonical State Machine
 
@@ -90,13 +91,14 @@
 | Implementer | 허용 write scope 안에서 목표 산출물을 만든다. | scope drift, 무단 cross-repo 변경, 불명확한 요구사항이 발생한다. | `Blocked`로 전환하고 범위를 재정의한다. |
 | Verification | 모든 필수 검증 명령이 통과하고 증거가 남는다. | 명령 실패, 환경 부족, 증거 누락이 있다. | `Repairing` 또는 `Blocked`로 전환한다. |
 | Reviewer | reviewer가 diff, verification report, 남은 리스크를 기준으로 승인한다. | blocking finding, self-approval 시도, 검증과 diff 불일치가 있다. | `Repairing`으로 되돌린다. |
-| Feedback | 실패 분류 또는 `no new guardrail` 판단이 기록됐다. | close-out과 후속 guardrail 판단이 비어 있다. | `Feedback Pending`에 머문다. |
+| Feedback | 실패 분류, `no new guardrail`, 또는 quality sweep disposition이 기록됐다. | close-out과 후속 guardrail/cleanup 판단이 비어 있다. | `Feedback Pending`에 머문다. |
 
 ## Stop Conditions
 
 - `Rejected`: 대화성 요청, 범위 밖 요청, 사용자 취소처럼 작업 자체를 진행하지 않는 경우다.
 - `Blocked`: 선행조건 부족, 외부 의존성, 권한 문제, canonical source 부재로 현재 이슈 안에서 더 진행할 수 없는 경우다.
 - `Completed`: verification 통과, reviewer 승인, feedback close-out이 모두 끝난 경우다.
+- `Completed`는 terminal state지만, post-closeout quality sweep이 필요하면 새 `Received` work item을 시작할 수 있다. 이 경우 original issue를 다시 열지 않는다.
 - `Repairing`은 terminal state가 아니다. 반복 실패가 누적되면 verification contract registry와 feedback/guardrail policy에 정의된 retry budget 기준에 따라 `Blocked` 또는 후속 planning으로 넘긴다.
 
 ## Role Separation Invariants
@@ -106,6 +108,7 @@
 - reviewer sub-agent들은 implementer와 세션, 컨텍스트, 역할 프롬프트, output ownership이 분리돼 있어야 한다.
 - verification이 끝나기 전에는 review verdict를 final로 선언할 수 없다.
 - feedback 단계는 성공 경로와 실패 경로 모두에 필요하다. 성공 시에는 `no new guardrail`도 하나의 명시적 판단으로 남긴다.
+- non-blocking quality drift는 original issue의 completion verdict를 뒤집지 않고, separate cleanup issue/PR candidate로 분리한다.
 - task type별 세부 정책은 후속 Issue가 확장하더라도, `Router -> Interview -> Context Pack -> Implementer -> Verification -> Reviewer -> Feedback` 순서는 바꾸지 않는다.
 
 ## Issue / PR Projection
@@ -114,6 +117,7 @@
 - exec plan은 `Planned` 상태의 공식 기록이며, 구현을 시작하기 전에 존재해야 한다.
 - PR은 기본적으로 local `Verifying`, `Reviewing`, `Feedback Pending` 결과를 reader-first 요약으로 전달하는 컨테이너다. detailed verification, review, feedback evidence는 exec plan이나 linked artifact에 두고, 사용자가 예외적으로 요청하지 않았다면 open PR로 게시한다.
 - `Completed` 판정은 PR의 verification 결과와 reviewer verdict, exec plan의 close-out이 함께 있어야 성립한다.
+- quality sweep에서 나온 cleanup candidate는 original issue/PR에 추가 수정으로 섞지 않고, 새 issue/PR 또는 follow-up artifact로 분리한다.
 - 완료된 exec plan은 `docs/exec-plans/completed/`로 옮기고, 후속 Issue가 이 문서를 전제조건으로 참조한다.
 - completed exec plan은 historical close-out record이며, 현재 canonical runtime과 정책은 stable source of truth 문서에서 해석한다.
 
@@ -125,3 +129,4 @@
 - [../operations/verification-contract-registry.md](../operations/verification-contract-registry.md)는 `Verifying`, `Repairing`, `Blocked` semantics와 retry budget을 명시한다.
 - [../operations/dual-agent-review-policy.md](../operations/dual-agent-review-policy.md)는 `Reviewing` 단계의 reviewer input, verdict, repair loop, evidence rule을 구체화한다.
 - [../operations/failure-to-guardrail-feedback-loop.md](../operations/failure-to-guardrail-feedback-loop.md)는 `Feedback Pending` close-out, feedback ledger, guardrail 승격 규칙을 고정한다.
+- [../operations/continuous-quality-feedback-loop.md](../operations/continuous-quality-feedback-loop.md)는 recurring quality sweep, cleanup candidate, quality sweep report handoff를 고정한다.

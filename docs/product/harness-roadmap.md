@@ -8,7 +8,7 @@
 2. 실행 가능한 작업은 task type에 맞는 최소 컨텍스트와 명시적 write scope를 가진다.
 3. 구현 Agent는 결정론적 검증 명령을 통과하기 전까지 작업 완료를 주장할 수 없다.
 4. 코드 검토는 구현 Agent 자신이 아니라, 현재 Codex 세션에서 분리 생성한 session-isolated sub-agent reviewer pool이 수행한다.
-5. 실패는 다음 문서, skill, 테스트, CI 가드레일로 축적된다.
+5. 실패와 non-blocking quality drift는 다음 문서, skill, 테스트, CI 가드레일 또는 cleanup 작업으로 축적된다.
 
 ## 이번 계획의 고정 결정
 
@@ -22,6 +22,7 @@
 - 현재 control plane source of truth는 `docs/architecture/`, `docs/operations/`, `docs/product/`, `docs/exec-plans/`로 한정한다.
 - 새 작업은 항상 exec plan으로 고정한 뒤 시작한다.
 - 사용자가 다르게 요청하지 않으면 PR은 independent review와 feedback evidence를 먼저 채운 뒤 open 상태로 publish한다.
+- feedback close-out 뒤에는 scheduled 또는 targeted quality sweep signal을 cleanup candidate 또는 guardrail follow-up으로 다시 분류할 수 있다.
 
 ## 목표 상태
 
@@ -35,6 +36,7 @@
 6. verification contract registry에 정의된 명령이 통과해야 다음 단계로 넘어간다.
 7. reviewer sub-agent pool과 reviewer coordinator는 [../operations/dual-agent-review-policy.md](../operations/dual-agent-review-policy.md)에 따라 역할별로 구현 diff와 검증 결과를 검토하고, 통과 또는 수정 요청을 결정한다.
 8. 실패한 작업은 [../operations/failure-to-guardrail-feedback-loop.md](../operations/failure-to-guardrail-feedback-loop.md)의 feedback ledger에 남기고 다음 가드레일 후보로 전환한다.
+9. `Completed` 뒤의 quality sweep은 lint drift, duplication, unused code를 새 cleanup issue/PR candidate 또는 guardrail follow-up으로 보낸다.
 
 ## 권장 실행 순서
 
@@ -58,11 +60,14 @@
 13. `GRW-S08` verification/review-loop skill pack
 14. `GRW-S09` guardrail-hardening skill pack
 15. `GRW-18` workflow repo pilot issue로 새 흐름 1회 검증
+16. `GRW-23` continuous quality feedback loop 정렬
 
 ### Phase 3. Repo-Specific Contracts
 
-16. `GRB-04` backend verification contract 정규화
-17. `GRC-05` frontend verification contract 정규화
+17. `GRB-04` backend verification contract 정규화
+18. `GRC-05` frontend verification contract 정규화
+19. `GRB-05` backend GC baseline 정렬
+20. `GRC-06` frontend GC baseline 정렬
 
 ## 바로 다음에 추천하는 작업
 
@@ -85,3 +90,4 @@
 - 구현 Agent는 자기 자신의 결과를 최종 승인하지 않는다.
 - 같은 실패가 반복되면 다음 턴에서는 가드레일이 하나 더 생겨야 한다.
 - `Feedback Pending` close-out에는 guardrail 승격 대상 또는 `no new guardrail` 이유가 남아야 한다.
+- quality sweep에서 발견한 non-blocking cleanup candidate는 original issue 완료 여부와 분리해 새 work item으로 넘긴다.
