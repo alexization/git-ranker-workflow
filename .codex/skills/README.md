@@ -82,6 +82,8 @@
 - `request-intake`: 새 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 먼저 분류할 때 사용
 - `ambiguity-interview`: `모호한 요청`을 executable issue, `Blocked`, `Rejected` 중 하나로 수렴시킬 때 사용
 - `issue-to-exec-plan`: issue를 active exec plan으로 바꾸고 write scope와 verification을 잠글 때 사용
+- `context-pack-selection`: active exec plan 뒤에 primary context pack과 required docs, forbidden context를 잠글 때 사용
+- `boundary-check`: 구현 전에 read/write/network/escalation 경계와 write scope completeness를 다시 확인할 때 사용
 - `parallel-work-split`: 여러 agent를 투입하기 전에 ownership과 disjoint write set을 고정할 때 사용
 - `api-contract-sync`: backend API 계약 변화가 client consumer와 workflow evidence에 미치는 영향을 맞출 때 사용
 - `verification-contract-runner`: selected verification contract profile을 실행하고 latest verification report를 쓸 때 사용
@@ -103,7 +105,9 @@
 1. `request-intake`
 2. `ambiguity-interview` if route is `모호한 요청`
 3. `issue-to-exec-plan` if route is `즉시 실행 가능한 작업` or interview exits `Planned`
-4. `parallel-work-split` if more than one agent will work on the same issue
+4. `context-pack-selection` once active exec plan exists
+5. `boundary-check` before implementation
+6. `parallel-work-split` if more than one agent will work on the same issue
 
 아래 skill은 기본 진입 순서가 아니라 조건부 hook으로 사용한다.
 
