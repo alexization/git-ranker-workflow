@@ -120,6 +120,7 @@
 - workflow 저장소 Issue 본문은 `.codex/skills/issue-to-exec-plan/assets/github-issue-body.md`를 복사해 채운다.
 - workflow 저장소 PR 본문은 `.github/PULL_REQUEST_TEMPLATE.md`를 복사한 임시 파일을 기준으로 채운다.
 - PR은 기본적으로 open으로 생성한다. draft PR은 사용자가 명시적으로 요청했거나, scope-complete 전 공유가 필요한 blocker를 body와 exec plan에 적을 때만 예외적으로 사용한다.
+- PR은 review를 받기 위한 작업용 draft workspace가 아니다. canonical 기본값은 local diff와 exec plan artifact에서 verification, independent review, feedback close-out을 먼저 끝내고, 그 최신 결과를 PR에 싣고 publish하는 것이다.
 - Issue/PR 본문에는 사람이 확인할 요약만 적고, detailed verification report, review evidence, feedback ledger는 exec plan이나 별도 close-out artifact에 남긴다.
 - 성공한 검증은 PR 본문에 고수준 결과만 짧게 적고, 실패, 재시도, 예외, skipped check 같은 운영 상세는 verification report로 내린다.
 - review verdict와 feedback decision은 PR 본문에 요약할 수 있지만, canonical evidence는 [dual-agent-review-policy.md](dual-agent-review-policy.md)와 [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)가 지정한 artifact에 남긴다.
@@ -140,9 +141,10 @@
 3. body file을 준비한 뒤 `gh issue create --body-file ...`로 대상 저장소 이슈를 만든다.
 4. 이슈 번호를 브랜치명과 exec plan에 연결한다.
 5. 작업 후 latest verification report를 만들고, reviewer minimum context를 준비한 뒤 session-isolated sub-agent reviewer pool로 independent review를 먼저 수행한다. 공통 handoff surface를 각 reviewer에 fan-out하되, 역할별 focus에 맞는 subset만 줄 수 있고 final verdict owner 하나를 남긴다.
-6. PR body file에 작업 요약, 접근, review guide, validation summary, 영향, 남은 리스크를 먼저 채우고, detailed verification/review/feedback evidence는 close-out artifact에 정리한다.
-7. 사용자가 draft를 명시적으로 요청했거나, scope-complete 전 blocker 공유가 필요하면 draft PR을 연다. 그렇지 않다면 `gh pr create --base develop --body-file ...`로 open PR을 연다.
-8. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
+6. review verdict가 `changes-requested`면 implementer가 in-scope repair를 수행하고, 영향을 받은 verification을 다시 실행한 뒤 reviewer pool을 다시 수행한다. `approved` 또는 declared blocker가 나오기 전에는 PR을 만들지 않는다.
+7. latest review verdict와 feedback outcome이 고정된 뒤 PR body file에 작업 요약, 접근, review guide, validation summary, 영향, 남은 리스크를 채우고, detailed verification/review/feedback evidence는 close-out artifact에 정리한다.
+8. 사용자가 draft를 명시적으로 요청했거나, scope-complete 전 blocker 공유가 필요하면 draft PR을 연다. 그렇지 않다면 `gh pr create --base develop --body-file ...`로 open PR을 연다.
+9. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
 
 ## 문서, SKILL, exec plan의 역할
 
@@ -167,7 +169,8 @@
 - review 단계에 들어가기 전 latest verification report와 reviewer minimum context를 준비한다.
 - reviewer minimum context의 canonical handoff surface는 reviewer pool 전체에 공통이다. 역할별 reviewer는 focus에 맞는 subset만 읽을 수 있지만, implementer가 handoff 항목을 임의로 삭제하거나 final verdict owner의 추적 책임을 줄일 수는 없다.
 - independent review는 항상 session-isolated sub-agent reviewer들로 수행하고, implementer와 reviewer의 세션, prompt, output ownership을 섞지 않는다.
-- 사용자가 다르게 요청하지 않았다면 independent review를 끝낸 뒤 PR을 publish한다.
+- `changes-requested`가 남아 있는 상태에서 draft PR을 먼저 열고 review thread를 canonical repair loop처럼 쓰지 않는다. 기본 repair loop는 local diff, latest verification report, reviewer evidence를 기준으로 닫는다.
+- 사용자가 다르게 요청하지 않았다면 independent review와 feedback close-out을 끝낸 뒤 PR을 publish한다.
 - source of truth 문서를 함께 업데이트하거나, 업데이트가 불필요한 이유를 남긴다.
 - 검증 명령과 최종 상태는 close-out artifact에 반드시 남기고, PR 본문에는 필요한 요약만 남긴다.
 - quality sweep에서 나온 non-blocking cleanup candidate는 current issue에 섞지 말고 별도 work item으로 넘긴다.

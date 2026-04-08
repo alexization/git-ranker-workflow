@@ -143,6 +143,17 @@
 - 산출물: quality sweep policy, report template, skill, 관련 roadmap/system map/governance hook, `GRW-23` exec plan
 - 검증: 문서 본문 리뷰, hook grep, representative quality signal simulation
 
+### GRW-25. pre-PR review cycle hardening
+
+- 저장소: `git-ranker-workflow`
+- 선행조건: `GRW-20`, `GRW-21`, `GRW-S08`, `GRW-S09`
+- 권장 write scope: `docs/operations`, `docs/architecture`, `docs/product`, `.codex/skills/`, `docs/exec-plans`
+- 기본 결정: canonical 기본값은 `implement -> verification -> sub-agent review -> repair loop -> approved -> feedback close-out -> open PR publish`다. draft PR은 review workspace가 아니라 user request 또는 blocker-sharing exception이다.
+- 핵심 작업: governance/review policy wording을 더 직접적으로 정렬하고, `publish-after-review` thin-layer skill과 registry hook을 추가해 publish ordering drift를 줄인다.
+- 비범위: backend/frontend 앱 코드 변경, GitHub Actions 구현, 외부 reviewer runtime 추가, merge policy 재설계
+- 산출물: updated governance/review policy hook, publish skill, related roadmap/catalog update, `GRW-25` exec plan
+- 검증: 문서 본문 리뷰, hook grep, skill 본문 점검, issue body render, `git diff --check`
+
 ## Skill Track
 
 ### GRW-S06. intake/ambiguity skill pack
