@@ -90,6 +90,7 @@ stable source of truth는 이미 `independent review -> feedback close-out -> PR
 - `sed -n '1,240p' .codex/skills/README.md`
 - `rg -n "publish-after-review|draft PR|review workspace|publish container|independent review를 먼저|approved.*PR|PR 존재 여부|feedback close-out" docs .codex/skills`
 - `gh issue view --repo alexization/git-ranker-workflow 71 --json body,title,number`
+- `gh pr view 72 --json body,title,number,url,isDraft`
 - `git diff --check`
 
 ## Evidence
@@ -145,7 +146,9 @@ stable source of truth는 이미 `independent review -> feedback close-out -> PR
    - 결과: governance, review policy, roadmap, catalog, local skill surface에서 `feedback close-out`을 포함한 같은 vocabulary가 반복되어 draft-first drift를 줄이는 방향으로 정렬된 것을 확인했다.
 10. `gh issue view --repo alexization/git-ranker-workflow 71 --json body,title,number`
    - 결과: issue `#71` body render가 의도한 섹션과 줄바꿈을 유지하는 것을 확인했다.
-11. `git diff --check`
+11. `gh pr view 72 --json body,title,number,url,isDraft`
+    - 결과: open PR `#72`가 draft가 아닌 상태로 생성됐고, PR body render가 template 섹션과 줄바꿈을 유지하는 것을 확인했다.
+12. `git diff --check`
     - 결과: whitespace error 없음.
 
 ## Reviewer Handoff Input
@@ -217,6 +220,13 @@ stable source of truth는 이미 `independent review -> feedback close-out -> PR
 - Promotion decision: `no-new-guardrail`
 - Decision rationale: 이번 issue 자체에서 governance wording hardening과 `publish-after-review` skill/registry hook을 함께 추가해 필요한 guardrail을 current diff 안에서 이미 반영했다. 별도의 추가 guardrail asset을 더 만들 필요는 없다.
 - Follow-up asset or issue: 없음
+
+## Publish
+
+- Publish decision: `open PR`
+- PR: `#72`
+- URL: `https://github.com/alexization/git-ranker-workflow/pull/72`
+- Render check: `gh pr view 72 --json body,title,number,url,isDraft`로 title/body/url/isDraft를 확인했다.
 
 ## Docs Updated
 
