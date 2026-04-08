@@ -6,8 +6,8 @@
 - Repository: `git-ranker-workflow`
 - Branch Name: `feat/grw-23-continuous-quality-feedback-loop`
 - Task Slug: `2026-04-08-grw-23-continuous-quality-feedback-loop`
-- Primary Context Pack: `workflow-docs`
-- Verification Contract Profile: `workflow-docs`
+- Primary Context Pack: `cross-repo-planning`
+- Verification Contract Profile: `cross-repo-planning`
 
 ## Problem
 
@@ -101,6 +101,9 @@
 
 ## Verification
 
+- impacted repo official source review
+  - 결과: `alexization/git-ranker@develop`의 `README.md`, `build.gradle`, `.github/workflows/quality-gate.yml`을 확인해 backend의 Gradle entrypoint와 quality gate surface를 current rollout 근거로 사용 가능함을 확인했다.
+  - 결과: `alexization/git-ranker-client@main`의 `README.md`, `package.json`, `.github/workflows/ci.yml`을 확인해 frontend의 npm script와 CI surface를 current rollout 근거로 사용 가능함을 확인했다.
 - `sed -n '1,260p' docs/operations/continuous-quality-feedback-loop.md`
   - 결과: trigger mode, signal taxonomy, detection surface, disposition vocabulary, cleanup handoff minimum이 한 문서에 정리된 것을 확인했다.
 - `sed -n '1,220p' docs/operations/quality-sweep-report-template.md`
@@ -121,12 +124,19 @@
 
 ## Verification Report
 
-- Contract profile: `workflow-docs`
+- Contract profile: `cross-repo-planning`
 - Overall status: `passed`
 - Preconditions:
-  - workflow 저장소 문서/skill 전용 변경
+  - workflow 저장소 문서/skill 전용 write scope
   - GitHub Issue `#60`
   - feature branch `feat/grw-23-continuous-quality-feedback-loop`
+  - impacted repo official source confirmed: `alexization/git-ranker@develop`, `alexization/git-ranker-client@main`
+- Command: `GitHub fetch_file alexization/git-ranker@develop README.md, build.gradle, .github/workflows/quality-gate.yml`
+  - Status: `passed`
+  - Evidence: backend의 Gradle verification surface와 existing `quality-gate.yml` base lane을 current rollout 근거로 확인했다.
+- Command: `GitHub fetch_file alexization/git-ranker-client@main README.md, package.json, .github/workflows/ci.yml`
+  - Status: `passed`
+  - Evidence: frontend의 npm scripts와 existing `ci.yml` base lane을 current rollout 근거로 확인했다.
 - Command: `sed -n '1,260p' docs/operations/continuous-quality-feedback-loop.md`
   - Status: `passed`
   - Evidence: trigger mode, signal taxonomy, detection surface, disposition, cleanup handoff minimum이 포함됐다.
@@ -151,6 +161,9 @@
 ## Evidence
 
 - current harness coverage와 gap 검토 결과
+- impacted repo official source review
+  - backend remote source: `alexization/git-ranker@develop` `README.md`, `build.gradle`, `.github/workflows/quality-gate.yml`
+  - frontend remote source: `alexization/git-ranker-client@main` `README.md`, `package.json`, `.github/workflows/ci.yml`
 - continuous quality feedback policy 본문
 - quality sweep report template 본문
 - quality sweep triage skill 본문
@@ -159,8 +172,8 @@
   - `docs/exec-plans/completed/2026-03-26-grc-02-frontend-lint-debt.md`: `coding-rule-drift -> cleanup-pr-candidate`
   - `docs/exec-plans/completed/2026-03-25-grw-04-frontend-routes-data-flow-docs.md`: `unused-code-drift -> cleanup-pr-candidate`
 - current repo structure review
-  - backend local `build.gradle`, `.github/workflows/quality-gate.yml`
-  - frontend remote `README.md`, `package.json`, `.github/workflows/ci.yml`
+  - backend official source: `alexization/git-ranker@develop` `README.md`, `build.gradle`, `.github/workflows/quality-gate.yml`
+  - frontend official source: `alexization/git-ranker-client@main` `README.md`, `package.json`, `.github/workflows/ci.yml`
 - `git diff --check` 결과
 - GitHub Issue `#60` body render 확인 결과
 
