@@ -115,7 +115,7 @@
 - representative quality signal simulation 2건
   - 결과: `GRC-02`의 lint warning debt는 `coding-rule-drift -> cleanup-pr-candidate`로, `GRW-04`의 unused ranking prefetch 경로는 `unused-code-drift -> cleanup-pr-candidate`로 현재 policy에 대입 가능함을 확인했다.
 - current repo structure review
-  - 결과: backend는 local Gradle project와 existing `quality-gate.yml`을 이미 갖고 있어 repo-local GC lane 확장에 적합했다.
+  - 결과: backend는 remote `README.md`, `build.gradle`, existing `quality-gate.yml` 기준으로 Gradle entrypoint와 quality gate surface가 확인돼 repo-local GC lane 확장에 적합했다.
   - 결과: frontend는 remote `README.md`, `package.json`, existing `ci.yml` 기준으로 repo-local npm script + GitHub Actions 확장이 가장 자연스러웠고, 현재 workflow worktree에는 local frontend checkout이 없으므로 implementation 전 worktree 준비가 필요함을 확인했다.
 - `git diff --check`
   - 결과: whitespace 또는 patch formatting 오류가 없음을 확인했다.

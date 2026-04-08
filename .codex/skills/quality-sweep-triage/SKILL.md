@@ -40,6 +40,7 @@ quality sweep signal을 `repair-now`, `cleanup-pr-candidate`, `guardrail-follow-
   - scan scope
   - detection surface
   - signal class
+  - trigger signal
   - severity
   - selected disposition
   - follow-up asset / issue / PR
@@ -64,6 +65,7 @@ rg -n "lint|duplicate|unused|quality sweep|cleanup" docs/exec-plans docs/operati
 - trigger mode와 source artifact
 - bounded scan scope
 - signal class와 그 이유
+- trigger signal
 - detection surface
 - severity 판단 근거
 - selected disposition과 selection rule 근거
@@ -102,6 +104,7 @@ Sweep Decision
 - Scan scope: `src/features/ranking`
 - Detection surface: lint warning summary, reviewer note
 - Signal class: `unused-code-drift`
+- Trigger signal: ranking helper 2개가 route refactor 이후 호출되지 않는다.
 - Severity: `non-blocking`
 - Disposition: `cleanup-pr-candidate`
 - Follow-up asset / issue / PR: cleanup issue 초안
