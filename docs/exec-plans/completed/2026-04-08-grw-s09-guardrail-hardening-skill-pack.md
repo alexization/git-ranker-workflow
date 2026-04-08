@@ -77,7 +77,7 @@
 - `find .codex/skills -maxdepth 3 -type f | sort`
   - 결과: `guardrail-ledger-update`, `failure-to-policy`, checklist, registry 업데이트가 기대 경로에 생성된 것을 확인했다.
 - `sed -n '1,260p' .codex/skills/guardrail-ledger-update/SKILL.md`
-  - 결과: entry precondition, root cause normalization, output location, required evidence, `failure-to-policy` handoff가 포함된 것을 확인했다.
+  - 결과: entry precondition, terminal review outcome 기준 trigger, root cause normalization, output location, required evidence, `failure-to-policy` handoff가 포함된 것을 확인했다.
 - `sed -n '1,260p' .codex/skills/failure-to-policy/SKILL.md`
   - 결과: failure taxonomy, recurrence 확인, promotion decision, canonical `Guardrail status` vocabulary, `no-new-guardrail` 예외, follow-up handoff가 포함된 것을 확인했다.
 - `sed -n '1,220p' .codex/skills/guardrail-ledger-update/checklists/feedback-closeout-minimum.md`
@@ -105,7 +105,7 @@
   - Evidence: 새 skill 2종과 checklist가 기대 경로에 생성됐다.
 - Command: `sed -n '1,260p' .codex/skills/guardrail-ledger-update/SKILL.md`
   - Status: `passed`
-  - Evidence: entry precondition, root cause normalization, ledger entry output, `failure-to-policy` handoff가 포함됐다.
+  - Evidence: entry precondition, `changes-requested`를 feedback close-out trigger로 취급하지 않는 terminal review outcome 기준, ledger entry output, `failure-to-policy` handoff가 포함됐다.
 - Command: `sed -n '1,260p' .codex/skills/failure-to-policy/SKILL.md`
   - Status: `passed`
   - Evidence: failure taxonomy, recurrence, promotion decision, canonical `Guardrail status` vocabulary, `no-new-guardrail` 예외가 포함됐다.
@@ -165,6 +165,9 @@
 - Review repair:
   - 초기 reviewer pass에서 ledger template 필수 필드(`Date`, `Task / Exec Plan`, `Existing guardrail`)와 canonical `Guardrail status` vocabulary 누락, representative simulation 분류 drift가 지적됐다.
   - current head `8f21beb3f75071869916f0ab78998ce828bb1a64`에서 해당 항목을 모두 보정한 뒤 reviewer pool을 다시 실행해 최종 `approved`를 받았다.
+- Post-PR review repair:
+  - Codex GitHub review는 `guardrail-ledger-update` trigger가 `changes-requested`를 terminal close-out처럼 읽히게 만든다고 지적했다.
+  - current head 이후 repair에서 feedback close-out trigger를 `approved | blocked | review 불가`로만 좁히고, `changes-requested`는 repair loop로 되돌려야 한다는 evidence와 forbidden shortcut을 추가했다.
 
 ## Feedback / Guardrail Follow-up
 
