@@ -2,7 +2,7 @@
 
 - Issue ID: `GRW-23`
 - GitHub Issue: `#60`
-- Status: `In Progress`
+- Status: `Completed`
 - Repository: `git-ranker-workflow`
 - Branch Name: `feat/grw-23-continuous-quality-feedback-loop`
 - Task Slug: `2026-04-08-grw-23-continuous-quality-feedback-loop`
@@ -66,7 +66,7 @@
 - `docs/operations/quality-sweep-report-template.md`
 - `.codex/skills/quality-sweep-triage/SKILL.md`
 - 관련 architecture/product/operations/skills registry hook
-- `docs/exec-plans/active/2026-04-08-grw-23-continuous-quality-feedback-loop.md`
+- `docs/exec-plans/completed/2026-04-08-grw-23-continuous-quality-feedback-loop.md`
 
 ## Working Decisions
 
@@ -156,7 +156,7 @@
   - Status: `passed`
   - Evidence: issue body render가 깨지지 않았다.
 - Failure summary: 없음
-- Next action: 사용자 검토 또는 후속 independent review handoff
+- Next action: historical close-out reconciliation
 
 ## Evidence
 
@@ -202,12 +202,19 @@
 - `docs/operations/workflow-governance.md`
 - `docs/product/harness-roadmap.md`
 - `docs/product/work-item-catalog.md`
-- `docs/exec-plans/active/2026-04-08-grw-23-continuous-quality-feedback-loop.md`
+- `docs/exec-plans/completed/2026-04-08-grw-23-continuous-quality-feedback-loop.md`
 
 ## Independent Review
 
-- 이번 턴에서는 session-isolated reviewer pool을 실행하지 않았다.
-- 따라서 canonical independent review evidence와 `Completed` close-out은 아직 남아 있다.
+- Not run
+- Reason: GitHub PR `#61` merge 시점에 reviewer pool evidence가 이 plan에 남지 않았고, `GRW-18`에서는 historical snapshot을 retroactive reviewer output으로 다시 쓰지 않는다.
+
+## Close-out Reconciliation
+
+- GitHub PR `#61`은 `2026-04-08`에 `merged` 됐다.
+- GitHub Issue `#60`은 PR 본문의 `Closes #60`에도 불구하고 open 상태로 남아 있었고, repository default branch가 `main`인 상태에서 PR이 `develop`에 merge된 영향으로 자동 close가 되지 않은 것으로 확인됐다.
+- `GRW-18` pilot에서 Issue `#60`을 `2026-04-08`에 수동으로 `closed` (`state_reason=completed`) 처리하고, stale active exec plan을 `completed/` historical record로 옮겼다.
+- 이 reconciliation은 policy 본문과 original verification evidence를 다시 쓰지 않고, merge/issue state와 보관 위치만 current GitHub state에 맞췄다.
 
 ## Skill Consideration
 
