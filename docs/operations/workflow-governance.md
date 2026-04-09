@@ -142,7 +142,7 @@
 4. 이슈 번호를 브랜치명과 exec plan에 연결한다.
 5. 작업 후 latest verification report를 만들고, reviewer minimum context를 준비한 뒤 session-isolated sub-agent reviewer pool로 independent review를 먼저 수행한다. 공통 handoff surface를 각 reviewer에 fan-out하되, 역할별 focus에 맞는 subset만 줄 수 있고 final verdict owner 하나를 남긴다.
 6. review verdict가 `changes-requested`면 implementer가 in-scope repair를 수행하고, 영향을 받은 verification을 다시 실행한 뒤 reviewer pool을 다시 수행한다. `approved` 또는 declared blocker가 나오기 전에는 PR을 만들지 않는다.
-7. latest review verdict와 feedback outcome이 고정된 뒤 PR body file에 작업 요약, 접근, review guide, validation summary, 영향, 남은 리스크를 채우고, detailed verification/review/feedback evidence는 close-out artifact에 정리한다.
+7. latest review verdict와 publish path에 필요한 evidence가 고정된 뒤 PR body file에 작업 요약, 접근, review guide, validation summary, 영향, 남은 리스크를 채우고, detailed verification/review/feedback evidence는 close-out artifact에 정리한다. open path는 feedback outcome을, blocker-sharing draft path는 blocker disclosure를 포함한다.
 8. 사용자가 draft를 명시적으로 요청했거나, scope-complete 전 blocker 공유가 필요하면 draft PR을 연다. 그렇지 않다면 `gh pr create --base develop --body-file ...`로 open PR을 연다.
 9. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
 

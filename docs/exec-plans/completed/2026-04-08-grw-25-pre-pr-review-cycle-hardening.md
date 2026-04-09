@@ -74,14 +74,14 @@ stable source of truth는 이미 `independent review -> feedback close-out -> PR
 ## Working Decisions
 
 - canonical direction 자체는 바꾸지 않고, current policy의 뜻을 더 명확하게 드러내는 hardening으로 제한한다.
-- `publish-after-review` skill은 새 policy를 발명하지 않고, `approved review verdict`와 `fixed feedback outcome` 뒤에 open PR을 publish하는 thin layer만 담당한다.
+- `publish-after-review` skill은 새 policy를 발명하지 않고, `approved review verdict` 뒤 open PR을 publish하거나 선언된 blocker-sharing draft exception을 publish하는 thin layer만 담당한다.
 - draft PR은 canonical review surface가 아니라 user request 또는 blocker-sharing exception이라는 점을 문서와 skill에서 같은 vocabulary로 맞춘다.
 - plugin cache의 외부 skill은 source of truth가 아니므로 이번 작업에서 직접 수정하지 않는다.
 
 ## Verification
 
 - `sed -n '116,180p' docs/operations/workflow-governance.md`
-- `sed -n '10,210p' docs/operations/dual-agent-review-policy.md`
+- `sed -n '10,230p' docs/operations/dual-agent-review-policy.md`
 - `sed -n '114,121p' docs/architecture/harness-system-map.md`
 - `sed -n '20,26p' docs/product/harness-roadmap.md`
 - `sed -n '1,260p' docs/product/work-item-catalog.md`
@@ -113,15 +113,17 @@ stable source of truth는 이미 `independent review -> feedback close-out -> PR
 
 ## Skill Consideration
 
-이번 이슈의 핵심은 publish 단계 thin-layer skill을 추가해 current policy를 operationalize하는 것이다. 따라서 새 skill은 policy 재정의가 아니라, reviewer-handoff 이후 PR publish를 canonical 순서로 고정하는 최소 surface에 머문다.
+이번 이슈의 핵심은 publish 단계 thin-layer skill을 추가해 current policy를 operationalize하는 것이다. 따라서 새 skill은 policy 재정의가 아니라, reviewer-handoff 이후 open PR path와 blocker-sharing draft path를 canonical 순서로 고정하는 최소 surface에 머문다.
 
 ## Verification Report
 
 - Overall Status: `passed`
-- Verification Time: `2026-04-08`
+- Verification Time: `2026-04-09`
 - Notes:
   - workflow-docs profile 기준 본문/registry/skill hook 정렬을 확인했다.
   - first review에서 나온 `feedback close-out ordering shorthand`와 `verification coverage` finding을 반영해 workflow-governance, `publish-after-review`, exec plan wording을 수리한 뒤 affected command를 다시 실행했다.
+  - post-PR review에서 나온 blocker-sharing draft path 누락을 반영해 `publish-after-review`, skills registry, review policy hook wording을 추가 수리했다.
+  - second post-PR reviewer pass에서 지적한 policy body 예외 누락과 exec plan verification freshness gap을 반영해 workflow-governance step 7, dual-agent review policy 본문, completed exec plan changed section coverage를 다시 맞췄다.
   - GitHub issue `#71` body render와 local diff whitespace check를 함께 확인했다.
 
 ### Commands
@@ -137,19 +139,29 @@ stable source of truth는 이미 `independent review -> feedback close-out -> PR
 5. `sed -n '1,260p' docs/product/work-item-catalog.md`
    - 결과: `GRW-25` catalog entry와 기본 결정, write scope, verification surface가 추가된 것을 확인했다.
 6. `sed -n '1,260p' .codex/skills/publish-after-review/SKILL.md`
-   - 결과: `approved` verdict와 feedback close-out 뒤 publish하는 thin-layer skill 본문이 추가된 것을 확인했다.
+   - 결과: `approved` verdict 뒤 open PR을 publish하고, blocker-sharing exception이 선언되면 explicit draft PR 생성 step으로 이어지는 thin-layer skill 본문을 확인했다.
 7. `sed -n '1,120p' .codex/skills/reviewer-handoff/SKILL.md`
    - 결과: `approved` verdict 뒤에는 feedback close-out을 먼저 정리하고, publish는 `publish-after-review` 단계로 넘긴다는 handoff note를 직접 확인했다.
 8. `sed -n '1,240p' .codex/skills/README.md`
-   - 결과: skill registry와 close-out 추천 순서에 `publish-after-review` hook이 추가된 것을 확인했다.
+   - 결과: skill registry와 close-out 추천 순서가 `approved` open path와 blocker-sharing draft path를 모두 설명하도록 정렬된 것을 확인했다.
 9. `rg -n "publish-after-review|draft PR|review workspace|publish container|independent review를 먼저|approved.*PR|PR 존재 여부|feedback close-out" docs .codex/skills`
    - 결과: governance, review policy, roadmap, catalog, local skill surface에서 `feedback close-out`을 포함한 같은 vocabulary가 반복되어 draft-first drift를 줄이는 방향으로 정렬된 것을 확인했다.
 10. `gh issue view --repo alexization/git-ranker-workflow 71 --json body,title,number`
    - 결과: issue `#71` body render가 의도한 섹션과 줄바꿈을 유지하는 것을 확인했다.
 11. `gh pr view 72 --json body,title,number,url,isDraft`
-    - 결과: open PR `#72`가 draft가 아닌 상태로 생성됐고, PR body render가 template 섹션과 줄바꿈을 유지하는 것을 확인했다.
+   - 결과: open PR `#72`가 draft가 아닌 상태로 생성됐고, PR body render가 template 섹션과 줄바꿈을 유지하는 것을 확인했다.
 12. `git diff --check`
     - 결과: whitespace error 없음.
+13. `sed -n '143,148p' docs/operations/workflow-governance.md`
+    - 결과: publish body preparation step이 open path의 feedback outcome과 blocker-sharing draft path의 blocker disclosure를 모두 직접 설명하도록 정렬된 것을 확인했다.
+14. `sed -n '24,32p' docs/operations/dual-agent-review-policy.md`
+    - 결과: implementer role이 open PR path와 blocker-sharing draft path의 publish evidence를 모두 반영하도록 정렬된 것을 확인했다.
+15. `sed -n '149,158p' docs/operations/dual-agent-review-policy.md`
+    - 결과: review repair loop 본문이 open path와 draft exception path를 모두 직접 설명하고, draft PR thread가 canonical repair loop가 아니라는 점을 유지하는 것을 확인했다.
+16. `sed -n '205,216p' docs/operations/dual-agent-review-policy.md`
+    - 결과: `publish-after-review` relationship hook이 open PR path와 draft PR exception path를 함께 설명하는 것을 확인했다.
+17. `sed -n '116,240p' docs/exec-plans/completed/2026-04-08-grw-25-pre-pr-review-cycle-hardening.md`
+    - 결과: post-PR repair note, verification notes, post-PR review repair evidence를 포함한 changed exec plan section 전체가 latest wording과 일치하는 것을 확인했다.
 
 ## Reviewer Handoff Input
 
@@ -210,6 +222,14 @@ stable source of truth는 이미 `independent review -> feedback close-out -> PR
 - Review repair:
   - 초기 reviewer pass에서는 exec plan과 governance의 ordering shorthand가 `feedback close-out` 단계를 건너뛰고, `publish-after-review`가 feedback outcome 고정 전 publish를 허용하며, latest verification report가 `.codex/skills/reviewer-handoff/SKILL.md` direct check를 직접 덮지 않는다고 지적됐다.
   - repair에서 workflow-governance 공통 지시, `publish-after-review` precondition/step 2, exec plan canonical flow shorthand를 보정하고 `reviewer-handoff` direct verification을 추가한 뒤 reviewer pool을 다시 실행해 최종 `approved`를 받았다.
+- Post-PR review repair:
+  - PR `#72` review는 `publish-after-review`가 blocker-sharing draft exception path를 precondition과 step에서 완전히 다루지 못한다고 지적했다.
+  - current head 이후 repair에서 `publish-after-review`에 declared blocker path, explicit draft PR 생성 step, blocker disclosure precondition을 추가하고 `.codex/skills/README.md`, `docs/operations/dual-agent-review-policy.md`, completed exec plan wording을 함께 정렬했다.
+  - second reviewer pass에서는 dual-agent policy 본문이 blocker-sharing draft path를 relationship hook만큼 직접 설명하지 못하고, completed exec plan rerun coverage가 current diff보다 좁다고 지적했다.
+  - current head 이후 repair에서 workflow-governance step 7, dual-agent role split/review repair loop 본문, completed exec plan verification coverage를 보정하고 affected section 전체를 다시 확인했다.
+  - follow-up reviewer pool에서 `scope-and-governance` reviewer `Kuhn`은 policy body, skill, registry, exec plan evidence가 blocker-sharing draft path를 모순 없이 설명한다고 확인했다.
+  - `verification-and-regression` reviewer `Lovelace`는 command 17 범위를 `116:240`으로 넓힌 뒤 stale exec-plan coverage blocker가 해소됐다고 확인했다.
+  - reviewer-coordinator `Gibbs`는 follow-up reviewer pool의 필수 역할이 모두 `approved`이며 blocking finding이 없으므로 overall verdict를 `approved`로 재확인했다.
 
 ## Feedback / Guardrail Follow-up
 
