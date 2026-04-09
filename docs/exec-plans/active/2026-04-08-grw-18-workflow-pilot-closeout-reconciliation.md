@@ -150,7 +150,7 @@
   - Evidence: `GRW-23` historical record가 `completed/`에 유지되고 Issue `#60` close note도 보존된다.
 - Command: `sed -n '1,420p' docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
   - Status: `passed`
-  - Evidence: `GRW-18` plan이 `In Progress` 상태, pre-repair review verdict, repair note, state correction을 함께 기록하고 rerun review를 대기한다.
+  - Evidence: `GRW-18` plan이 `In Progress` 상태로 repair history, fresh reviewer approval evidence, state correction을 함께 기록한다.
 - Command: `find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort`
   - Status: `passed`
   - Evidence: `GRW-18`만 `active/`에 있고 `GRW-17`, `GRW-23`은 `completed/`에 유지된다.
@@ -162,54 +162,55 @@
   - Evidence: Issue `#70`은 현재 `OPEN`, `REOPENED` 상태로 되돌려졌다.
 - Command: `gh pr view 73 --repo alexization/git-ranker-workflow --json number,state,isDraft,mergeStateStatus,headRefName,baseRefName,mergedAt`
   - Status: `passed`
-  - Evidence: PR `#73`은 현재 `OPEN` draft이고 `mergedAt=null`이라 non-terminal state와 일치한다.
+  - Evidence: PR `#73`은 현재 `OPEN`, `isDraft=false`, `mergedAt=null`이라 review 이후 publish 상태이면서도 여전히 non-terminal state와 일치한다.
 - Command: `gh pr view 73 --repo alexization/git-ranker-workflow --json number,title,body,isDraft,state`
   - Status: `passed`
-  - Evidence: live PR body가 `#70` reopened, `GRW-18` active, draft PR 유지라는 current repair state와 일치한다.
+  - Evidence: live PR body가 `#70` reopened, `GRW-18` active, reviewer approval 반영, open PR 유지라는 current state와 일치한다.
 - Command: `git diff --check`
   - Status: `passed`
   - Evidence: whitespace 또는 patch formatting 오류가 없다.
 - Failure summary: 없음
-- Next action: canonical reviewer pool 재검토
+- Next action: PR `#73` merge와 post-merge close-out sync를 대기한다.
 
 ## Independent Review
 
 - Implementer: `Codex`
-- Reviewer: `Halley | reviewer-coordinator`
+- Reviewer: `Kuhn | reviewer-coordinator`
 - Additional Reviewers:
-  - `scope-and-governance`: `Newton`
-  - `verification-and-regression`: `Kant`
+  - `scope-and-governance`: `Archimedes`
+  - `verification-and-regression`: `Hooke`
 - Reviewer Roles / Prompt Focus:
   - `scope-and-governance`
   - `verification-and-regression`
 - Reviewer Input:
   - Exec plan: `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
-  - Latest verification report: `passed`였지만 terminal state wording mismatch가 있었다.
-  - Diff summary: `GRW-17`, `GRW-23` historical record 이동과 `GRW-18` completed close-out 기록 추가
-  - Source-of-truth update: exec plan historical record 정리만 수행
-  - Remaining risks / skipped checks: premature close-out, review evidence 부재
-- Review Verdict: `changes-requested`
+  - Latest verification report: `passed`
+  - Diff summary: `GRW-17`, `GRW-23` historical record 유지와 `GRW-18` active repair state 반영
+  - Source-of-truth update: exec plan historical record와 active plan evidence만 갱신, stable policy 문서는 변경하지 않음
+  - Remaining risks / skipped checks: merge 전까지 Issue `#70`과 exec plan을 `Completed`로 닫지 않음, post-merge close-out은 후속 단계
+- Review Verdict: `approved`
 - Findings / Change Requests:
-  - `GRW-18` issue/exec plan을 merge 전 `Completed`로 닫은 상태를 되돌릴 것
-  - latest verification report와 independent review section의 terminal wording mismatch를 제거할 것
+  - No blocking findings.
+  - `scope-and-governance`: live GitHub state, exec plan scope, write scope, historical record 보존이 서로 일치한다.
+  - `verification-and-regression`: latest verification report, PR diff, PR body, issue 상태 사이에 stale evidence mismatch가 없다.
 - Evidence:
-  - reviewer pool 두 역할 모두 현재 상태 판정이 governance / review policy와 충돌한다고 판단했다.
+  - coordinator `Kuhn`이 dual-agent-review-policy aggregation 규칙에 따라 두 필수 reviewer role이 모두 `approved`이고 blocking finding이 없음을 확인해 overall verdict를 `approved`로 잠갔다.
 
 ## Repair Note
 
 - `2026-04-09`: canonical reviewer pool이 `changes-requested`를 반환해 `GRW-18`을 active로 되돌리고 Issue `#70`을 reopened 했다.
-- 다음 단계는 repair 후 verification 재실행과 reviewer pool 재검토다.
+- 같은 날 repair 반영 후 verification을 재실행했고, fresh reviewer pool (`Archimedes`, `Hooke`, coordinator `Kuhn`)이 `approved` verdict를 반환했다.
 
 ## Risks or Blockers
 
 - merge 전 close-out을 확정하면 pilot이 해결하려던 drift를 재현하게 된다.
-- canonical reviewer runtime이 이미 실행됐으므로, 이후 최신 review evidence 없이 상태를 다시 확정하면 또 다른 evidence mismatch가 생긴다.
+- fresh reviewer evidence는 확보됐지만, merge/post-merge close-out 전까지는 Issue `#70`과 exec plan을 terminal state로 옮기면 안 된다.
 
 ## Next Preconditions
 
-- repair 반영 후 latest verification report를 갱신한다.
-- canonical reviewer pool을 최신 diff 기준으로 다시 실행한다.
-- review verdict가 `approved`가 되기 전에는 issue `#70`이나 exec plan을 다시 `Completed`로 닫지 않는다.
+- PR `#73`은 review-approved open 상태로 유지하고 merge를 기다린다.
+- merge 전까지 Issue `#70`과 exec plan은 계속 non-terminal 상태를 유지한다.
+- merge 뒤 feedback close-out과 `Completed` 이동 여부를 current GitHub state 기준으로 다시 잠근다.
 
 ## Docs Updated
 
@@ -221,7 +222,7 @@
 
 - `GRW-17`, `GRW-23` historical record는 `completed/`에 유지한다.
 - premature close-out이었던 `GRW-18`은 active로 되돌리고 Issue `#70`을 reopened 했다.
-- PR `#73`은 review evidence 보강 전까지 draft/open 상태로 유지한다.
+- PR `#73`은 fresh review approval 이후 open 상태로 publish하고, merge 전까지 active issue로 유지한다.
 
 ## Skill Consideration
 
