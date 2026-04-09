@@ -2,7 +2,7 @@
 
 - Issue ID: `GRW-17`
 - GitHub Issue: `#43`
-- Status: `In Progress`
+- Status: `Completed`
 - Repository: `git-ranker-workflow`
 - Branch Name: `feat/grw-17-failure-to-guardrail-feedback-loop`
 - Task Slug: `2026-04-07-grw-17-failure-to-guardrail-feedback-loop`
@@ -61,7 +61,7 @@
 - `docs/operations/guardrail-ledger-template.md`
 - feedback taxonomy, promotion rule, `no new guardrail` close-out rule
 - 관련 hook 문서 갱신
-- `GRW-17` 실행 기록
+- `docs/exec-plans/completed/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
 
 ## Working Decisions
 
@@ -98,6 +98,11 @@
 - `git diff --check` 결과
 - GitHub Issue `#43` body 검증 결과
 
+## Independent Review
+
+- Not run
+- Reason: GitHub PR `#44` merge 시점에 reviewer pool evidence가 이 plan에 남지 않았고, `GRW-18`에서는 historical snapshot을 retroactive reviewer output으로 다시 쓰지 않는다.
+
 ## Representative Past Failure Classification
 
 | Source | Failure class | Promotion decision | Why |
@@ -111,7 +116,7 @@
 - failure taxonomy를 너무 세분화하면 implementer/reviewer가 실제 close-out에서 일관되게 적용하기 어려워질 수 있다.
 - 승격 규칙이 review/verification retry semantics와 충돌하면 같은 failure가 repair 대상인지, follow-up guardrail 대상인지 구분이 흐려질 수 있다.
 - template와 skill을 지금 같이 구현하면 `GRW-S09` 범위를 잠식하므로, 이번 작업은 policy와 ledger template까지만 잠근다.
-- 독립 reviewer가 아직 배정되지 않았으므로 `Completed` close-out과 review evidence는 후속 review handoff에서 채워야 한다.
+- 독립 reviewer evidence는 merge 당시 이 plan에 남지 않았고, 이 completed snapshot은 그 historical gap을 그대로 보존한다.
 
 ## Next Preconditions
 
@@ -126,7 +131,14 @@
 - `docs/operations/workflow-governance.md`
 - `docs/architecture/harness-system-map.md`
 - `docs/product/harness-roadmap.md`
-- `docs/exec-plans/active/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
+- `docs/exec-plans/completed/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
+
+## Close-out Reconciliation
+
+- GitHub Issue `#43`는 `2026-04-07`에 `closed` (`state_reason=completed`) 상태가 됐다.
+- GitHub PR `#44`는 `2026-04-07`에 `merged` 됐다.
+- source-of-truth 산출물은 이미 merge된 상태였지만 exec plan 파일이 `active/`에 남아 있어, `GRW-18` pilot에서 stale active record를 `completed/` historical record로 정리했다.
+- 이 reconciliation은 policy 본문이나 당시 verification evidence를 다시 쓰지 않고, 상태와 보관 위치만 현재 GitHub state에 맞췄다.
 
 ## Skill Consideration
 
