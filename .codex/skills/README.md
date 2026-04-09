@@ -89,6 +89,7 @@
 - `verification-contract-runner`: selected verification contract profile을 실행하고 latest verification report를 쓸 때 사용
 - `repair-loop-triage`: verification 실패나 review 수리 요청 뒤 rerun, `Blocked`, split 중 하나를 정할 때 사용
 - `reviewer-handoff`: reviewer minimum context를 reviewer pool에 fan-out하고 review evidence를 남길 때 사용
+- `publish-after-review`: approved review verdict 뒤 open PR을 publish하거나, 선언된 blocker draft 예외를 publish할 때 사용
 - `guardrail-ledger-update`: feedback close-out에서 guardrail ledger entry를 작성할 때 사용
 - `failure-to-policy`: normalized failure를 가장 작은 guardrail asset으로 연결할 때 사용
 - `quality-sweep-triage`: quality sweep signal을 cleanup candidate, guardrail follow-up, repair-now, no-action으로 분류할 때 사용
@@ -130,7 +131,8 @@ close-out이 `Rejected`이거나 route가 `대화`로 끝나면 issue, exec plan
 3. `reviewer-handoff` once latest verification report is `passed`
 4. `guardrail-ledger-update` once latest verification and review outcomes are fixed
 5. `failure-to-policy` when feedback close-out must choose a guardrail promotion target or `no-new-guardrail`
-6. `quality-sweep-triage` when periodic or targeted quality scan is in scope
+6. `publish-after-review` once latest review verdict is `approved`, or blocker-sharing draft exception is declared, and the publish container is ready
+7. `quality-sweep-triage` when periodic or targeted quality scan is in scope
 
 `api-contract-sync`의 canonical backend contract는 `git-ranker/docs/openapi/openapi.json`이다. workflow는 canonical spec을 복제해 소유하지 않고, sync 절차와 evidence를 관리한다.
 

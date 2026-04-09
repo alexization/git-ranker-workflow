@@ -115,7 +115,7 @@
 
 - Issue는 최소한 `Received`에서 `Planned`까지의 상태를 설명하되, 사람에게 필요한 문제/배경/결과/범위 중심 요약을 우선한다.
 - exec plan은 `Planned` 상태의 공식 기록이며, 구현을 시작하기 전에 존재해야 한다.
-- PR은 기본적으로 local `Verifying`, `Reviewing`, `Feedback Pending` 결과를 reader-first 요약으로 전달하는 컨테이너다. detailed verification, review, feedback evidence는 exec plan이나 linked artifact에 두고, 사용자가 예외적으로 요청하지 않았다면 open PR로 게시한다.
+- PR은 기본적으로 local `Verifying`, `Reviewing`, `Feedback Pending` 결과를 reader-first 요약으로 전달하는 컨테이너다. review/repair loop는 PR 없이 local artifact에서 먼저 닫고, detailed verification, review, feedback evidence는 exec plan이나 linked artifact에 둔 뒤, 사용자가 예외적으로 요청하지 않았다면 open PR로 게시한다.
 - `Completed` 판정은 PR의 verification 결과와 reviewer verdict, exec plan의 close-out이 함께 있어야 성립한다.
 - quality sweep에서 나온 cleanup candidate는 original issue/PR에 추가 수정으로 섞지 않고, 새 issue/PR 또는 follow-up artifact로 분리한다.
 - 완료된 exec plan은 `docs/exec-plans/completed/`로 옮기고, 후속 Issue가 이 문서를 전제조건으로 참조한다.

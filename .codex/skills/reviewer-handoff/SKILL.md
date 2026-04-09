@@ -40,6 +40,8 @@ reviewer가 더 많은 문서를 읽게 만드는 것이 목적이 아니다. re
 - role별 finding 또는 no-blocking note
 - final verdict owner
 
+`approved` verdict가 고정되면 그 다음 단계는 PR 생성이 아니라 feedback close-out 정리이며, publish는 `publish-after-review` 단계에서 따로 수행한다.
+
 ## 빠른 점검 명령
 
 ```bash
@@ -58,3 +60,4 @@ rg -n "## Verification Report|## Independent Review" docs/exec-plans/active/<pla
 - reviewer role을 늘리면서 minimum context를 줄이지 않는다.
 - skipped checks나 remaining risk를 숨긴 채 approval을 받으려 하지 않는다.
 - verdict만 기록하고 reviewer input, role별 finding, aggregation 근거를 비워 두지 않는다.
+- draft PR을 먼저 열어 두고 그 URL을 reviewer handoff의 기본 입력처럼 취급하지 않는다.

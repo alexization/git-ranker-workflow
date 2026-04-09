@@ -22,6 +22,7 @@
 - 현재 control plane source of truth는 `docs/architecture/`, `docs/operations/`, `docs/product/`, `docs/exec-plans/`로 한정한다.
 - 새 작업은 항상 exec plan으로 고정한 뒤 시작한다.
 - 사용자가 다르게 요청하지 않으면 PR은 independent review와 feedback evidence를 먼저 채운 뒤 open 상태로 publish한다.
+- draft PR은 canonical review workspace가 아니라 user-request 또는 blocker-sharing exception이다.
 - feedback close-out 뒤에는 scheduled 또는 targeted quality sweep signal을 cleanup candidate 또는 guardrail follow-up으로 다시 분류할 수 있다.
 
 ## 목표 상태
@@ -61,13 +62,14 @@
 14. `GRW-S09` guardrail-hardening skill pack
 15. `GRW-18` workflow repo pilot issue로 새 흐름 1회 검증
 16. `GRW-23` continuous quality feedback loop 정렬
+17. `GRW-25` pre-PR review cycle hardening
 
 ### Phase 3. Repo-Specific Contracts
 
-17. `GRB-04` backend verification contract 정규화
-18. `GRC-05` frontend verification contract 정규화
-19. `GRB-05` backend GC baseline 정렬
-20. `GRC-06` frontend GC baseline 정렬
+18. `GRB-04` backend verification contract 정규화
+19. `GRC-05` frontend verification contract 정규화
+20. `GRB-05` backend GC baseline 정렬
+21. `GRC-06` frontend GC baseline 정렬
 
 ## 바로 다음에 추천하는 작업
 
