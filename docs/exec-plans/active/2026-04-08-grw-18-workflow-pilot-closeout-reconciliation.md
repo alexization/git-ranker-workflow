@@ -129,7 +129,7 @@
 - moved exec plan historical records
 - GitHub Issue `#60` close-out 유지 결과
 - GitHub Issue `#70` reopen 결과
-- PR `#73` draft/open state
+- PR `#73` open state
 - `GRW-18` latest verification report
 - `GRW-18` canonical reviewer pool evidence
 - PR `#73` body alignment evidence
@@ -141,7 +141,7 @@
 - Preconditions:
   - `GRW-17`, `GRW-23` completed historical record는 유지한다.
   - Issue `#70`은 premature close-out을 되돌리기 위해 `OPEN` / `REOPENED` 상태로 복구했다.
-  - PR `#73`은 repair 검토를 위해 `OPEN` draft 상태로 유지한다.
+  - PR `#73`은 repair 검토와 reviewer handoff를 거친 뒤 `OPEN`, `isDraft=false` 상태로 publish했다.
 - Command: `sed -n '1,320p' docs/exec-plans/completed/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
   - Status: `passed`
   - Evidence: `GRW-17` historical record가 `completed/`에 유지되고 reconciliation note도 보존된다.
