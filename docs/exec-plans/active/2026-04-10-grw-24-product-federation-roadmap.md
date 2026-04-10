@@ -17,7 +17,7 @@
 
 ## Why Now
 
-현재 active queue에는 `GRW-18`, `GRB-04`, `GRB-06`이 남아 있고, 이후 작업은 `GRW-26`, `GRW-27`, `GRB-07`, `GRC-07`처럼 federation ownership과 repo-local bootstrap으로 이어진다. product 문서가 completed backlog와 target ownership을 계속 섞어 보여주면 후속 issue 분해와 handoff 기준이 흔들린다.
+현재 active queue에는 `GRW-24`, `GRW-18`, `GRB-04`, `GRB-06`이 남아 있고, 이후 작업은 `GRW-26`, `GRW-27`, `GRB-07`, `GRC-07`처럼 federation ownership과 repo-local bootstrap으로 이어진다. product 문서가 completed backlog와 target ownership을 계속 섞어 보여주면 후속 issue 분해와 handoff 기준이 흔들린다.
 
 지금 단계에서 product 문서를 남은 backlog만 보이게 정리하고, target repo canonical entrypoint를 `AGENTS.md`로 잠가 두어야 이후 app repo bootstrap과 repo-local skill ownership을 같은 기준으로 진행할 수 있다.
 
@@ -108,8 +108,10 @@
 
 ## Verification
 
-- `rg -n "GRW-10|GRW-11|GRW-12|GRW-13|GRW-14|GRW-15|GRW-16|GRW-17|GRW-19|GRW-20|GRW-21|GRW-22|GRW-23|GRW-25|GRW-S|GRB-01|GRB-02|GRC-01|GRC-02|GRC-03|GRW-01|GRW-02|GRW-03|GRW-04|GRW-05" docs/product`
+- `! rg -n "GRW-10|GRW-11|GRW-12|GRW-13|GRW-14|GRW-15|GRW-16|GRW-17|GRW-19|GRW-20|GRW-21|GRW-22|GRW-23|GRW-25|GRW-S|GRB-01|GRB-02|GRC-01|GRC-02|GRC-03|GRW-01|GRW-02|GRW-03|GRW-04|GRW-05" docs/product`
+- `rg -n "GRB-06" docs/product/harness-roadmap.md docs/product/work-item-catalog.md`
 - `rg -n "AGENTS.md|GRW-27|GRB-07|GRC-07|active queue" docs/product/harness-roadmap.md docs/product/work-item-catalog.md docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
+- `gh pr view 76 --repo alexization/git-ranker-workflow --json number,state,isDraft,headRefName,baseRefName,headRefOid`
 - `git diff --check`
 
 ## Evidence
@@ -127,26 +129,34 @@
 - Preconditions:
   - scope is limited to `docs/product/` 정리와 `GRW-18` active exec plan wording alignment
   - target repo `AGENTS.md` bootstrap은 planning만 반영하고 실제 app repo 생성 작업은 포함하지 않는다
-- Command: `rg -n "GRW-10|GRW-11|GRW-12|GRW-13|GRW-14|GRW-15|GRW-16|GRW-17|GRW-19|GRW-20|GRW-21|GRW-22|GRW-23|GRW-25|GRW-S|GRB-01|GRB-02|GRC-01|GRC-02|GRC-03|GRW-01|GRW-02|GRW-03|GRW-04|GRW-05" docs/product`
+- Command: `! rg -n "GRW-10|GRW-11|GRW-12|GRW-13|GRW-14|GRW-15|GRW-16|GRW-17|GRW-19|GRW-20|GRW-21|GRW-22|GRW-23|GRW-25|GRW-S|GRB-01|GRB-02|GRC-01|GRC-02|GRC-03|GRW-01|GRW-02|GRW-03|GRW-04|GRW-05" docs/product`
   - Status: `passed`
-  - Evidence: completed foundation work item ID가 `docs/product/` 본문에 남지 않는다.
+  - Evidence: completed foundation work item ID가 `docs/product/` 본문에 남지 않고, no-match 결과를 success로 취급하는 replayable command다.
+- Command: `rg -n "GRB-06" docs/product/harness-roadmap.md docs/product/work-item-catalog.md`
+  - Status: `passed`
+  - Evidence: active queue에 남아 있는 `GRB-06`이 roadmap과 catalog에도 다시 반영된다.
 - Command: `rg -n "AGENTS.md|GRW-27|GRB-07|GRC-07|active queue" docs/product/harness-roadmap.md docs/product/work-item-catalog.md docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
   - Status: `passed`
   - Evidence: federation ownership, `AGENTS.md` entrypoint, `GRW-18` active queue reconciliation wording이 roadmap, catalog, active exec plan에 함께 반영된다.
+- Command: `gh pr view 76 --repo alexization/git-ranker-workflow --json number,state,isDraft,headRefName,baseRefName,headRefOid`
+  - Status: `passed`
+  - Evidence: live PR `#76`은 `OPEN`, `isDraft=true` 상태이고 current head branch가 `feat/grw-24-product-federation-roadmap`임을 확인했다.
 - Command: `git diff --check`
   - Status: `passed`
   - Evidence: current workflow docs diff와 active exec plan patch에 formatting 오류가 없다.
 - Failure summary: 없음
 - Next action:
-  - commit `84baf45`를 branch에 push했고 draft PR `#76` body render를 확인했다.
-  - independent review blocker가 해소되면 open publish readiness를 다시 판정한다.
+  - repaired tree에 대한 verification은 다시 `passed`로 잠겼다.
+  - current repaired tree 기준 refreshed reviewer aggregation verdict를 잠근다.
+  - reviewer pool verdict가 `approved`면 open publish readiness를 다시 판정한다.
 
 ## Independent Review
 
 - Implementer: `Codex`
-- Reviewer: `없음`
+- Reviewer: `Franklin | reviewer-coordinator`
 - Additional Reviewers:
-  - `없음`
+  - `scope-and-governance`: `Franklin`
+  - `verification-and-regression`: `Hume`
 - Reviewer Roles / Prompt Focus:
   - `scope-and-governance`
   - `verification-and-regression`
@@ -154,25 +164,25 @@
   - Exec plan: `docs/exec-plans/active/2026-04-10-grw-24-product-federation-roadmap.md`
   - Latest verification report: `passed`
   - Diff summary: product backlog를 active/pending 기준으로 정리하고, workflow orchestration / app-repo implementation ownership, `AGENTS.md` entrypoint, `GRW-18` active queue reconciliation 범위를 source of truth에 반영했다.
-  - Source-of-truth update: `docs/product/README.md`, `docs/product/harness-roadmap.md`, `docs/product/work-item-catalog.md`, `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
-  - Remaining risks / skipped checks: session-isolated reviewer pool evidence가 아직 없고, target repo `AGENTS.md` bootstrap은 후속 issue로 남아 있다.
-- Review Verdict: `blocked`
+  - Source-of-truth update (cumulative issue diff): `docs/product/README.md`, `docs/product/harness-roadmap.md`, `docs/product/work-item-catalog.md`, `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
+  - Remaining risks / skipped checks: target repo `AGENTS.md` bootstrap은 후속 issue로 남아 있다.
+- Review Verdict: `approved`
 - Findings / Change Requests:
-  - current turn에서는 session-isolated reviewer pool을 생성하지 않았으므로 canonical independent review evidence가 없다.
-  - `approved` verdict가 없어서 open PR publish path는 사용할 수 없다.
+  - No blocking findings.
 - Evidence:
-  - `docs/operations/workflow-governance.md`와 `docs/operations/dual-agent-review-policy.md`는 open PR 전에 latest verification report와 session-isolated reviewer pool 기반 independent review verdict를 요구한다.
-  - 이번 turn은 user request에 맞춰 commit/PR publish를 진행하지만, review runtime 부재를 blocker로 남기고 draft blocker-sharing exception path만 사용할 수 있다.
+  - `scope-and-governance` reviewer `Franklin`은 scope, ownership boundary, active backlog alignment, draft blocker-sharing handling에서 blocking finding이 없음을 확인했다.
+  - `verification-and-regression` reviewer `Hume`은 final metadata sync 이후 `Next action`, `Next Preconditions`, verification report, live PR body가 current repaired tree와 일치한다고 확인했다.
+  - reviewer-coordinator `Franklin`이 두 필수 reviewer role의 latest verdict가 모두 `approved`이고 blocking finding이 없음을 확인해 overall verdict를 `approved`로 잠갔다.
 
 ## Publish Result
 
-- Publish path: `draft blocker-sharing exception`
+- Initial publish path: `draft blocker-sharing exception`
 - GitHub PR: `#76`
 - PR URL: `https://github.com/alexization/git-ranker-workflow/pull/76`
-- Branch / Commit: `feat/grw-24-product-federation-roadmap` / `84baf45`
-- Draft reason:
-  - session-isolated reviewer pool evidence가 없어 `approved` verdict 없이 open publish를 할 수 없다.
-  - blocker 공유와 reader-first summary 게시만 먼저 수행한다.
+- Branch: `feat/grw-24-product-federation-roadmap`
+- Current promotion status:
+  - latest independent review verdict는 `approved`다.
+  - owner는 PR `#76`을 open 상태로 promote할 수 있다.
 - Body render check:
   - `gh pr view 76 --repo alexization/git-ranker-workflow --json number,title,body,state,isDraft,url,headRefName,baseRefName`
   - Result: `OPEN`, `isDraft=true`, expected sections/body preserved
@@ -181,11 +191,10 @@
 
 - `GRW-18` 범위를 과하게 넓히면 one-issue/one-goal, primary-repo boundary를 깰 수 있다.
 - target repo `AGENTS.md` 생성은 아직 planning만 반영됐고 실제 bootstrap은 후속 repo task로 남아 있다.
-- session-isolated reviewer pool evidence가 없어서 open PR publish 조건을 아직 만족하지 못한다.
 
 ## Next Preconditions
 
-- draft PR `#76`에 대해 independent review blocker를 해소한 뒤 open PR 전환 또는 follow-up close-out을 다시 판정한다.
+- approved review evidence를 유지한 채 PR `#76`을 draft에서 open으로 promote한다.
 - 후속 작업은 `GRW-26`, `GRW-27`, `GRB-07`, `GRC-07` 순서로 federation ownership과 repo-local bootstrap을 진행한다.
 
 ## Docs Updated
@@ -195,3 +204,23 @@
 - `docs/product/work-item-catalog.md`
 - `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
 - `docs/exec-plans/active/2026-04-10-grw-24-product-federation-roadmap.md`
+
+## Repair Note
+
+- `2026-04-10`: reviewer pool (`Nietzsche`, `Anscombe`)이 `changes-requested`를 반환했다.
+- trigger:
+  - product backlog에서 `GRB-06` 누락
+  - no-match `rg` command의 non-replayable verification 기록
+  - `GRW-18` active queue evidence와 publish result commit SHA stale state
+- Decision: current issue 안에서 `repair`
+- Root cause: active queue reconciliation과 publish artifact를 업데이트하면서 current branch에 새 active exec plan과 추가 backend active item을 product source of truth에 끝까지 반영하지 못했다.
+- Budget remaining: same-issue repair 1회 가능
+- Rerun targets:
+  - `! rg -n "GRW-10|GRW-11|GRW-12|GRW-13|GRW-14|GRW-15|GRW-16|GRW-17|GRW-19|GRW-20|GRW-21|GRW-22|GRW-23|GRW-25|GRW-S|GRB-01|GRB-02|GRC-01|GRC-02|GRC-03|GRW-01|GRW-02|GRW-03|GRW-04|GRW-05" docs/product`
+  - `rg -n "GRB-06" docs/product/harness-roadmap.md docs/product/work-item-catalog.md`
+  - `rg -n "AGENTS.md|GRW-27|GRB-07|GRC-07|active queue" docs/product/harness-roadmap.md docs/product/work-item-catalog.md docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
+  - `gh pr view 76 --repo alexization/git-ranker-workflow --json number,state,isDraft,headRefName,baseRefName,headRefOid`
+  - `git diff --check`
+- Next owner: `Codex`
+- `2026-04-10`: follow-up reviewer pass에서 live PR body와 exec plan의 publish-state wording drift가 추가로 지적됐다.
+- same-issue repair로 live PR body를 current draft review-in-progress 상태에 맞게 갱신했고, `Independent Review` 섹션을 refreshed reviewer aggregation pending 상태로 다시 잠갔다.

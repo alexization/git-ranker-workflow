@@ -75,6 +75,18 @@
 - 산출물: backend verification contract, 필요한 문서/스크립트 정리, workflow handoff에 쓸 repo-local entry surface
 - 검증: contract에 적힌 명령과 실제 실행 결과 대조
 
+### GRB-06. backend test/CI removal
+
+- 저장소: `git-ranker`
+- 상태: `active`
+- 선행조건: 없음
+- 권장 write scope: `src/test/`, `build.gradle`, `.github/workflows/`, current exec plan
+- 기본 결정: legacy test/CI surface는 repo-local verification/TDD 재구성 전까지 baseline reset 대상으로 본다. workflow는 이 상태를 backlog와 active queue에서 숨기지 않고 follow-up rebuild 전제와 함께 드러낸다.
+- 핵심 작업: 기존 backend test source/resource tree와 obsolete test/integration task surface를 제거하고, workflow 파일은 유지하되 test execution lane만 제거한 상태를 기록한다.
+- 비범위: 새 테스트 코드 작성, 새 CI 검증 로직 도입, `src/main/` production 동작 변경
+- 산출물: removed backend test inventory, narrowed workflow verification surface, rebuild preconditions가 적힌 active exec plan
+- 검증: `./gradlew test`, `./gradlew build`, `git diff --check`
+
 ### GRB-07. backend `AGENTS.md` entrypoint and knowledge bootstrap
 
 - 저장소: `git-ranker`

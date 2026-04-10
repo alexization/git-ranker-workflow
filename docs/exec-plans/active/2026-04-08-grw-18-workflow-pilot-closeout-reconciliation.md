@@ -176,7 +176,7 @@
   - Evidence: `GRB-06` 역시 backend repo 구현 이슈로서 completed 이동 전 final close-out 판단이 아직 필요하므로 active queue에 남아야 한다.
 - Command: `find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort`
   - Status: `passed`
-  - Evidence: completed 조건을 만족한 문서는 `completed/`에 있고, 현재 active queue에는 `GRW-18`, `GRB-04`, `GRB-06`만 남아 있다.
+  - Evidence: completed 조건을 만족한 문서는 `completed/`에 있고, 현재 active queue에는 `GRW-18`, `GRB-04`, `GRB-06`, `GRW-24`가 남아 있다.
 - Command: `gh issue view --repo alexization/git-ranker-workflow 60 --json state,stateReason,title,number,closedAt`
   - Status: `passed`
   - Evidence: Issue `#60`은 계속 `CLOSED`, `COMPLETED` 상태다.
