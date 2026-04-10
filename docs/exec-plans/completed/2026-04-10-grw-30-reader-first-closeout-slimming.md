@@ -51,6 +51,7 @@ completed exec plan도 historical record라는 목적 자체는 맞지만, plann
 - Ran:
   - `sed -n` review for governance, verification registry, harness system map, exec plan guidance, workflow templates, related skills
   - `rg -n "reader-first|verification evidence|Verification Summary|full transcript|1~3개 bullet|exec plan 경로|raw command literal" docs .github .codex/skills`
+  - `find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort`
   - `gh issue view 79 --repo alexization/git-ranker-workflow --json number,title,state,body`
   - `gh pr view 80 --repo alexization/git-ranker-workflow --json number,title,state,isDraft,url,body`
   - `git diff --check`
@@ -58,6 +59,7 @@ completed exec plan도 historical record라는 목적 자체는 맞지만, plann
   - governance, verification registry, exec plan guidance가 human-facing body와 operational artifact를 더 명확히 분리한다.
   - workflow Issue/PR template와 issue body asset이 짧은 reader-first 형식으로 정렬됐다.
   - skill wording이 `latest verification evidence`, compact `Verification Summary`, PR body density 제한을 같은 vocabulary로 사용한다.
+  - `GRW-30` exec plan은 active queue에서 빠지고 completed historical record로만 남는다.
   - GitHub Issue `#79`, PR `#80` body render는 예상한 multiline 섹션을 유지한다.
 - Failure or skipped summary: 없음
 - Next action: 없음
