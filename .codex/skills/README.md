@@ -79,17 +79,17 @@
 현재 등록된 project skill은 아래와 같다.
 
 - `skill-creator`: 새 skill 생성, 기존 skill 리팩터링, trigger/structure/resource 설계에 사용
-- `request-intake`: 새 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 먼저 분류할 때 사용
+- `request-intake`: 새 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류하고 `default`/`guarded` lane을 고를 때 사용
 - `ambiguity-interview`: `모호한 요청`을 executable issue, `Blocked`, `Rejected` 중 하나로 수렴시킬 때 사용
-- `issue-to-exec-plan`: issue를 active exec plan으로 바꾸고 write scope와 verification을 잠글 때 사용
+- `issue-to-exec-plan`: guarded lane의 issue를 active exec plan으로 바꾸고 write scope와 verification을 잠글 때 사용
 - `context-pack-selection`: active exec plan 뒤에 primary context pack과 required docs, forbidden context를 잠글 때 사용
 - `boundary-check`: 구현 전에 read/write/network/escalation 경계와 write scope completeness를 다시 확인할 때 사용
 - `parallel-work-split`: 여러 agent를 투입하기 전에 ownership과 disjoint write set을 고정할 때 사용
 - `api-contract-sync`: backend API 계약 변화가 client consumer와 workflow evidence에 미치는 영향을 맞출 때 사용
 - `verification-contract-runner`: selected verification contract profile을 실행하고 latest verification report를 쓸 때 사용
 - `repair-loop-triage`: verification 실패나 review 수리 요청 뒤 rerun, `Blocked`, split 중 하나를 정할 때 사용
-- `reviewer-handoff`: reviewer minimum context를 reviewer pool에 fan-out하고 review evidence를 남길 때 사용
-- `publish-after-review`: approved review verdict 뒤 open PR을 publish하거나, 선언된 blocker draft 예외를 publish할 때 사용
+- `reviewer-handoff`: review가 실제로 필요할 때 reviewer minimum context를 넘기고 review evidence를 남길 때 사용
+- `publish-after-review`: legacy 이름이지만 current policy에서는 latest verification 뒤 open PR을 publish하는 단계에 사용
 - `guardrail-ledger-update`: feedback close-out에서 guardrail ledger entry를 작성할 때 사용
 - `failure-to-policy`: normalized failure를 가장 작은 guardrail asset으로 연결할 때 사용
 - `quality-sweep-triage`: quality sweep signal을 cleanup candidate, guardrail follow-up, repair-now, no-action으로 분류할 때 사용
@@ -105,9 +105,9 @@
 
 1. `request-intake`
 2. `ambiguity-interview` if route is `모호한 요청`
-3. `issue-to-exec-plan` if route is `즉시 실행 가능한 작업` or interview exits `Planned`
+3. `issue-to-exec-plan` if selected lane is `guarded` or interview exits `Planned`
 4. `context-pack-selection` once active exec plan exists
-5. `boundary-check` before implementation
+5. `boundary-check` before guarded-lane implementation
 6. `parallel-work-split` if more than one agent will work on the same issue
 
 아래 skill은 기본 진입 순서가 아니라 조건부 hook으로 사용한다.
@@ -127,18 +127,18 @@ close-out이 `Rejected`이거나 route가 `대화`로 끝나면 issue, exec plan
 구현 뒤 close-out 순서는 아래 hook을 따른다.
 
 1. `verification-contract-runner`
-2. `repair-loop-triage` if verification failed or review requested changes
-3. `reviewer-handoff` once latest verification report is `passed`
-4. `guardrail-ledger-update` once latest verification and review outcomes are fixed
-5. `failure-to-policy` when feedback close-out must choose a guardrail promotion target or `no-new-guardrail`
-6. `publish-after-review` once latest review verdict is `approved`, or blocker-sharing draft exception is declared, and the publish container is ready
+2. `publish-after-review` once latest verification report is `passed` and the open PR must be created
+3. `reviewer-handoff` if independent review is required after publish
+4. `repair-loop-triage` if verification failed or review requested changes
+5. `guardrail-ledger-update` once feedback close-out is actually triggered
+6. `failure-to-policy` when feedback close-out must choose a guardrail promotion target or `no-new-guardrail`
 7. `quality-sweep-triage` when periodic or targeted quality scan is in scope
 
 `api-contract-sync`의 canonical backend contract는 `git-ranker/docs/openapi/openapi.json`이다. workflow는 canonical spec을 복제해 소유하지 않고, sync 절차와 evidence를 관리한다.
 
 새 skill을 추가할 때는 roadmap item이나 task ID가 아니라 asset 이름과 workflow 역할만 registry에 남긴다.
 
-구현 결과의 최종 승인은 구현 Agent가 아니라 별도 review Agent가 담당한다.
+구현 결과의 publish 기준은 latest verification이다. merge-level approval이 추가로 필요하면 별도 reviewer가 담당한다.
 
 ## Related Docs
 
