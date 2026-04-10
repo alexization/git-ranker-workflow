@@ -13,13 +13,15 @@
 
 `GRW-17`과 `GRW-23`은 canonical source와 GitHub PR merge 기준으로 이미 완료된 작업이지만, active exec plan 디렉터리에 그대로 남아 있고 `GRW-23` GitHub Issue `#60`도 open 상태로 남아 있었다. 이 close-out drift가 남아 있으면 current active queue와 historical record 경계가 흐려지고, 하네스의 `Completed` semantics도 실제 운영 상태와 어긋난다.
 
-`GRW-18`의 목적은 새 흐름을 실제 issue 하나로 끝까지 검증하는 것이다. 별도의 가상 예제를 만들기보다, 이 실제 drift 정리 작업을 pilot 대상 issue로 사용해 `request-intake -> issue-to-exec-plan -> context-pack-selection -> boundary-check -> verification-contract-runner -> reviewer-handoff -> guardrail-ledger-update` 순서를 현재 control plane에서 재현해야 한다.
+또한 `docs/exec-plans/active/`는 현재 진행 중인 작업만 보여줘야 하는데, 실제로는 "이미 completed로 가야 하는 plan", "workflow artifact close-out만 남은 plan", "여전히 owner issue에서 구현을 계속해야 하는 plan"이 섞일 수 있다. active queue 자체를 주기적으로 점검해 상태를 바로잡는 운영 루프가 없으면 pilot close-out drift가 다시 반복된다.
+
+`GRW-18`의 목적은 새 흐름을 실제 issue 하나로 끝까지 검증하는 것이다. 별도의 가상 예제를 만들기보다, 이 실제 drift 정리 작업을 pilot 대상 issue로 사용해 `request-intake -> issue-to-exec-plan -> context-pack-selection -> boundary-check -> verification-contract-runner -> reviewer-handoff -> guardrail-ledger-update` 순서를 현재 control plane에서 재현해야 한다. 이번에는 `GRW-18` 자체의 상태 correction뿐 아니라 current active exec plan queue를 함께 점검해 completed 이동과 active 유지 판단을 같은 규칙으로 수행한다.
 
 ## Why Now
 
 `GRW-S07`, `GRW-S08`, `GRW-S09`까지 준비되면서 implementer 시작 단계와 verification/review/feedback close-out thin layer가 모두 갖춰졌다. 이제 첫 workflow-docs pilot에서 실제 작업 하나를 새 흐름으로 닫아, 문서상 규칙이 운영상 close-out drift를 정리할 수 있는지 확인할 시점이다.
 
-또한 close-out 상태를 premature하게 확정하면 pilot이 해결하려던 drift를 다시 만들 수 있다. 이번 repair는 canonical reviewer pool이 지적한 상태 판정 오류를 수리해, issue/exec plan/PR 상태가 서로 맞는지 다시 잠그는 데 초점을 둔다.
+또한 close-out 상태를 premature하게 확정하면 pilot이 해결하려던 drift를 다시 만들 수 있다. 이번 repair는 canonical reviewer pool이 지적한 상태 판정 오류를 수리해, issue/exec plan/PR 상태가 서로 맞는지 다시 잠그는 데 초점을 둔다. active queue audit을 이번 pilot의 일부로 포함해 "completed로 가야 할 문서 이동"과 "미완료 작업의 소유자 유지" 기준도 함께 고정해야 한다.
 
 ## Scope
 
@@ -27,11 +29,15 @@
 - `GRW-18` exec plan을 active 상태로 되돌리고 현재 review/repair 상태를 반영한다.
 - GitHub Issue `#70`, PR `#73`, exec plan 상태가 현재 non-terminal state와 일치하도록 맞춘다.
 - `GRW-18` exec plan에 latest verification report와 canonical independent review evidence를 남긴다.
+- current active exec plan queue를 검토해 completed 조건을 이미 만족한 plan이 남아 있는지 확인한다.
+- completed 조건을 만족한 active plan은 `completed/` historical record로 이동하고, 관련 issue/PR state drift가 있으면 같이 맞춘다.
+- 아직 미완료인 active plan은 workflow artifact close-out만 남은 경우에만 `GRW-18` 과정에서 마무리하고, app repo 구현이 남아 있으면 원래 owner issue 아래 active 상태로 유지한다.
 
 ## Non-scope
 
 - `GRW-17`, `GRW-23` source-of-truth policy 본문 재설계
 - backend/frontend 앱 코드 변경
+- backend/frontend 앱 repo의 미완료 구현을 `GRW-18` issue로 흡수하는 것
 - 새 GitHub Actions, bot runtime, quality detector 구현
 - post-merge close-out을 지금 시점에 완료로 선언하는 것
 
@@ -44,6 +50,8 @@
   - `.github/` template를 쓰지 않는 PR body update surface
 - Control-plane artifacts:
   - `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
+  - `docs/exec-plans/active/2026-04-09-grb-04-backend-verification-contract-reset.md`
+  - `docs/exec-plans/active/2026-04-09-grb-06-backend-test-ci-removal.md`
   - `docs/exec-plans/completed/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
   - `docs/exec-plans/completed/2026-04-08-grw-23-continuous-quality-feedback-loop.md`
   - `/tmp/grw-18-pr-body.md`
@@ -62,13 +70,17 @@
 - `docs/exec-plans/completed/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
 - `docs/exec-plans/completed/2026-04-08-grw-23-continuous-quality-feedback-loop.md`
 - `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
+- updated current active exec plan queue state
 - reopened GitHub Issue `#70`
 - PR `#73` state/body correction
 
 ## Working Decisions
 
 - 이번 pilot의 primary repo와 task type은 `git-ranker-workflow` / `workflow 문서 수정`으로 고정한다.
-- `GRW-17`, `GRW-23` historical record는 그대로 `completed/`에 유지하고, repair 대상은 `GRW-18`의 상태 판정으로 제한한다.
+- `GRW-17`, `GRW-23` historical record는 그대로 `completed/`에 유지한다.
+- current active exec plan queue review는 `docs/exec-plans/*` artifact와 linked GitHub state correction까지만 포함한다.
+- active plan의 남은 작업이 app repo 구현이면 `GRW-18`이 구현 ownership을 가져오지 않고, 해당 issue를 active 상태로 유지한 채 next precondition만 더 선명하게 남긴다.
+- active plan의 남은 작업이 workflow artifact close-out만이면 `GRW-18` 과정에서 completed 이동까지 마무리할 수 있다.
 - `GRW-18` issue와 exec plan은 merge 전까지 `Completed`로 닫지 않는다.
 - canonical reviewer pool verdict가 `changes-requested`면 exec plan은 active 상태로 되돌리고 repair loop를 먼저 수행한다.
 
@@ -86,6 +98,8 @@
   - `docs/operations/verification-contract-registry.md`
   - `docs/operations/dual-agent-review-policy.md`
   - `docs/operations/failure-to-guardrail-feedback-loop.md`
+  - active exec plan `2026-04-09-grb-04-backend-verification-contract-reset.md`
+  - active exec plan `2026-04-09-grb-06-backend-test-ci-removal.md`
   - completed exec plan `2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
   - completed exec plan `2026-04-08-grw-23-continuous-quality-feedback-loop.md`
 - Optional docs trigger:
@@ -94,16 +108,16 @@
   - sibling app repo code tree eager load
   - policy 본문 재설계를 위한 unrelated stable docs 확장
 - First-ring hot file cue:
-  - `GRW-18`, `Status`, `Verification Report`, `Independent Review`, `PR #73`
+  - `GRW-18`, `GRB-04`, `GRB-06`, `Status`, `Verification Report`, `Independent Review`, `PR #73`
 
 ## Boundary Check Summary
 
 - Read boundary:
-  - `workflow-docs` pack required docs와 `GRW-17`, `GRW-23`, `GRW-18` exec plan/GitHub metadata까지만 읽는다.
+  - `workflow-docs` pack required docs와 current active/completed exec plan queue, linked GitHub metadata까지만 읽는다.
 - Write boundary:
   - `docs/exec-plans/active/`, `docs/exec-plans/completed/`, PR body
 - Control-plane artifact:
-  - current `GRW-18` active exec plan, completed exec plan 2건, GitHub issue/PR state
+  - current `GRW-18` active exec plan, active queue review 대상 exec plan, completed exec plan 2건, GitHub issue/PR state
 - Explicitly forbidden path:
   - sibling app repo code, policy redesign 범위의 stable source of truth
 - Network:
@@ -116,6 +130,8 @@
 - `sed -n '1,320p' docs/exec-plans/completed/2026-04-07-grw-17-failure-to-guardrail-feedback-loop.md`
 - `sed -n '1,380p' docs/exec-plans/completed/2026-04-08-grw-23-continuous-quality-feedback-loop.md`
 - `sed -n '1,420p' docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
+- `sed -n '1,360p' docs/exec-plans/active/2026-04-09-grb-04-backend-verification-contract-reset.md`
+- `sed -n '1,320p' docs/exec-plans/active/2026-04-09-grb-06-backend-test-ci-removal.md`
 - `find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort`
 - `gh issue view --repo alexization/git-ranker-workflow 60 --json state,stateReason,title,number,closedAt`
 - `gh issue view --repo alexization/git-ranker-workflow 70 --json state,stateReason,title,number,closedAt`
@@ -127,6 +143,7 @@
 
 - merged PR state for `GRW-17` / `GRW-23`
 - moved exec plan historical records
+- current active queue review 결과와 per-plan disposition
 - GitHub Issue `#60` close-out 유지 결과
 - GitHub Issue `#70` reopen 결과
 - PR `#73` open state
@@ -151,9 +168,15 @@
 - Command: `sed -n '1,420p' docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
   - Status: `passed`
   - Evidence: `GRW-18` plan이 `In Progress` 상태로 repair history, fresh reviewer approval evidence, state correction을 함께 기록한다.
+- Command: `sed -n '1,360p' docs/exec-plans/active/2026-04-09-grb-04-backend-verification-contract-reset.md`
+  - Status: `passed`
+  - Evidence: `GRB-04`는 backend repo 구현 이슈로서 verification/reset 작업이 아직 active 범위에 있으며, workflow artifact close-out만 남은 상태가 아니라는 점을 확인한다.
+- Command: `sed -n '1,320p' docs/exec-plans/active/2026-04-09-grb-06-backend-test-ci-removal.md`
+  - Status: `passed`
+  - Evidence: `GRB-06` 역시 backend repo 구현 이슈로서 completed 이동 전 final close-out 판단이 아직 필요하므로 active queue에 남아야 한다.
 - Command: `find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort`
   - Status: `passed`
-  - Evidence: `GRW-18`만 `active/`에 있고 `GRW-17`, `GRW-23`은 `completed/`에 유지된다.
+  - Evidence: completed 조건을 만족한 문서는 `completed/`에 있고, 현재 active queue에는 `GRW-18`, `GRB-04`, `GRB-06`만 남아 있다.
 - Command: `gh issue view --repo alexization/git-ranker-workflow 60 --json state,stateReason,title,number,closedAt`
   - Status: `passed`
   - Evidence: Issue `#60`은 계속 `CLOSED`, `COMPLETED` 상태다.
@@ -187,7 +210,7 @@
   - Latest verification report: `passed`
   - Diff summary: `GRW-17`, `GRW-23` historical record 유지와 `GRW-18` active repair state 반영
   - Source-of-truth update: exec plan historical record와 active plan evidence만 갱신, stable policy 문서는 변경하지 않음
-  - Remaining risks / skipped checks: merge 전까지 Issue `#70`과 exec plan을 `Completed`로 닫지 않음, post-merge close-out은 후속 단계
+  - Remaining risks / skipped checks: merge 전까지 Issue `#70`과 exec plan을 `Completed`로 닫지 않음, post-merge close-out은 후속 단계다. Active queue review는 workflow artifact와 linked GitHub state만 다루며, `GRB-04`, `GRB-06`의 app repo 구현 완료 판정은 각각 원래 issue owner scope에 남긴다.
 - Review Verdict: `approved`
 - Findings / Change Requests:
   - No blocking findings.
@@ -205,12 +228,14 @@
 
 - merge 전 close-out을 확정하면 pilot이 해결하려던 drift를 재현하게 된다.
 - fresh reviewer evidence는 확보됐지만, merge/post-merge close-out 전까지는 Issue `#70`과 exec plan을 terminal state로 옮기면 안 된다.
+- active queue review 중 app repo 구현 이슈를 `GRW-18`로 흡수하면 one-issue/one-goal, primary-repo boundary를 깨게 된다.
 
 ## Next Preconditions
 
 - PR `#73`은 review-approved open 상태로 유지하고 merge를 기다린다.
 - merge 전까지 Issue `#70`과 exec plan은 계속 non-terminal 상태를 유지한다.
 - merge 뒤 feedback close-out과 `Completed` 이동 여부를 current GitHub state 기준으로 다시 잠근다.
+- current active queue는 각 plan별 disposition을 다시 검토하되, app repo 구현이 남은 문서는 원래 issue 아래에서 close-out까지 이어간다.
 
 ## Docs Updated
 
@@ -223,6 +248,7 @@
 - `GRW-17`, `GRW-23` historical record는 `completed/`에 유지한다.
 - premature close-out이었던 `GRW-18`은 active로 되돌리고 Issue `#70`을 reopened 했다.
 - PR `#73`은 fresh review approval 이후 open 상태로 publish하고, merge 전까지 active issue로 유지한다.
+- current active exec plan queue는 completed 이동 후보와 계속 active로 남을 후보를 구분해 관리한다.
 
 ## Skill Consideration
 
