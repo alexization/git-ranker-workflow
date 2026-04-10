@@ -13,18 +13,6 @@
 
 ## Workflow Track
 
-### GRW-18. workflow pilot and active queue close-out reconciliation
-
-- 저장소: `git-ranker-workflow`
-- 상태: `active`
-- 선행조건: 없음
-- 권장 write scope: pilot 대상 문서, `docs/exec-plans`
-- 기본 결정: foundation policy는 이미 fixed 상태로 보고, workflow repo는 current active exec plan queue를 주기적으로 점검해 completed로 가야 할 문서를 historical record로 옮긴다. 다만 app repo의 미완료 구현을 `GRW-18` issue에 흡수하지는 않는다.
-- 핵심 작업: current active exec plan queue를 검토해 completed 조건을 이미 만족한 문서를 `completed/`로 이동하고, 아직 미완료인 작업은 workflow-only close-out 잔여인지 owner issue의 구현 잔여인지 구분한다. workflow artifact/state sync만 남은 항목은 `GRW-18` 과정에서 close-out까지 마무리한다.
-- 비범위: backend/frontend 기능 개발, app repo의 미완료 구현을 `GRW-18` issue로 흡수하는 것
-- 산출물: reconciled pilot exec plan, active queue review 결과, moved completed exec plans, verification/review/feedback close-out 근거
-- 검증: active/completed exec plan 상태, linked GitHub issue/PR 상태, latest verification/review evidence 정합성 확인, current active queue triage 결과
-
 ### GRW-26. federated ownership model alignment
 
 - 저장소: `git-ranker-workflow`

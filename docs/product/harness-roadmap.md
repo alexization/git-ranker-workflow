@@ -40,35 +40,34 @@
 
 ### Phase 1. Current Transition Closeout
 
-1. `GRW-18` workflow pilot and active queue close-out reconciliation
-2. `GRB-04` backend verification contract reset
-3. `GRB-06` backend test/CI removal
-4. `GRC-05` frontend verification contract 정렬
+1. `GRB-04` backend verification contract reset
+2. `GRB-06` backend test/CI removal
+3. `GRC-05` frontend verification contract 정렬
 
 ### Phase 2. Federation Source-Of-Truth Alignment
 
-5. `GRW-26` federated ownership model alignment
-6. `GRW-27` federated `AGENTS.md` handoff contract
+4. `GRW-26` federated ownership model alignment
+5. `GRW-27` federated `AGENTS.md` handoff contract
 
 ### Phase 3. Repo-Local Knowledge Ownership
 
-7. `GRB-07` backend `AGENTS.md` entrypoint and knowledge bootstrap
-8. `GRC-07` frontend `AGENTS.md` entrypoint and knowledge bootstrap
+6. `GRB-07` backend `AGENTS.md` entrypoint and knowledge bootstrap
+7. `GRC-07` frontend `AGENTS.md` entrypoint and knowledge bootstrap
 
 ### Phase 4. Repo-Local Guardrail Baselines
 
-9. `GRB-05` backend GC baseline 정렬
-10. `GRC-06` frontend GC baseline 정렬
+8. `GRB-05` backend GC baseline 정렬
+9. `GRC-06` frontend GC baseline 정렬
 
 ## 바로 다음에 추천하는 작업
 
-1. `GRW-18`
-2. `GRB-04`
-3. `GRB-06`
-4. `GRC-05`
-5. `GRW-26`
+1. `GRB-04`
+2. `GRB-06`
+3. `GRC-05`
+4. `GRW-26`
+5. `GRW-27`
 
-`GRW-24`는 completed snapshot으로 정리됐고, 이제 `GRW-18`, `GRB-04`, `GRB-06`, `GRC-05`를 닫아야 workflow pilot close-out과 repo-local verification surface가 현재 기준으로 정리된다. 이후 `GRW-26`, `GRW-27`에서 ownership과 `AGENTS.md` handoff contract를 federation 기준으로 다시 잠가야 backend/frontend repo-local bootstrap이 중복 문서 없이 이어진다.
+이제 `GRB-04`, `GRB-06`, `GRC-05`를 닫아야 repo-local verification surface가 현재 기준으로 정리된다. 이후 `GRW-26`, `GRW-27`에서 ownership과 `AGENTS.md` handoff contract를 federation 기준으로 다시 잠가야 backend/frontend repo-local bootstrap이 중복 문서 없이 이어진다.
 
 ## 사용 원칙
 
