@@ -6,11 +6,12 @@
 
 - Issue와 PR 본문은 사람이 빠르게 맥락과 판단 포인트를 이해하기 위한 reader-first 문서로 쓴다.
 - 본문에는 문제, 배경, 접근, 영향, 검토 포인트, 남은 리스크처럼 사람이 바로 판단할 정보를 우선 적는다.
-- 아래 정보는 본문 필수 항목으로 강제하지 않는다.
-  - branch 이름, exec plan 파일명, 전체 파일 목록, 업데이트한 문서 inventory
-  - raw verification 명령과 명령별 상세 로그
-  - reviewer input dump, guardrail ledger field 전체, 내부 운영 체크리스트
-- 위 operational evidence는 exec plan, verification report, review comment, feedback ledger 같은 별도 close-out artifact에 남긴다.
+- 한 섹션은 가능하면 짧은 문단 하나 또는 1~3개 bullet로 끝내고, 같은 사실을 여러 섹션에 반복하지 않는다.
+- 아래 정보는 본문 기본값으로 넣지 않는다.
+  - branch 이름, task slug, exec plan 경로, 전체 파일 목록, 업데이트한 문서 inventory
+  - raw verification command literal, command별 상세 로그, body render check 같은 운영 확인 과정
+  - reviewer runtime chronology, reviewer input dump, guardrail ledger field 전체, 내부 운영 체크리스트
+- 위 operational evidence는 exec plan, verification artifact, review comment, feedback ledger 같은 별도 close-out artifact에 남긴다.
 - 새 라이브러리, 외부 서비스, 스키마/설정/환경 변경, 마이그레이션, 배포 주의점은 사람이 놓치기 쉬우므로 본문에 명시한다.
 
 ## 문서 링크 규칙
@@ -56,7 +57,7 @@
 | Lane | 언제 쓰나 | 필수 산출물 | 생략 가능한 것 |
 | --- | --- | --- | --- |
 | `default lane` | 단일 저장소, 명확한 요청, bounded write scope, 검증이 자명한 변경 | 짧은 task brief, latest verification summary, open PR | GitHub issue, active exec plan, sub-agent review, feedback ledger |
-| `guarded lane` | tracked backlog, workflow/policy 변경, cross-repo planning, public contract/schema/auth/CI/migration/destructive change, 또는 사용자가 formal plan/review를 원할 때 | GitHub issue, active exec plan, verification report, 필요 시 review evidence | pre-publish draft PR, 불필요한 multi-reviewer pool |
+| `guarded lane` | tracked backlog, workflow/policy 변경, cross-repo planning, public contract/schema/auth/CI/migration/destructive change, 또는 사용자가 formal plan/review를 원할 때 | GitHub issue, active exec plan, verification evidence, 필요 시 review evidence | pre-publish draft PR, 불필요한 multi-reviewer pool |
 
 `default lane` task brief에는 최소한 아래 네 가지가 보여야 한다.
 
@@ -100,7 +101,8 @@
 - 기대 결과 또는 완료 조건
 - 범위와 비범위
 - 접근 메모 또는 주요 제약
-- 남아 있는 리스크, open question, 참고 자료
+- 영향 또는 의존성 필요 시
+- 남아 있는 리스크, open question, 참고 자료 필요 시
 
 ## 각 PR에 반드시 들어가야 할 내용
 
@@ -117,8 +119,10 @@
 하네스 관련 PR에서는 가능하면 아래 증거를 남긴다.
 
 - human-facing Issue/PR 본문과 운영용 close-out artifact를 분리한다.
-- 명령 실행 결과 요약 또는 verification report 위치
-- verification report 최소 필드: contract profile, command별 status, 핵심 evidence, failure summary, next action
+- 명령 실행 결과 요약 또는 verification evidence 위치
+- verification evidence 최소 필드: contract profile, overall status, 무엇을 실행했는지, 핵심 evidence, failure/skipped summary, next action
+- required command가 모두 통과했고 skipped/blocked nuance가 없으면 compact `Verification Summary`를 쓸 수 있다.
+- failed, blocked, skipped, conditional nuance, repair history처럼 command-level trace가 중요하면 detailed `Verification Report`를 쓴다.
 - review evidence 최소 필드: implementer, reviewer, reviewer input, verdict, blocking finding 또는 no-blocking note
 - reviewer pool을 사용했다면 final verdict owner와 역할별 reviewer를 함께 남긴다
 - feedback evidence 최소 필드: stage, failure class, promotion decision, follow-up asset 또는 `no new guardrail` 이유, 핵심 evidence
@@ -137,6 +141,11 @@
 ## Historical Record 규칙
 
 - `docs/exec-plans/completed/`의 문서는 당시 close-out 근거를 보존하는 historical record다.
+- completed exec plan은 historical close-out record이지 full transcript가 아니다.
+- future completed exec plan의 기본값은 task metadata, 문제/배경, scope 또는 effective change summary, write scope, outputs, verification evidence, 남은 리스크 또는 follow-up, docs updated 정도로 유지한다.
+- `Context Selection Summary`, `Boundary Check Summary`, 상세 `Verification Report`, `Independent Review`, `Feedback`, `Close-out Reconciliation` 같은 섹션은 실제로 그 절차가 실행됐거나 후속 판단에 꼭 필요할 때만 남긴다.
+- passed docs-only change라면 compact `Verification Summary`를 기본값으로 쓰고, command-by-command 상세는 예외일 때만 남긴다.
+- 같은 사실을 `Scope`, `Outputs`, `Evidence`, `Close-out`에 반복해서 적지 않는다.
 - completed exec plan의 reviewer 이름, runtime 설명, 검증 결과, 파일명은 후속 정책 변경에 맞춘다는 이유만으로 rewrite하지 않는다.
 - 현재 canonical runtime, 정책, 템플릿은 stable source of truth 문서인 `docs/operations/`, `docs/architecture/`, `docs/product/`, `.github/`, `.codex/skills/`에서 읽는다.
 - historical exec plan이 현재 정책과 어휘가 다를 수 있다는 사실 자체는 drift가 아니라 이력이다. 현재 규칙과의 관계는 stable source of truth에서 설명한다.
@@ -165,13 +174,14 @@
 - draft PR은 사용자가 명시적으로 요청했을 때만 사용한다.
 - verification 전에 막힌 작업은 placeholder draft PR로 공유하지 않는다. blocker는 issue, exec plan, 또는 작업 대화에 남긴다.
 - PR은 검증된 결과를 공개하는 기본 협업 surface다. canonical 기본값은 `implement -> verify -> open PR publish`다.
-- Issue/PR 본문에는 사람이 확인할 요약만 적고, detailed verification report, review evidence, feedback ledger는 exec plan이나 별도 close-out artifact에 남긴다.
-- 성공한 검증은 PR 본문에 고수준 결과만 짧게 적고, 실패, 재시도, 예외, skipped check 같은 운영 상세는 verification report로 내린다.
+- Issue/PR 본문에는 사람이 확인할 요약만 적고, exec plan 경로, raw command literal, reviewer runtime chronology, detailed verification evidence, feedback ledger는 exec plan이나 별도 close-out artifact에 남긴다.
+- 성공한 검증은 PR 본문에 contract profile과 overall result 수준의 요약만 짧게 적고, 실패, 재시도, 예외, skipped check, command별 status 같은 운영 상세는 verification artifact로 내린다.
+- `default lane` PR body는 문제, 해결, 검증 결과를 짧게 요약하는 기본형으로 쓰고, `guarded lane`도 같은 reader-first 원칙 안에서 필요한 정보만 더한다.
 - review verdict와 feedback decision은 PR 본문에 요약할 수 있지만, canonical evidence는 실제로 review나 feedback이 수행됐을 때만 [dual-agent-review-policy.md](dual-agent-review-policy.md)와 [failure-to-guardrail-feedback-loop.md](failure-to-guardrail-feedback-loop.md)가 지정한 artifact에 남긴다.
 - independent review는 guarded lane, high-risk change, 또는 사용자 요청이 있을 때만 수행한다. 필요 시 current Codex 세션의 session-isolated sub-agent reviewer를 쓸 수 있지만, reviewer pool은 기본값이 아니다.
 - 생성 직후에는 `gh issue view --json body` 또는 `gh pr view --json body`로 본문이 예상한 줄바꿈과 섹션을 유지하는지 확인한다.
-- Issue template은 최소한 `대상 저장소`, `문제/배경`, `왜 지금`, `완료 조건`, `범위/비범위`, `접근 메모`, `리스크 또는 참고 자료`를 포함해야 한다.
-- PR template은 최소한 `요약`, `연결된 issue 또는 no-issue reason`, `접근`, `review guide`, `validation summary`, `dependencies/impact`, `risks/follow-up`을 포함해야 한다.
+- Issue template은 최소한 `대상 저장소`, `문제/배경`, `왜 지금`, `완료 조건`, `범위/비범위`, `접근 메모`, `영향 또는 의존성 필요 시`, `리스크 또는 확인이 필요한 점`을 포함해야 한다.
+- PR template은 최소한 `요약`, `연결된 issue 또는 no-issue reason`, `해결 접근`, `validation summary`, `reviewer focus 필요 시`, `impact / risks`를 포함해야 한다.
 - 커밋 메시지는 항상 루트의 `.gitmessage.ko.txt` 형식을 따른다.
 - 저장소별 작업은 각 저장소마다 별도 branch 또는 worktree에서 수행한다.
 - 모든 기능 브랜치는 대상 저장소의 `develop` 브랜치를 기준으로 분기한다.
@@ -184,10 +194,10 @@
 2. 대상 저장소의 `develop` 최신 상태를 기준으로 worktree 또는 branch를 만든다.
 3. `guarded lane`이면 body file을 준비한 뒤 `gh issue create --body-file ...`로 대상 저장소 이슈를 만들고 active exec plan을 작성한다. `default lane`이면 짧은 task brief만 잠근다.
 4. 구현을 수행한다.
-5. latest verification report 또는 verification summary를 만든다.
-6. PR body file에 작업 요약, 접근, validation summary, 영향, 남은 리스크를 채운 뒤 `gh pr create --base develop --body-file ...`로 open PR을 연다.
+5. latest verification summary 또는 detailed verification report를 만든다.
+6. PR body file에 작업 요약, 해결 접근, validation summary, reviewer focus 필요 시, 영향/리스크를 채운 뒤 `gh pr create --base develop --body-file ...`로 open PR을 연다.
 7. 생성 직후 `gh issue view --json body` 또는 `gh pr view --json body`로 본문 렌더링을 확인한다.
-8. independent review가 필요한 작업이면 open PR 위에서 review를 수행하고, `changes-requested`가 나오면 implementer가 수리 후 영향을 받은 verification을 다시 실행한다.
+8. independent review가 필요한 작업이면 latest verification evidence를 기준으로 open PR 위에서 review를 수행하고, `changes-requested`가 나오면 implementer가 수리 후 영향을 받은 verification을 다시 실행한다.
 9. blocker, 반복 실패, guardrail promotion 필요성이 있을 때만 feedback close-out을 남긴다.
 
 ## 문서, SKILL, exec plan의 역할
@@ -211,9 +221,9 @@
 - network나 escalation이 필요하면 목적과 범위를 task brief, exec plan, 또는 최종 close-out에 남긴다.
 - verification failure가 나면 registry의 retry budget 안에서만 repair loop를 돌리고, budget 초과나 missing canonical source는 `Blocked` 또는 후속 planning으로 넘긴다.
 - issue 없이 시작한 default lane 작업이 policy, contract, CI, cross-repo planning으로 커지면 즉시 guarded lane으로 승격한다.
-- review 단계에 들어갈 때만 latest verification report와 reviewer minimum context를 준비한다.
+- review 단계에 들어갈 때만 latest verification evidence와 reviewer minimum context를 준비한다.
 - independent review는 guarded lane, high-risk change, 또는 사용자 요청이 있을 때만 수행한다. reviewer가 필요해도 기본값은 한 명의 분리된 reviewer이고, reviewer pool은 security/reliability처럼 추가 눈이 실제로 필요한 경우에만 올린다.
-- `changes-requested`가 남아 있는 상태에서도 PR은 open 상태를 유지한다. canonical repair loop는 open PR의 current diff와 latest verification report를 기준으로 닫는다.
+- `changes-requested`가 남아 있는 상태에서도 PR은 open 상태를 유지한다. canonical repair loop는 open PR의 current diff와 latest verification evidence를 기준으로 닫는다.
 - 사용자가 다르게 요청하지 않았다면 latest verification이 통과한 즉시 open PR을 publish하고, review/repair는 그 뒤에 이어간다.
 - feedback close-out은 blocker, 반복 실패, guardrail promotion, quality sweep follow-up이 있을 때만 남긴다.
 - source of truth 문서를 함께 업데이트하거나, 업데이트가 불필요한 이유를 남긴다.

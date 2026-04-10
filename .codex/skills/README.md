@@ -86,7 +86,7 @@
 - `boundary-check`: 구현 전에 read/write/network/escalation 경계와 write scope completeness를 다시 확인할 때 사용
 - `parallel-work-split`: 여러 agent를 투입하기 전에 ownership과 disjoint write set을 고정할 때 사용
 - `api-contract-sync`: backend API 계약 변화가 client consumer와 workflow evidence에 미치는 영향을 맞출 때 사용
-- `verification-contract-runner`: selected verification contract profile을 실행하고 latest verification report를 쓸 때 사용
+- `verification-contract-runner`: selected verification contract profile을 실행하고 latest verification evidence를 남길 때 사용
 - `repair-loop-triage`: verification 실패나 review 수리 요청 뒤 rerun, `Blocked`, split 중 하나를 정할 때 사용
 - `reviewer-handoff`: review가 실제로 필요할 때 reviewer minimum context를 넘기고 review evidence를 남길 때 사용
 - `publish-after-review`: legacy 이름이지만 current policy에서는 latest verification 뒤 open PR을 publish하는 단계에 사용
@@ -127,7 +127,7 @@ close-out이 `Rejected`이거나 route가 `대화`로 끝나면 issue, exec plan
 구현 뒤 close-out 순서는 아래 hook을 따른다.
 
 1. `verification-contract-runner`
-2. `publish-after-review` once latest verification report is `passed` and the open PR must be created
+2. `publish-after-review` once latest verification evidence is `passed` and the open PR must be created
 3. `reviewer-handoff` if independent review is required after publish
 4. `repair-loop-triage` if verification failed or review requested changes
 5. `guardrail-ledger-update` once feedback close-out is actually triggered

@@ -35,7 +35,7 @@
 feedback close-out을 시작할 때 최소한 아래 입력이 있어야 한다.
 
 - task brief 또는 exec plan
-- latest verification report 또는 `Blocked` 이유
+- latest verification evidence 또는 `Blocked` 이유
 - latest review verdict 또는 review를 생략한 이유
 - repair attempt 요약 필요 시
 - 남은 리스크, skipped check, failure note

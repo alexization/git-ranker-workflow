@@ -18,7 +18,7 @@ description: verification과 review 결과가 고정된 뒤 guardrail ledger ent
 - active exec plan 또는 close-out artifact 경로
 - `docs/operations/failure-to-guardrail-feedback-loop.md`
 - `docs/operations/guardrail-ledger-template.md`
-- latest verification report 또는 `Blocked` 이유
+- latest verification evidence 또는 `Blocked` 이유
 - latest review verdict 또는 review 불가 사유
 - 관련 repair attempt, remaining risk, skipped check
 
@@ -58,7 +58,7 @@ description: verification과 review 결과가 고정된 뒤 guardrail ledger ent
 sed -n '1,260p' docs/operations/failure-to-guardrail-feedback-loop.md
 sed -n '1,220p' docs/operations/guardrail-ledger-template.md
 sed -n '1,260p' docs/exec-plans/active/<plan>.md
-rg -n "## Verification Report|## Independent Review|Feedback|Guardrail" docs/exec-plans/active/<plan>.md
+rg -n "## Verification Summary|## Verification Report|## Independent Review|Feedback|Guardrail" docs/exec-plans/active/<plan>.md
 ```
 
 ## 피해야 할 것

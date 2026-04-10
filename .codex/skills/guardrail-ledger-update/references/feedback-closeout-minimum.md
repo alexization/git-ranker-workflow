@@ -5,7 +5,7 @@ feedback close-out 전에 아래를 확인한다. 이 checklist는 `docs/operati
 ## Input Ready
 
 - [ ] exec plan 또는 close-out artifact 경로가 고정돼 있다.
-- [ ] latest verification report 또는 `Blocked` 이유가 있다.
+- [ ] latest verification evidence 또는 `Blocked` 이유가 있다.
 - [ ] latest review verdict 또는 review 불가 사유가 있다.
 - [ ] remaining risk, skipped check, repair note 중 relevant input을 모았다.
 - [ ] root cause를 한 문장으로 적을 수 있다.
