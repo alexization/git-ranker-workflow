@@ -1,6 +1,8 @@
 # Work Item Catalog
 
-이 문서는 현재 하네스 시스템 구축을 위한 작업 카탈로그다. 모든 작업은 `요청 라우팅`, `컨텍스트 제한`, `도구 경계`, `결정론적 검증`, `구현/리뷰 Agent 분리`, `실패의 가드레일화`, `non-blocking quality drift의 cleanup 분리`를 차례로 고정하는 방향으로 진행한다.
+이 문서는 현재 하네스 시스템의 active/pending 작업 카탈로그다. 완료된 작업은 여기서 제거하고 `docs/exec-plans/completed/` historical record에서 읽는다.
+
+현재 카탈로그는 workflow가 orchestration을 맡고, 각 app repo가 implementation knowledge를 소유하는 federation 구조로 전환하는 남은 작업만 다룬다.
 
 ## 사용 순서
 
@@ -11,217 +13,90 @@
 
 ## Workflow Track
 
-### GRW-19. Harness issue/PR template 정렬
+### GRW-18. workflow pilot and active queue close-out reconciliation
 
 - 저장소: `git-ranker-workflow`
+- 상태: `active`
 - 선행조건: 없음
-- 권장 write scope: `.github/`, `docs/operations/`, `docs/product/`, `docs/exec-plans/`
-- 기본 결정: Issue/PR template은 reader-first 문서로 유지한다. 사람에게 필요한 문제/배경/결과/리뷰 포인트/영향을 우선 적고, write scope, detailed verification, review/feedback evidence는 exec plan과 supporting artifact에 둔다.
-- 핵심 작업: workflow Issue template, PR template, governance 문서, issue body template를 현재 reader-first 기준으로 정렬한다.
-- 비범위: backend/frontend 코드 변경, GitHub Actions 구현
-- 산출물: 업데이트된 GitHub templates, 관련 governance/source of truth 반영
-- 검증: template 본문 리뷰와 필수 섹션 grep 확인
-
-### GRW-10. 하네스 기준 정렬
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-19`
-- 권장 write scope: `docs/product`, `docs/architecture`, `docs/operations`, `.codex/skills/`, `docs/exec-plans`
-- 기본 결정: 현재 기준 문서는 앞으로 사용할 하네스 흐름만 설명한다. 구현 Agent와 review Agent의 역할 분리를 초기 기준으로 넣고, control plane 범위 밖의 readiness/reference/runtime 성격 문서는 현재 source of truth에서 제외한다.
-- 핵심 작업: roadmap, catalog, index, 운영 문서의 방향을 현재 하네스 기준으로 정렬하고 다음 Issue 진입 기준을 고정한다.
-- 비범위: backend/frontend 코드 변경, CI 구현
-- 산출물: 업데이트된 source of truth와 후속 Issue 진입 기준
-- 검증: 관련 문서 간 용어와 흐름 정렬 검토
-
-### GRW-11. 하네스 시스템 맵과 상태 머신 정의
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-10`
-- 권장 write scope: `docs/architecture`, 필요 시 `docs/README.md`
-- 기본 결정: 목표 흐름은 `Router -> Interview -> Context Pack -> Implementer -> Verification -> Reviewer -> Feedback`으로 고정한다.
-- 핵심 작업: 시스템 구성요소, 상태 전이, stop condition, pass/fail semantics, 역할 분리 원칙을 문서화한다.
-- 비범위: skill 작성, CI 구현
-- 산출물: 하네스 시스템 맵 문서, 상태 머신 정의
-- 검증: flow와 state가 issue/PR workflow에 그대로 투영 가능한지 문서 리뷰
-
-### GRW-12. 요청 라우팅과 ambiguity interview 정책 정의
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-11`
-- 권장 write scope: `docs/operations`, 필요 시 루트 운영 문서
-- 기본 결정: 모호한 요청은 바로 구현으로 보내지 않는다. 인터뷰는 요구사항을 줄이는 방향으로 수행한다.
-- 핵심 작업: 요청 분류 기준, 모호성 판단 규칙, 인터뷰 종료 조건, 일반 대화 fallback, 즉시 실행 가능한 작업의 기준을 문서화한다.
-- 비범위: 새로운 에이전트 런타임 구현
-- 산출물: request routing policy, ambiguity interview policy
-- 검증: 예시 요청 3~5개를 분류해 정책이 일관되게 적용되는지 검토
-
-### GRW-13. context pack registry와 task-to-context 매핑 정의
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-11`, `GRW-12`
-- 권장 write scope: `docs/architecture`, `docs/operations`, `docs/product`
-- 기본 결정: 컨텍스트는 task type 기준으로 최소 공개한다. `backend 수정`, `frontend 수정`, `workflow 문서 수정`, `cross-repo planning`은 서로 다른 context pack을 사용하고, 앱 동작은 workflow 복제 문서 대신 각 저장소 엔트리 문서와 코드/테스트를 우선 읽는다.
-- 핵심 작업: task type별 필수 문서, 선택 문서, 금지 컨텍스트, hot file 탐색 기준을 정의한다.
-- 비범위: 자동 context loader 구현
-- 산출물: context pack registry, task-to-context mapping 표
-- 검증: 대표 task에 대해 과도한 문서 로딩 없이 필요한 판단이 가능한지 시뮬레이션
-
-### GRW-14. tool boundary matrix와 write scope 거버넌스 정의
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-11`, `GRW-13`
-- 권장 write scope: `docs/operations`, `docs/architecture`, 필요 시 `AGENTS.md`
-- 기본 결정: 프롬프트 제약보다 도구 경계를 우선한다. cross-repo 작업은 기본적으로 문서 PR과 앱 코드 PR로 분리한다.
-- 핵심 작업: task type별 read/write/network/escalation 허용 범위, 위험 명령 금지 규칙, write scope 템플릿을 정의한다.
-- 비범위: 샌드박스 구현 변경
-- 산출물: tool boundary matrix, 갱신된 write scope 규칙
-- 검증: 대표 task별 허용/금지 사례 검토
-
-### GRW-15. verification contract registry와 repair loop 기준 정의
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-11`
-- 권장 write scope: `docs/operations`, `docs/architecture`, 필요 시 `docs/product`
-- 기본 결정: 완료 판정은 저장소별 명시된 명령이 내린다. 검증 결과는 review Agent에게 전달 가능한 형식으로 남겨야 한다.
-- 핵심 작업: `workflow`, `backend`, `frontend`별 기본 검증 명령, 실패 시 repair loop 입력 형식, 최대 재시도 기준, stop condition을 정의한다.
-- 비범위: 테스트 프레임워크 추가
-- 산출물: verification contract registry, repair loop policy
-- 검증: 각 저장소의 현재 명령으로 registry 초안을 채울 수 있는지 확인
-
-### GRW-16. dual-agent review policy 정의
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-11`, `GRW-15`
-- 권장 write scope: `docs/operations`, `docs/architecture`, `.codex/skills` 필요 시
-- 기본 결정: 구현 Agent는 자기 자신의 결과를 최종 승인할 수 없다. review Agent는 구현 컨텍스트와 분리된 검토 관점으로 동작한다.
-- 핵심 작업: implementer/reviewer 책임 분리, reviewer 입력 형식, review 통과 조건, 수정 요청 루프, review evidence 규칙을 정의한다.
-- 비범위: 자동 PR 리뷰 봇 구현
-- 산출물: dual-agent review policy, review checklist 초안
-- 검증: 샘플 diff와 검증 결과를 기준으로 reviewer 흐름 시뮬레이션
-
-### GRW-17. failure-to-guardrail feedback loop 정의
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-12`, `GRW-14`, `GRW-15`, `GRW-16`
-- 권장 write scope: `docs/operations`, `.codex/skills`
-- 기본 결정: 반복 실패는 반드시 `문서 규칙`, `skill`, `테스트`, `CI`, `template` 중 하나로 승격할지 판단한다.
-- 핵심 작업: 실패 taxonomy, feedback ledger 포맷, 가드레일 후보 승격 규칙, no-op 기준을 정의한다.
-- 비범위: 자동 PR 생성, 자동 복구
-- 산출물: feedback loop policy, guardrail ledger template
-- 검증: 과거 실패 사례 2~3개를 분류해 ledger에 적합한지 확인
-
-### GRW-21. sub-agent reviewer pool 기본값 정렬
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-16`
-- 권장 write scope: `docs/operations`, `docs/architecture`, `docs/product`, `docs/exec-plans/`
-- 기본 결정: 독립 review의 canonical runtime은 session-isolated sub-agent reviewer pool이다. MCP 기반 외부 reviewer runtime이나 외부 모델 호출은 쓰지 않는다.
-- 핵심 작업: sub-agent reviewer pool의 필수 역할, reviewer minimum context fan-out, verdict aggregation 규칙을 source of truth에 반영한다.
-- 비범위: 외부 reviewer runtime 자체의 인프라 수정, 자동 PR review bot 구현, backend/frontend 앱 코드 변경
-- 산출물: updated review policy와 architecture/product hook, `GRW-21` exec plan
-- 검증: role prompt, sub-agent reviewer pool, verdict aggregation 관련 hook grep과 independent review evidence 확인
-
-### GRW-18. workflow repo pilot issue로 새 흐름 1회 검증
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-12`, `GRW-13`, `GRW-14`, `GRW-15`, `GRW-16`
 - 권장 write scope: pilot 대상 문서, `docs/exec-plans`
-- 기본 결정: 첫 pilot은 문서 또는 규칙 변경처럼 브라우저 자동화가 없어도 되는 작업으로 시작한다.
-- 핵심 작업: 실제 Issue 하나를 새 라우팅, context pack, boundary, verification, review, feedback 흐름으로 끝까지 수행한다.
-- 비범위: backend/frontend 기능 개발
-- 산출물: pilot exec plan, verification 결과, review 결과, feedback ledger entry
-- 검증: 새 흐름만으로 작업이 끝까지 닫히는지 확인
+- 기본 결정: foundation policy는 이미 fixed 상태로 보고, workflow repo는 current active exec plan queue를 주기적으로 점검해 completed로 가야 할 문서를 historical record로 옮긴다. 다만 app repo의 미완료 구현을 `GRW-18` issue에 흡수하지는 않는다.
+- 핵심 작업: current active exec plan queue를 검토해 completed 조건을 이미 만족한 문서를 `completed/`로 이동하고, 아직 미완료인 작업은 workflow-only close-out 잔여인지 owner issue의 구현 잔여인지 구분한다. workflow artifact/state sync만 남은 항목은 `GRW-18` 과정에서 close-out까지 마무리한다.
+- 비범위: backend/frontend 기능 개발, app repo의 미완료 구현을 `GRW-18` issue로 흡수하는 것
+- 산출물: reconciled pilot exec plan, active queue review 결과, moved completed exec plans, verification/review/feedback close-out 근거
+- 검증: active/completed exec plan 상태, linked GitHub issue/PR 상태, latest verification/review evidence 정합성 확인, current active queue triage 결과
 
-### GRW-23. continuous quality feedback loop 정렬
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-15`, `GRW-16`, `GRW-17`, `GRW-S09`
-- 권장 write scope: `docs/operations`, `docs/architecture`, `docs/product`, `.codex/skills/`, `docs/exec-plans`
-- 기본 결정: quality sweep은 verification completion gate가 아니라 `Completed` 뒤 recurring surface다. non-blocking lint drift, duplication, unused code는 original issue를 다시 열지 않고 separate cleanup issue/PR candidate로 분리한다. detector나 gate 부재가 반복되면 guardrail follow-up으로 승격한다.
-- 핵심 작업: continuous quality feedback loop policy, quality sweep report template, signal taxonomy, cleanup handoff rule, thin-layer skill을 source of truth와 registry에 반영한다.
-- 비범위: repo-specific detector 구현, 실제 automation runtime, backend/frontend 앱 코드 cleanup
-- 산출물: quality sweep policy, report template, skill, 관련 roadmap/system map/governance hook, `GRW-23` exec plan
-- 검증: 문서 본문 리뷰, hook grep, representative quality signal simulation
-
-### GRW-25. pre-PR review cycle hardening
+### GRW-26. federated ownership model alignment
 
 - 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-20`, `GRW-21`, `GRW-S08`, `GRW-S09`
-- 권장 write scope: `docs/operations`, `docs/architecture`, `docs/product`, `.codex/skills/`, `docs/exec-plans`
-- 기본 결정: canonical 기본값은 `implement -> verification -> sub-agent review -> repair loop -> approved -> feedback close-out -> open PR publish`다. draft PR은 review workspace가 아니라 user request 또는 blocker-sharing exception이다.
-- 핵심 작업: governance/review policy wording을 더 직접적으로 정렬하고, `publish-after-review` thin-layer skill과 registry hook을 추가해 publish ordering drift를 줄인다.
-- 비범위: backend/frontend 앱 코드 변경, GitHub Actions 구현, 외부 reviewer runtime 추가, merge policy 재설계
-- 산출물: updated governance/review policy hook, publish skill, related roadmap/catalog update, `GRW-25` exec plan
-- 검증: 문서 본문 리뷰, hook grep, skill 본문 점검, issue body render, `git diff --check`
+- 상태: `pending`
+- 선행조건: `GRW-18`, `GRB-04`, `GRC-05`
+- 권장 write scope: `docs/product`, `docs/architecture`, `docs/operations`, `.codex/skills/`
+- 기본 결정: workflow는 orchestration만 소유하고, repo-specific implementation knowledge는 target repo로 내린다.
+- 핵심 작업: ownership matrix, workflow-vs-repo 책임 경계, workflow-local skill의 thin-layer 기준, migration exit criteria를 stable source of truth에 반영한다.
+- 비범위: backend/frontend repo 실제 파일 생성, repo-local CI 구현
+- 산출물: federation ownership source of truth, migration checklist, updated workflow skill ownership rules
+- 검증: architecture/product/operations 문서 용어 정렬, workflow-local knowledge duplication no-go 확인
 
-## Skill Track
-
-### GRW-S06. intake/ambiguity skill pack
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-12`
-- 권장 write scope: `.codex/skills/` 하위만
-- 기본 결정: skill은 라우팅과 인터뷰 절차를 고정하는 문서형 자산으로 시작한다.
-- 핵심 작업: `request-intake`, `ambiguity-interview` skill 작성
-- 비범위: 실행 런타임 추가
-- 산출물: skill 문서 2개, 갱신된 skill registry
-- 검증: 예시 요청을 skill 입력/출력 형식에 맞춰 시뮬레이션
-
-### GRW-S07. context-pack/boundary skill pack
+### GRW-27. federated repo handoff contract
 
 - 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-13`, `GRW-14`
-- 권장 write scope: `.codex/skills/` 하위만
-- 기본 결정: context pack 선택과 write scope 검토를 분리된 반복 절차로 만든다.
-- 핵심 작업: `context-pack-selection`, `boundary-check` skill 작성
-- 비범위: 자동 context 수집기 구현
-- 산출물: skill 문서 2개
-- 검증: 대표 task에서 필요한 문서와 금지 범위를 일관되게 뽑는지 검토
-
-### GRW-S08. verification/review-loop skill pack
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-15`, `GRW-16`
-- 권장 write scope: `.codex/skills/` 하위만
-- 기본 결정: 구현 완료 선언보다 검증과 review handoff를 우선한다. 저장소별 명령은 contract registry가 canonical source고, review runtime 기본값은 session-isolated sub-agent reviewer pool이다.
-- 핵심 작업: `verification-contract-runner`, `repair-loop-triage`, `reviewer-handoff` skill 작성
-- 비범위: 테스트 프레임워크 추가
-- 산출물: skill 문서 3개
-- 검증: 실패 로그와 diff를 입력으로 triage와 review handoff가 재현되는지 확인
-
-### GRW-S09. guardrail-hardening skill pack
-
-- 저장소: `git-ranker-workflow`
-- 선행조건: `GRW-17`
-- 권장 write scope: `.codex/skills/` 하위만
-- 기본 결정: 같은 실패가 2번 이상 반복되면 가드레일 승격을 우선 검토한다.
-- 핵심 작업: `guardrail-ledger-update`, `failure-to-policy` skill 작성
-- 비범위: 자동 CI 생성
-- 산출물: skill 문서 2개, ledger update checklist
-- 검증: 과거 실패 사례를 기준으로 승격 판단이 가능한지 검토
+- 상태: `pending`
+- 선행조건: `GRW-26`
+- 권장 write scope: `docs/architecture`, `docs/operations`, `docs/product`, 필요 시 `.codex/skills/`
+- 기본 결정: workflow는 target repo에 필요한 최소 handoff만 남기고, 각 repo는 `AGENTS.md`를 canonical entrypoint로 노출해야 한다.
+- 핵심 작업: `AGENTS.md` requirement, handoff summary shape, local skill discovery order, repo bootstrap checklist를 정의한다.
+- 비범위: backend/frontend repo 실제 bootstrap 수행
+- 산출물: federated `AGENTS.md` handoff contract, repo bootstrap checklist, related workflow hook update
+- 검증: backend/frontend representative handoff simulation, required `AGENTS.md` checklist review
 
 ## Backend Track
 
-### GRB-04. backend verification contract 정규화
+### GRB-04. backend verification contract reset
 
 - 저장소: `git-ranker`
-- 선행조건: `GRW-15`
+- 상태: `active`
+- 선행조건: 없음
 - 권장 write scope: backend 검증 문서, build/test entrypoint, 필요 최소한의 preflight
-- 기본 결정: 행동 변경 없이 검증 명령과 실패 의미를 명확히 하는 것이 우선이다. 상위 completion semantics는 verification contract registry를 따른다.
-- 핵심 작업: 현재 backend 검증 명령, fail-fast 조건, 환경 전제, 결과 해석 기준을 contract에 맞게 정리한다.
+- 기본 결정: workflow의 상위 verification semantics는 이미 fixed로 보고, backend repo는 자신의 verification surface를 repo-local canonical source로 다시 정렬한다.
+- 핵심 작업: 현재 backend 검증 명령, fail-fast 조건, 환경 전제, 결과 해석 기준을 backend repo 기준으로 정리하고 orphan lane을 제거한다.
 - 비범위: 새 기능 구현
-- 산출물: backend verification contract, 필요한 문서/스크립트 정리
+- 산출물: backend verification contract, 필요한 문서/스크립트 정리, workflow handoff에 쓸 repo-local entry surface
 - 검증: contract에 적힌 명령과 실제 실행 결과 대조
+
+### GRB-06. backend test/CI removal
+
+- 저장소: `git-ranker`
+- 상태: `active`
+- 선행조건: 없음
+- 권장 write scope: `src/test/`, `build.gradle`, `.github/workflows/`, current exec plan
+- 기본 결정: legacy test/CI surface는 repo-local verification/TDD 재구성 전까지 baseline reset 대상으로 본다. workflow는 이 상태를 backlog와 active queue에서 숨기지 않고 follow-up rebuild 전제와 함께 드러낸다.
+- 핵심 작업: 기존 backend test source/resource tree와 obsolete test/integration task surface를 제거하고, workflow 파일은 유지하되 test execution lane만 제거한 상태를 기록한다.
+- 비범위: 새 테스트 코드 작성, 새 CI 검증 로직 도입, `src/main/` production 동작 변경
+- 산출물: removed backend test inventory, narrowed workflow verification surface, rebuild preconditions가 적힌 active exec plan
+- 검증: `./gradlew test`, `./gradlew build`, `git diff --check`
+
+### GRB-07. backend `AGENTS.md` entrypoint and knowledge bootstrap
+
+- 저장소: `git-ranker`
+- 상태: `pending`
+- 선행조건: `GRB-04`, `GRW-27`
+- 권장 write scope: backend entry docs, `.codex/skills/`, verification entry docs, 필요 시 supporting README
+- 기본 결정: Spring Boot 구현 규칙과 backend-only skill은 workflow가 아니라 backend repo가 소유한다.
+- 핵심 작업: repo root `AGENTS.md`를 추가하고, local skill registry, backend-only implementation knowledge surface를 만들고 workflow handoff contract와 연결한다.
+- 비범위: frontend repo 변경, workflow policy 재설계, broad CI rollout
+- 산출물: backend `AGENTS.md`, backend local skill surface, workflow handoff와 연결된 repo-local reference
+- 검증: `AGENTS.md` entrypoint 문서 review, local skill discovery path 확인, representative backend task handoff simulation
 
 ### GRB-05. backend GC baseline 정렬
 
 - 저장소: `git-ranker`
-- 선행조건: `GRB-04`, `GRW-23`
+- 상태: `pending`
+- 선행조건: `GRB-04`, `GRB-07`
 - 권장 write scope: `build.gradle`, backend static analysis config, `.github/workflows/`, backend README 또는 verification entry docs
-- 기본 결정: backend GC는 workflow repo가 아니라 backend repo의 Gradle task와 GitHub Actions가 소유한다. PR gate에는 low-noise static analysis만 넣고, duplication/wide dead code scan은 scheduled quality sweep으로 분리한다. Spring wiring, reflection, batch registration 영향이 큰 dead code removal은 issue-first를 기본으로 한다.
-- 핵심 작업: repo-local GC command surface를 추가하고, existing `quality-gate.yml`과 scheduled workflow에 blocking lane / sweep lane을 분리하며, cleanup candidate와 guardrail follow-up evidence를 `GRW-23` policy 형식에 맞춘다.
+- 기본 결정: backend GC는 workflow repo가 아니라 backend repo의 Gradle task와 GitHub Actions가 소유한다. PR gate에는 low-noise static analysis만 넣고, duplication/wide dead code scan은 scheduled quality sweep으로 분리한다.
+- 핵심 작업: repo-local GC command surface를 추가하고 blocking lane / sweep lane을 분리하며, cleanup candidate와 guardrail follow-up evidence를 repo-local surface에 반영한다.
 - 비범위: workflow repo policy 재설계, broad auto-delete, frontend repo 변경
-- 산출물: backend GC command, CI/scheduled workflow, repo-local docs update, `GRB-05` exec plan
+- 산출물: backend GC command, CI/scheduled workflow, repo-local docs update
 - 검증: PR gate command 통과, scheduled sweep artifact shape 확인, representative duplication/unused signal triage
 
 ## Client Track
@@ -229,26 +104,41 @@
 ### GRC-05. frontend verification contract 정규화
 
 - 저장소: `git-ranker-client`
-- 선행조건: `GRW-15`
+- 상태: `pending`
+- 선행조건: 없음
 - 권장 write scope: frontend 검증 문서, build/lint/typecheck entrypoint
-- 기본 결정: `lint`, `typecheck`, `build`를 안정적인 완료 조건으로 먼저 고정한다. 상위 completion semantics는 verification contract registry를 따른다.
-- 핵심 작업: 현재 frontend 검증 명령, 필수 env, 실패 의미, 수동 확인이 필요한 공백을 contract에 맞게 정리한다.
+- 기본 결정: workflow의 상위 verification semantics는 이미 fixed로 보고, frontend repo는 자신의 verification surface를 repo-local canonical source로 정리한다.
+- 핵심 작업: 현재 frontend 검증 명령, 필수 env, 실패 의미, 수동 확인이 필요한 공백을 frontend repo 기준으로 정리한다.
 - 비범위: UI 개편
-- 산출물: frontend verification contract, 필요한 문서/스크립트 정리
+- 산출물: frontend verification contract, 필요한 문서/스크립트 정리, workflow handoff에 쓸 repo-local entry surface
 - 검증: contract에 적힌 명령과 실제 실행 결과 대조
+
+### GRC-07. frontend `AGENTS.md` entrypoint and knowledge bootstrap
+
+- 저장소: `git-ranker-client`
+- 상태: `pending`
+- 선행조건: `GRC-05`, `GRW-27`
+- 권장 write scope: frontend entry docs, `.codex/skills/`, verification entry docs, 필요 시 supporting README
+- 기본 결정: React/Next 구현 규칙과 frontend-only knowledge surface는 workflow가 아니라 frontend repo가 소유한다.
+- 핵심 작업: repo root `AGENTS.md`를 추가하고, local skill registry, frontend-only implementation knowledge surface를 만들고 workflow handoff contract와 연결한다.
+- 비범위: backend repo 변경, workflow policy 재설계, broad UI rewrite
+- 산출물: frontend `AGENTS.md`, frontend local skill surface, workflow handoff와 연결된 repo-local reference
+- 검증: `AGENTS.md` entrypoint 문서 review, local skill discovery path 확인, representative frontend task handoff simulation
 
 ### GRC-06. frontend GC baseline 정렬
 
 - 저장소: `git-ranker-client`
-- 선행조건: `GRC-05`, `GRW-23`
+- 상태: `pending`
+- 선행조건: `GRC-05`, `GRC-07`
 - 권장 write scope: `package.json`, frontend static analysis config, `.github/workflows/`, frontend README 또는 repo entry docs
-- 기본 결정: frontend GC는 repo-local npm scripts와 GitHub Actions가 소유한다. 기존 `lint/build` PR gate 위에 unused export/file/dependency detector를 추가하되, duplication scan과 wide cleanup은 scheduled sweep lane으로 분리한다. auto-generated cleanup PR은 lint autofix나 high-confidence unused code fix처럼 low-risk surface에만 제한한다.
+- 기본 결정: frontend GC는 repo-local npm scripts와 GitHub Actions가 소유한다. 기존 `lint/build` PR gate 위에 unused export/file/dependency detector를 추가하되, duplication scan과 wide cleanup은 scheduled sweep lane으로 분리한다.
 - 핵심 작업: repo-local GC scripts, PR blocking lane, scheduled sweep lane, cleanup candidate handoff, autofix boundary를 current frontend structure에 맞게 추가한다.
 - 비범위: backend repo 변경, workflow repo policy 재설계, high-risk refactor auto-merge
-- 산출물: frontend GC scripts/workflows/docs, `GRC-06` exec plan
+- 산출물: frontend GC scripts/workflows/docs, repo-local quality handoff surface
 - 검증: PR gate command 통과, scheduled sweep report shape 확인, representative unused/duplication signal triage
 
 ## 참고
 
 - 공통 운영 규칙과 Definition of Done은 [docs/operations/workflow-governance.md](../operations/workflow-governance.md)를 따른다.
 - 새 작업의 기본 지시는 이 카탈로그와 active exec plan에서 읽는다.
+- workflow는 orchestration layer의 backlog만 유지하고, repo-local implementation knowledge backlog는 각 app repo에서 이어간다.
