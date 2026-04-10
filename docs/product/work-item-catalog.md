@@ -13,18 +13,6 @@
 
 ## Workflow Track
 
-### GRW-24. product federation roadmap cleanup
-
-- 저장소: `git-ranker-workflow`
-- 상태: `active`
-- 선행조건: 없음
-- 권장 write scope: `docs/product/`, `docs/exec-plans/active/`
-- 기본 결정: product 문서는 completed backlog를 계속 들고 있지 않고, current transition work와 federation ownership 기준만 보여 준다.
-- 핵심 작업: completed task를 product 문서에서 제거하고, workflow orchestration / app-repo implementation ownership 구조, `AGENTS.md` entrypoint, `GRW-18` active queue reconciliation 범위를 roadmap과 catalog에 반영한다.
-- 비범위: backend/frontend 앱 코드 변경, target repo `AGENTS.md` 실제 생성
-- 산출물: updated product docs, `GRW-24` active exec plan, publish-ready diff
-- 검증: completed task reference 제거, federation wording/`AGENTS.md` hook 확인, `git diff --check`
-
 ### GRW-18. workflow pilot and active queue close-out reconciliation
 
 - 저장소: `git-ranker-workflow`

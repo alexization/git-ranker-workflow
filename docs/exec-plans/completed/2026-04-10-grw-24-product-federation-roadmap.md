@@ -2,7 +2,7 @@
 
 - Issue ID: `GRW-24`
 - GitHub Issue: `#75`
-- Status: `In Progress`
+- Status: `Completed`
 - Repository: `git-ranker-workflow`
 - Branch Name: `feat/grw-24-product-federation-roadmap`
 - Task Slug: `2026-04-10-grw-24-product-federation-roadmap`
@@ -17,7 +17,7 @@
 
 ## Why Now
 
-현재 active queue에는 `GRW-24`, `GRW-18`, `GRB-04`, `GRB-06`이 남아 있고, 이후 작업은 `GRW-26`, `GRW-27`, `GRB-07`, `GRC-07`처럼 federation ownership과 repo-local bootstrap으로 이어진다. product 문서가 completed backlog와 target ownership을 계속 섞어 보여주면 후속 issue 분해와 handoff 기준이 흔들린다.
+현재 active queue에는 `GRW-18`, `GRB-04`, `GRB-06`이 남아 있고, 이후 작업은 `GRW-26`, `GRW-27`, `GRB-07`, `GRC-07`처럼 federation ownership과 repo-local bootstrap으로 이어진다. product 문서가 completed backlog와 target ownership을 계속 섞어 보여주면 후속 issue 분해와 handoff 기준이 흔들린다.
 
 지금 단계에서 product 문서를 남은 backlog만 보이게 정리하고, target repo canonical entrypoint를 `AGENTS.md`로 잠가 두어야 이후 app repo bootstrap과 repo-local skill ownership을 같은 기준으로 진행할 수 있다.
 
@@ -42,7 +42,7 @@
   - `docs/product/`
   - `docs/exec-plans/active/`
 - Control-plane artifacts:
-  - `docs/exec-plans/active/2026-04-10-grw-24-product-federation-roadmap.md`
+  - `docs/exec-plans/completed/2026-04-10-grw-24-product-federation-roadmap.md`
   - `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
   - `/tmp/grw-24-issue-body.md`
   - `/tmp/grw-24-pr-body.md`
@@ -60,7 +60,7 @@
 - `docs/product/harness-roadmap.md`
 - `docs/product/work-item-catalog.md`
 - `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
-- `docs/exec-plans/active/2026-04-10-grw-24-product-federation-roadmap.md`
+- `docs/exec-plans/completed/2026-04-10-grw-24-product-federation-roadmap.md`
 
 ## Working Decisions
 
@@ -96,9 +96,9 @@
 - Read boundary:
   - `workflow-docs` pack required docs와 current active/completed exec plan inventory까지만 읽는다.
 - Write boundary:
-  - `docs/product/`, `docs/exec-plans/active/`, body file
+  - `docs/product/`, `docs/exec-plans/`, body file
 - Control-plane artifact:
-  - current `GRW-24` active exec plan, `GRW-18` active exec plan, GitHub issue/pr metadata
+  - completed `GRW-24` exec plan, `GRW-18` active exec plan, GitHub issue/pr metadata
 - Explicitly forbidden path:
   - sibling app repo code, unrelated stable source of truth mass update
 - Network:
@@ -140,15 +140,14 @@
   - Evidence: federation ownership, `AGENTS.md` entrypoint, `GRW-18` active queue reconciliation wording이 roadmap, catalog, active exec plan에 함께 반영된다.
 - Command: `gh pr view 76 --repo alexization/git-ranker-workflow --json number,state,isDraft,headRefName,baseRefName,headRefOid`
   - Status: `passed`
-  - Evidence: live PR `#76`은 `OPEN`, `isDraft=true` 상태이고 current head branch가 `feat/grw-24-product-federation-roadmap`임을 확인했다.
+  - Evidence: live PR `#76`은 `OPEN`, `isDraft=false` 상태이고 current head branch가 `feat/grw-24-product-federation-roadmap`임을 확인했다.
 - Command: `git diff --check`
   - Status: `passed`
   - Evidence: current workflow docs diff와 active exec plan patch에 formatting 오류가 없다.
 - Failure summary: 없음
 - Next action:
-  - repaired tree에 대한 verification은 다시 `passed`로 잠겼다.
-  - current repaired tree 기준 refreshed reviewer aggregation verdict를 잠근다.
-  - reviewer pool verdict가 `approved`면 open publish readiness를 다시 판정한다.
+  - verification, independent review, feedback close-out, open PR publish까지 current branch에서 모두 잠겼다.
+  - GitHub Issue `#75`는 `CLOSED`, `COMPLETED`로 닫혔고, 이 completed snapshot을 포함한 상태로 PR `#76` merge를 대기한다.
 
 ## Independent Review
 
@@ -161,7 +160,7 @@
   - `scope-and-governance`
   - `verification-and-regression`
 - Reviewer Input:
-  - Exec plan: `docs/exec-plans/active/2026-04-10-grw-24-product-federation-roadmap.md`
+  - Exec plan: `docs/exec-plans/completed/2026-04-10-grw-24-product-federation-roadmap.md`
   - Latest verification report: `passed`
   - Diff summary: product backlog를 active/pending 기준으로 정리하고, workflow orchestration / app-repo implementation ownership, `AGENTS.md` entrypoint, `GRW-18` active queue reconciliation 범위를 source of truth에 반영했다.
   - Source-of-truth update (cumulative issue diff): `docs/product/README.md`, `docs/product/harness-roadmap.md`, `docs/product/work-item-catalog.md`, `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
@@ -174,14 +173,26 @@
   - `verification-and-regression` reviewer `Hume`은 final metadata sync 이후 `Next action`, `Next Preconditions`, verification report, live PR body가 current repaired tree와 일치한다고 확인했다.
   - reviewer-coordinator `Franklin`이 두 필수 reviewer role의 latest verdict가 모두 `approved`이고 blocking finding이 없음을 확인해 overall verdict를 `approved`로 잠갔다.
 
+## Feedback / Guardrail Follow-up
+
+- Latest verification status: `passed`
+- Latest review verdict: `approved`
+- Failure class: `evidence-closeout`
+- Root cause: close-out 단계에서 product backlog, active queue evidence, PR body/publish metadata가 current branch state와 한 번 어긋나면서 repair loop가 길어졌다.
+- Promotion decision: `no-new-guardrail`
+- Decision rationale: 이번 issue 안에서 product docs, exec plan evidence, PR body를 모두 현재 state에 맞게 수리했고, 기존 workflow governance와 feedback close-out 규칙만으로 같은 종류의 drift를 다룰 수 있다. 추가 guardrail asset을 새로 만드는 것보다 current historical snapshot을 정확히 남기는 편이 맞다.
+- Follow-up asset or issue: 없음
+
 ## Publish Result
 
 - Initial publish path: `draft blocker-sharing exception`
 - GitHub PR: `#76`
 - PR URL: `https://github.com/alexization/git-ranker-workflow/pull/76`
+- GitHub Issue: `#75`
 - Branch: `feat/grw-24-product-federation-roadmap`
 - Current promotion status:
   - latest independent review verdict는 `approved`다.
+  - GitHub Issue `#75`는 `CLOSED`, `COMPLETED` 상태다.
   - PR `#76`은 approved review 뒤 open 상태로 promote됐다.
 - Body render check:
   - `gh pr view 76 --repo alexization/git-ranker-workflow --json number,title,body,state,isDraft,url,headRefName,baseRefName`
@@ -202,7 +213,7 @@
 - `docs/product/harness-roadmap.md`
 - `docs/product/work-item-catalog.md`
 - `docs/exec-plans/active/2026-04-08-grw-18-workflow-pilot-closeout-reconciliation.md`
-- `docs/exec-plans/active/2026-04-10-grw-24-product-federation-roadmap.md`
+- `docs/exec-plans/completed/2026-04-10-grw-24-product-federation-roadmap.md`
 
 ## Repair Note
 

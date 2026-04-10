@@ -40,11 +40,10 @@
 
 ### Phase 1. Current Transition Closeout
 
-1. `GRW-24` product federation roadmap cleanup
-2. `GRW-18` workflow pilot and active queue close-out reconciliation
-3. `GRB-04` backend verification contract reset
-4. `GRB-06` backend test/CI removal
-5. `GRC-05` frontend verification contract 정렬
+1. `GRW-18` workflow pilot and active queue close-out reconciliation
+2. `GRB-04` backend verification contract reset
+3. `GRB-06` backend test/CI removal
+4. `GRC-05` frontend verification contract 정렬
 
 ### Phase 2. Federation Source-Of-Truth Alignment
 
@@ -63,15 +62,13 @@
 
 ## 바로 다음에 추천하는 작업
 
-1. `GRW-24`
-2. `GRW-18`
-3. `GRB-04`
-4. `GRB-06`
-5. `GRC-05`
+1. `GRW-18`
+2. `GRB-04`
+3. `GRB-06`
+4. `GRC-05`
+5. `GRW-26`
 
-`GRW-24`를 먼저 publish해야 product 문서 자체가 active/pending backlog, federation ownership, `AGENTS.md` entrypoint 기준으로 정리된다.
-
-그 다음 `GRW-18`, `GRB-04`, `GRB-06`, `GRC-05`를 닫아야 workflow pilot close-out과 repo-local verification surface가 현재 기준으로 정리된다. 이후 `GRW-26`, `GRW-27`에서 ownership과 `AGENTS.md` handoff contract를 federation 기준으로 다시 잠가야 backend/frontend repo-local bootstrap이 중복 문서 없이 이어진다.
+`GRW-24`는 completed snapshot으로 정리됐고, 이제 `GRW-18`, `GRB-04`, `GRB-06`, `GRC-05`를 닫아야 workflow pilot close-out과 repo-local verification surface가 현재 기준으로 정리된다. 이후 `GRW-26`, `GRW-27`에서 ownership과 `AGENTS.md` handoff contract를 federation 기준으로 다시 잠가야 backend/frontend repo-local bootstrap이 중복 문서 없이 이어진다.
 
 ## 사용 원칙
 
