@@ -193,7 +193,7 @@
   - Evidence: product docs에서 `GRW-18`은 더 이상 active work item section으로 남지 않고, 다음 queue는 `GRB-04`, `GRB-06`, `GRC-05`, `GRW-26`, `GRW-27`로 정리된다.
 - Command: `find docs/exec-plans/active docs/exec-plans/completed -maxdepth 1 -type f | sort`
   - Status: `passed`
-  - Evidence: completed 조건을 만족한 문서는 `completed/`에 있고, 현재 active queue에는 `GRB-04`, `GRB-06`만 남아 있다.
+  - Evidence: completed 조건을 만족한 문서는 `completed/`에 있고, current publish-follow-up branch의 active exec plan queue에는 `GRB-04`, `GRB-06`, `GRW-28`이 남아 있다. 이 중 `GRW-28`은 `GRW-18` terminal-state sync를 원격 기본 브랜치에 publish하기 위한 workflow-docs follow-up이다.
 - Command: `gh api repos/alexization/git-ranker-workflow/issues/60 --jq '{number,state,state_reason,closed_at,title}'`
   - Status: `passed`
   - Evidence: Issue `#60`은 계속 `CLOSED`, `COMPLETED` 상태다.
@@ -207,7 +207,7 @@
   - Status: `passed`
   - Evidence: whitespace 또는 patch formatting 오류가 없다.
 - Failure summary: 없음
-- Next action: historical record를 유지하고, 현재 active queue인 `GRB-04`, `GRB-06`과 pending `GRC-05`, `GRW-26`, `GRW-27`로 후속 작업을 이어간다.
+- Next action: historical record를 유지하고, 현재 active exec plan queue인 `GRB-04`, `GRB-06`, `GRW-28`을 각각 owner scope에 맞게 이어간다. product backlog 기준 다음 queue는 `GRC-05`, `GRW-26`, `GRW-27`로 유지한다.
 
 ## Independent Review
 
@@ -257,12 +257,13 @@
 ## Risks or Blockers
 
 - `GRB-04`, `GRB-06`은 여전히 app repo implementation issue이므로 `GRW-18` close-out과 분리해 각각의 owner scope에서 계속 닫아야 한다.
+- `GRW-28`은 `GRW-18` terminal-state sync를 publish하는 workflow-docs follow-up이라, app repo backlog와 섞지 않고 draft PR `#78` close-out으로 따로 닫아야 한다.
 - `GRC-05`가 아직 pending이라 repo-local verification surface 정렬은 frontend 쪽에서 후속으로 이어져야 한다.
 - completed historical record는 pre-merge reviewer pool evidence와 post-merge terminal-state sync를 함께 보존하므로, final terminal sync가 별도 reviewer runtime 없이 기록됐다는 점을 artifact에 그대로 남긴다.
 
 ## Next Preconditions
 
-- current active queue는 `GRB-04`, `GRB-06`을 유지하고, frontend verification alignment는 `GRC-05`에서 이어간다.
+- current active exec plan queue는 `GRB-04`, `GRB-06`, `GRW-28`을 유지하고, frontend verification alignment는 `GRC-05`에서 이어간다.
 - federation source-of-truth alignment는 `GRB-04`, `GRC-05` close-out 뒤 `GRW-26`, `GRW-27` 순서로 진행한다.
 
 ## Docs Updated
@@ -278,7 +279,7 @@
 - `GRW-17`, `GRW-23` historical record는 `completed/`에 유지한다.
 - `GRW-18` historical record도 `completed/`에 두고, active queue에서는 제거한다.
 - GitHub Issue `#70`은 `CLOSED`, `COMPLETED` 상태고 PR `#73`은 `2026-04-09` merge 결과를 유지한다.
-- current active exec plan queue는 `GRB-04`, `GRB-06`만 남기고, product backlog/roadmap도 같은 상태를 가리킨다.
+- current active exec plan queue는 `GRB-04`, `GRB-06`, `GRW-28`이며, `GRW-28`은 `GRW-18` terminal-state sync publish를 위한 operational follow-up으로 product backlog/roadmap의 product queue와는 별도 surface에 남는다.
 
 ## Skill Consideration
 
