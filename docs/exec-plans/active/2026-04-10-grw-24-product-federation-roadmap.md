@@ -182,10 +182,10 @@
 - Branch: `feat/grw-24-product-federation-roadmap`
 - Current promotion status:
   - latest independent review verdict는 `approved`다.
-  - owner는 PR `#76`을 open 상태로 promote할 수 있다.
+  - PR `#76`은 approved review 뒤 open 상태로 promote됐다.
 - Body render check:
   - `gh pr view 76 --repo alexization/git-ranker-workflow --json number,title,body,state,isDraft,url,headRefName,baseRefName`
-  - Result: `OPEN`, `isDraft=true`, expected sections/body preserved
+  - Result: `OPEN`, `isDraft=false`, expected sections/body preserved
 
 ## Risks or Blockers
 
@@ -194,7 +194,6 @@
 
 ## Next Preconditions
 
-- approved review evidence를 유지한 채 PR `#76`을 draft에서 open으로 promote한다.
 - 후속 작업은 `GRW-26`, `GRW-27`, `GRB-07`, `GRC-07` 순서로 federation ownership과 repo-local bootstrap을 진행한다.
 
 ## Docs Updated
