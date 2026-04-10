@@ -27,6 +27,3 @@
 
 ## 리스크 / 확인이 필요한 점
 - <risk-or-open-question>
-
-## 참고 자료
-- <doc-or-link>

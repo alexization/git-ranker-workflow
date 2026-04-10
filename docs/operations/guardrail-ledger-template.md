@@ -49,7 +49,7 @@
   - `Reviewing`
 - Failure class:
   - `review-handoff`
-- Trigger signal: reviewer input에 latest verification report 요약이 비어 있었다.
+- Trigger signal: reviewer input에 latest verification evidence 요약이 비어 있었다.
 - Root cause: review handoff minimum이 close-out 형식에서 강제되지 않았다.
 - Existing guardrail: `docs/operations/dual-agent-review-policy.md`
 - Recurrence:

@@ -40,7 +40,7 @@
 | Task brief | default lane에서 repo, 목표, write scope, verification을 잠근 짧은 메모 | 작업 대화, PR body 초안 |
 | Exec plan | guarded lane의 scope, non-scope, write scope, verification contract | `docs/exec-plans/` |
 | Context pack | guarded lane에서 허용된 최소 문서와 write scope | exec plan과 후속 policy |
-| Verification report | 실행 명령, 최종 상태, 핵심 evidence, 실패/예외 요약 | exec plan, verification artifact, PR summary |
+| Verification evidence | compact verification summary 또는 detailed report로 latest verification 상태를 남긴다 | exec plan, verification artifact, PR summary |
 | Open PR | 검증된 결과를 공개하는 기본 협업 surface | GitHub PR |
 | Review verdict | optional independent review 결과 | review comment, PR comment, exec plan 요약 |
 | Feedback entry | optional guardrail 승격 또는 후속 분류 결과 | exec plan, follow-up policy, ledger |
@@ -138,7 +138,7 @@
 - review/repair loop가 열리면 open PR의 current diff와 latest verification evidence를 기준으로 닫는다.
 - feedback이나 quality sweep이 필요하면 PR 완료 여부와 분리해 별도 artifact나 follow-up으로 남긴다.
 - 완료된 exec plan은 `docs/exec-plans/completed/`로 옮기고, 후속 Issue가 이 문서를 전제조건으로 참조한다.
-- completed exec plan은 historical close-out record이며, 현재 canonical runtime과 정책은 stable source of truth 문서에서 해석한다.
+- completed exec plan은 historical close-out record이며 full transcript는 아니다. 현재 canonical runtime과 정책은 stable source of truth 문서에서 해석한다.
 
 ## Detailed Policy Surfaces
 

@@ -5,7 +5,7 @@ description: guarded lane의 GitHub issue나 roadmap item을 실행 가능한 ex
 
 # Issue To Exec Plan
 
-이 skill은 issue를 문서화하는 것이 아니라 구현 가능한 범위로 잠그는 데 초점을 둔다. exec plan이 준비되면 이후 agent들이 같은 scope와 같은 verification을 재사용할 수 있어야 한다.
+이 skill은 issue를 장문화하는 것이 아니라 구현 가능한 범위로 잠그는 데 초점을 둔다. GitHub issue는 reader-facing summary만 담고, exec plan이 write scope와 verification의 canonical source가 되어야 한다.
 
 ## 언제 사용하나
 
@@ -29,7 +29,7 @@ description: guarded lane의 GitHub issue나 roadmap item을 실행 가능한 ex
 1. 문제, why now, scope, non-scope를 먼저 고정한다.
 2. 허용 write scope와 forbidden path를 적는다.
 3. verification 명령과 evidence surface를 미리 적는다.
-4. GitHub issue가 없으면 먼저 만들고 줄바꿈까지 확인한다.
+4. GitHub issue가 없으면 reader-first body로 먼저 만들고 줄바꿈까지 확인한다.
 5. `docs/exec-plans/active/YYYY-MM-DD-<issue-id-lower>-<slug>.md`를 작성한다.
 
 ## 결과
@@ -40,6 +40,8 @@ description: guarded lane의 GitHub issue나 roadmap item을 실행 가능한 ex
 - Problem, Why Now, Scope, Non-scope, Write Scope
 - Outputs, Verification, Evidence, Risks or Blockers
 - Next Preconditions, Docs Updated, Skill Consideration
+
+GitHub issue에는 최소한 target repo, problem, why now, outcome, scope/non-scope, approach note, risk 정도만 요약하고, write scope와 verification command 상세는 exec plan에 둔다.
 
 작업이 끝나면 `Completed`로 갱신하고 `docs/exec-plans/completed/`로 옮긴다.
 
@@ -63,6 +65,7 @@ workflow 저장소에서 멀티라인 issue body를 만들 때는 [github-issue-
 - verification을 `문서 확인`, `테스트 실행`처럼 추상적으로 쓰지 않는다.
 - 선행조건이 불명확한데 `Ready` 또는 `In Progress`로 올리지 않는다.
 - 애매한 요구사항을 임의 해석해 plan 본문에 박지 않는다.
+- GitHub issue 본문에 exec plan 경로, branch 이름, raw verification command, reviewer expectation dump를 그대로 넣지 않는다.
 - `docs/architecture/`, `docs/operations/`, `docs/product/` 같은 stable source of truth 문서에 현재/후속 work item ID를 설명용 문장으로 남기지 않는다.
 - 멀티라인 GitHub Issue 본문을 `gh issue create --body '...'` 또는 escaped `\n` 문자열로 직접 보내지 않는다.
 - Issue 생성 후 `gh issue view --json body` 확인 없이 줄바꿈이 정상이라고 가정하지 않는다.
