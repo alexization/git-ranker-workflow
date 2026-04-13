@@ -2,8 +2,8 @@
 
 - Status: `Completed`
 - Primary Repo: `git-ranker-workflow`
-- Related Issue: `없음`
-- Related PR: `not created in this session`
+- Related Issue: `alexization/git-ranker-workflow#83`
+- Related PR: `alexization/git-ranker-workflow#84`
 
 ## Request Summary
 

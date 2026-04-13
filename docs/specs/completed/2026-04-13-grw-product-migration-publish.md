@@ -1,9 +1,9 @@
 # 2026-04-13-grw-product-migration-publish
 
-- Status: `Approved`
+- Status: `Completed`
 - Primary Repo: `git-ranker-workflow`
 - Related Issue: `alexization/git-ranker-workflow#83`
-- Related PR: `not created`
+- Related PR: `alexization/git-ranker-workflow#84`
 
 ## Request Summary
 
@@ -54,11 +54,12 @@
 ## Write Scope
 - Primary repo: `git-ranker-workflow`
 - Allowed write paths:
-  - `docs/specs/active/2026-04-13-grw-product-migration-publish.md`
+  - `docs/specs/completed/2026-04-13-grw-product-migration-publish.md`
+  - `docs/specs/completed/2026-04-13-grw-product-to-spec-migration.md`
   - temporary issue/PR body file under `/tmp`
   - git metadata for branch/commit on current repo
 - Control-plane artifacts:
-  - `docs/specs/active/2026-04-13-grw-product-migration-publish.md`
+  - `docs/specs/completed/2026-04-13-grw-product-migration-publish.md`
 - Explicitly forbidden:
   - sibling app repo changes
   - current diff와 무관한 추가 문서 수정
@@ -80,8 +81,8 @@
   - `git status --short`
   - `git diff --stat`
   - `git diff --check`
-  - `gh issue view <issue-number>`
-  - `gh pr view <pr-number>`
+  - `gh issue view 83 --repo alexization/git-ranker-workflow`
+  - `gh pr view 84 --repo alexization/git-ranker-workflow`
 
 ## Delivery And Tracking Plan
 - Lane: `guarded lane`
@@ -111,3 +112,38 @@
 ## Approval
 - Harness judgment: 현재 publish 범위는 workflow docs migration과 seeded draft spec queue를 설명하는 하나의 umbrella artifact로 닫을 수 있다.
 - User approval: 사용자가 umbrella issue/PR 생성을 요청했고, publish scope에 current mixed diff를 포함하는 데 동의했다.
+
+## Verification Summary
+
+- Contract profile: `workflow-docs`
+- Overall status: `passed`
+- Ran:
+  - `git status --short`
+  - `git diff --stat`
+  - `git diff --check`
+  - `gh issue create --repo alexization/git-ranker-workflow --title "[Task] docs/product 제거와 spec-first queue 전환" --label task --label triage --body-file /tmp/grw-product-migration-issue-body.md`
+  - `git checkout -b codex/product-to-spec-migration`
+  - `git add AGENTS.md .codex/skills/README.md docs`
+  - `git commit -m "docs: product 문서를 제거하고 spec queue를 정렬" ...`
+  - `git push -u origin codex/product-to-spec-migration`
+  - `gh pr create --repo alexization/git-ranker-workflow --base develop --head codex/product-to-spec-migration --title "docs: product 문서를 제거하고 spec queue를 정렬" --body-file /tmp/grw-product-migration-pr-body.md`
+  - `gh issue view 83 --repo alexization/git-ranker-workflow`
+  - `gh pr view 84 --repo alexization/git-ranker-workflow`
+- Evidence:
+  - umbrella issue `#83`가 생성됐고 `task`, `triage` label과 reader-first body를 가진다.
+  - open PR `#84`가 `develop <- codex/product-to-spec-migration`로 생성됐다.
+  - PR 본문이 issue `#83`를 닫도록 연결한다.
+  - current branch가 원격에 push됐고 current docs diff가 PR로 publish됐다.
+- Failure or skipped summary: 없음
+- Next action: reviewer follow-up on PR `#84`
+
+## Final Change Summary
+
+- publish용 issue `#83`과 PR `#84`를 생성했다.
+- current docs migration diff를 branch `codex/product-to-spec-migration`에 커밋/푸시했다.
+- publish task spec을 close-out 하고 related issue/PR metadata를 고정했다.
+
+## Final User Validation
+
+- 사용자는 umbrella issue/PR 생성을 요청했고, publish scope에 mixed docs diff를 포함하는 데 동의했다.
+- 그 승인에 맞춰 issue와 open PR을 생성했다.
