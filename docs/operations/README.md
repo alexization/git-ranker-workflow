@@ -4,6 +4,7 @@
 
 현재 기준 문서:
 
+- [sdd-spec-policy.md](sdd-spec-policy.md)
 - [workflow-governance.md](workflow-governance.md)
 - [request-routing-policy.md](request-routing-policy.md)
 - [tool-boundary-matrix.md](tool-boundary-matrix.md)
