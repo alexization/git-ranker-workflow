@@ -34,7 +34,7 @@
 - `Trigger signal`은 symptom이고, `Root cause hypothesis`는 왜 이 quality drift가 다시 생길 수 있는지에 대한 가설이다.
 - `Detection surface`에는 command, grep, review note, repo-specific detector 중 실제로 쓴 경로를 적는다.
 - `Existing guardrail`에는 이미 있던 lint rule, docs rule, CI gate, detector가 있으면 적고, 없으면 `없음`이라고 적는다.
-- `cleanup-pr-candidate`를 고르면 follow-up asset에 대상 issue, PR candidate, exec plan path 중 최소 하나를 적는다.
+- `cleanup-pr-candidate`를 고르면 follow-up asset에 대상 issue, PR candidate, spec path 중 최소 하나를 적는다.
 - `no-action`을 고르면 `Notes`에 왜 지금은 follow-up을 만들지 않는지 적는다.
 
 ## Minimal Example
@@ -45,7 +45,7 @@
 - Trigger mode:
   - `post-closeout`
 - Source repo: `git-ranker-client`
-- Source task / PR / baseline: `docs/exec-plans/completed/2026-04-08-sample.md`
+- Source task / PR / baseline: `docs/specs/completed/2026-04-08-sample.md`
 - Scan scope: `src/features/ranking`
 - Detection surface: `npm run lint` warning summary와 reviewer note
 - Signal class:

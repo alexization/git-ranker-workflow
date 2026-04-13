@@ -10,7 +10,7 @@ body:
 
         각 항목은 짧은 문단 하나나 1~3개 bullet이면 충분합니다.
         아래에는 문제, 배경, 결과, 범위, 리스크처럼 판단에 필요한 내용만 적어 주세요.
-        파일 목록, 브랜치 이름, exec plan 파일명, raw 검증 명령, 문서 inventory 같은 운영 상세는 exec plan이나 별도 증거에 둡니다.
+        파일 목록, 브랜치 이름, spec 파일명, raw 검증 명령, 문서 inventory 같은 운영 상세는 approved spec이나 별도 증거에 둡니다.
 
   - type: dropdown
     id: target_repo
