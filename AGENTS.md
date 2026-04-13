@@ -14,16 +14,15 @@
 ## source of truth 위치
 
 - [docs/architecture](docs/architecture/README.md): 컨트롤 플레인 구조와 cross-repo 경계
-- [docs/product](docs/product/README.md): 실행 순서, 작업 카탈로그, 단계별 목표
 - [docs/operations](docs/operations/README.md): 작업 운영 규칙, evidence, runbook
-- [docs/specs](docs/specs/README.md): SDD 기반 작업 spec 문서
+- [docs/specs](docs/specs/README.md): SDD 기반 작업 spec 문서와 남은 요구사항 queue
 
 앱 동작의 canonical source는 workflow 복제 문서가 아니라 각 앱 저장소의 엔트리 문서와 코드/테스트에 둔다.
 
 ## 운영 원칙
 
 - 루트 문서는 인덱스만 맡는다. 상세 규칙은 `docs/` 아래에 둔다.
-- 새 작업은 원칙적으로 원본 로드맵보다 위 source of truth 문서를 먼저 읽고 시작한다.
+- 새 작업은 원칙적으로 stable source of truth 문서를 먼저 읽고, 남은 작업은 `docs/specs/active/`의 draft/approved spec으로 확인한다.
 - 모든 즉시 실행 가능한 작업은 구현 전에 소크라테스 방식으로 spec을 먼저 만든다.
 - spec은 요구사항, 하위 작업, write scope, verification, tracking 결정을 함께 소유한다.
 - 변경이 생기면 코드만이 아니라 관련 source of truth 문서도 함께 갱신한다.

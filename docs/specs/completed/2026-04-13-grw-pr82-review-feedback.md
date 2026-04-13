@@ -1,6 +1,6 @@
 # 2026-04-13-grw-pr82-review-feedback
 
-- Status: `Approved`
+- Status: `Completed`
 - Primary Repo: `git-ranker-workflow`
 - Related Issue: `없음`
 - Related PR: `alexization/git-ranker-workflow#82`
@@ -55,9 +55,9 @@ PR `#82` 리뷰에서 두 가지 문서 일관성 문제가 지적됐다. 첫째
   - `docs/operations/workflow-governance.md`
   - `docs/specs/active/2026-04-09-grb-04-backend-verification-contract-reset.md`
   - `docs/specs/active/2026-04-09-grb-06-backend-test-ci-removal.md`
-  - `docs/specs/active/2026-04-13-grw-pr82-review-feedback.md`
+  - `docs/specs/completed/2026-04-13-grw-pr82-review-feedback.md`
 - Control-plane artifacts:
-  - `docs/specs/active/2026-04-13-grw-pr82-review-feedback.md`
+  - `docs/specs/completed/2026-04-13-grw-pr82-review-feedback.md`
 - Explicitly forbidden:
   - sibling app repo changes
   - unrelated policy rewrites outside the two review findings
@@ -129,4 +129,14 @@ PR `#82` 리뷰에서 두 가지 문서 일관성 문제가 지적됐다. 첫째
   - workflow governance 실행 순서가 `verification, review, feedback, user validation`을 모두 reopen trigger로 명시한다.
   - 문서 diff에 whitespace 또는 patch formatting 문제는 없다.
 - Failure or skipped summary: review reply / thread resolve는 사용자 요청이 없어 수행하지 않았다.
-- Next action: push updated PR branch for reviewer follow-up
+- Next action: merged in PR `#82`
+
+## Final Change Summary
+
+- active spec 두 건에 `Approval Gate`를 보강했다.
+- workflow governance 실행 순서에 verification-based reopen trigger를 반영했다.
+- review feedback artifact를 completed history로 보존했다.
+
+## Final User Validation
+
+- PR `#82`는 2026-04-13에 merged 되었고, 이 spec은 해당 review repair의 historical close-out record로 보존된다.

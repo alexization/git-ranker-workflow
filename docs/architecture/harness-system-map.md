@@ -1,6 +1,6 @@
 # Harness System Map
 
-이 문서는 `git-ranker-workflow` 하네스의 architecture-level source of truth다. [docs/product/harness-roadmap.md](../product/harness-roadmap.md)가 작업 순서와 목표를 설명한다면, 이 문서는 각 단계의 책임과 입력/출력과 상태 전이를 정의한다.
+이 문서는 `git-ranker-workflow` 하네스의 architecture-level source of truth다. task별 요구사항과 sequencing은 `docs/specs/`의 draft/approved spec이 맡고, 이 문서는 각 단계의 책임과 입력/출력과 상태 전이를 정의한다.
 
 ## Control Objectives
 
@@ -16,8 +16,9 @@
 
 ## Planning Boundary
 
-- 현재 planning source of truth는 [docs/product/harness-roadmap.md](../product/harness-roadmap.md), [docs/product/work-item-catalog.md](../product/work-item-catalog.md), [docs/specs/](../specs/README.md)다.
-- 작업 순서와 backlog는 `docs/product/`가, task별 요구사항과 실행 기준은 `docs/specs/`가 맡는다.
+- 현재 planning source of truth는 [docs/specs/](../specs/README.md)다.
+- remaining work와 sequencing은 `docs/specs/active/`의 draft/approved spec과 prerequisite note로 표현한다.
+- 별도 roadmap/catalog 문서는 유지하지 않는다.
 - 현재 control plane은 별도 history/reference 트리를 유지하지 않는다. 앱 동작의 canonical source는 각 앱 저장소 문서와 코드/테스트다.
 
 ## System Components
@@ -26,7 +27,7 @@
 | --- | --- | --- | --- |
 | Router | 사용자 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류한다. | 사용자 요청, 운영 규칙 | route decision |
 | Spec Writer | 소크라테스 질문으로 문제, 목표, 제약, 전제, framing, 하위 작업, 검증 기준을 정리한다. | routed request, source docs, user answers | draft spec, approved spec |
-| Tracker | spec에 따라 parent issue, subtask issue, pre-implementation tracking artifact가 필요한지 결정하고 만든다. | approved spec, product docs | optional issue set, tracking decision |
+| Tracker | spec에 따라 parent issue, subtask issue, pre-implementation tracking artifact가 필요한지 결정하고 만든다. | approved spec | optional issue set, tracking decision |
 | Context Pack | approved spec 기준으로 최소 문서와 읽기 경계를 고정한다. | approved spec, task type, source docs | bounded context pack |
 | Implementer | 승인된 spec의 현재 하위 작업을 허용 범위 안에서 구현한다. | approved spec, selected subtask, context | diff, change notes |
 | Verification | 명시된 verification contract를 실행하고 pass/fail을 기록한다. | diff, verification contract | verification report or summary |

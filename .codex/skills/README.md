@@ -10,7 +10,7 @@
 
 ## Canonical Ownership
 
-- 정책, vocabulary, 상태 전이, 종료 조건, evidence minimum은 `docs/operations/`, `docs/architecture/`, `docs/product/`가 관리한다.
+- 정책, vocabulary, 상태 전이, 종료 조건, evidence minimum은 `docs/operations/`, `docs/architecture/`, `docs/specs/`가 관리한다.
 - skill은 그 정책을 대체하지 않고, 한 단계의 반복 실행 절차와 handoff만 다룬다.
 - policy와 skill이 충돌하면 skill에 새 규칙을 더하지 말고 canonical policy를 먼저 수정한 뒤 skill을 맞춘다.
 
