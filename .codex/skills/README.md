@@ -14,6 +14,12 @@
 - skill은 그 정책을 대체하지 않고, 한 단계의 반복 실행 절차와 handoff만 다룬다.
 - policy와 skill이 충돌하면 skill에 새 규칙을 더하지 말고 canonical policy를 먼저 수정한 뒤 skill을 맞춘다.
 
+## Thin-Layer Rule
+
+- workflow-local skill은 하나의 harness stage, 필요한 handoff, 다음에 읽을 canonical source만 설명한다.
+- workflow-local skill은 backend/frontend file map, repo-local command inventory, bootstrap guide, implementation heuristic의 stable home이 되면 안 된다.
+- thin-layer migration은 workflow skill에서 repo-specific detail을 걷어내도 target repo entry doc과 코드/테스트만으로 onboarding이 유지될 때 완료로 본다.
+
 ## Registry Status
 
 - `skill-creator`: 새 skill 생성, 기존 skill 리팩터링

@@ -21,6 +21,12 @@
 - 별도 roadmap/catalog 문서는 유지하지 않는다.
 - 현재 control plane은 별도 history/reference 트리를 유지하지 않는다. 앱 동작의 canonical source는 각 앱 저장소 문서와 코드/테스트다.
 
+## Federated Thin-Layer Invariants
+
+- workflow-local docs, skills, handoff artifact는 thin layer다. route, stage responsibility, boundary, minimum handoff만 정의한다.
+- state transition은 repo entrypoint에서 멈춘다. backend/frontend implementation procedure, file-level bootstrap, repo-local verification command는 sibling repo canonical source가 소유한다.
+- control plane 단계가 더 많은 app-specific detail을 필요로 하면 workflow stable doc을 두껍게 늘리지 말고 target repo entrypoint 또는 repo-local follow-up spec으로 handoff한다.
+
 ## System Components
 
 | Component | Responsibility | Primary Input | Primary Output |
