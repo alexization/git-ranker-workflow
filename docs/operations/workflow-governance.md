@@ -163,7 +163,7 @@ lane은 approved spec이 만들어진 뒤에 고른다.
 5. 현재 active subtask를 구현한다.
 6. verification evidence를 남긴다.
 7. publish가 필요한 결과면 open PR을 만든다.
-8. verification, review, feedback, user validation 중 spec defect가 드러나면 spec을 `Draft`로 내려 clarification loop와 재승인을 다시 연다.
+8. review, feedback, user validation 중 spec defect가 드러나면 spec을 `Draft`로 내려 clarification loop와 재승인을 다시 연다.
 9. review 또는 feedback이 trigger되면 그 evidence를 남긴다.
 10. 사용자 최종 검증으로 완료를 닫는다.
 
