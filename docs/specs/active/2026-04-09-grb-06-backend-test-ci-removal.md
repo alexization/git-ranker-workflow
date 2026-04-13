@@ -35,6 +35,15 @@
 - baseline reset이 목적이다.
 - current active work를 새 spec 체계로 이관한다.
 
+## Approval Gate
+- Problem and goal locked: `yes`
+- Non-goals explicit: `yes`
+- Primary repo and write scope locked: `yes`
+- Verification method locked: `yes`
+- Subtask split decided: `yes`
+- Tracking decision locked: `yes`
+- Remaining blockers: `none`
+
 ## Write Scope
 - Primary repo: `git-ranker`
 - Allowed write paths:

@@ -25,7 +25,7 @@
 | Component | Responsibility | Primary Input | Primary Output |
 | --- | --- | --- | --- |
 | Router | 사용자 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류한다. | 사용자 요청, 운영 규칙 | route decision |
-| Spec Writer | 소크라테스 질문으로 문제, 목표, 제약, 하위 작업, 검증 기준을 정리한다. | routed request, source docs, user answers | draft spec, approved spec |
+| Spec Writer | 소크라테스 질문으로 문제, 목표, 제약, 전제, framing, 하위 작업, 검증 기준을 정리한다. | routed request, source docs, user answers | draft spec, approved spec |
 | Tracker | spec에 따라 parent issue, subtask issue, pre-implementation tracking artifact가 필요한지 결정하고 만든다. | approved spec, product docs | optional issue set, tracking decision |
 | Context Pack | approved spec 기준으로 최소 문서와 읽기 경계를 고정한다. | approved spec, task type, source docs | bounded context pack |
 | Implementer | 승인된 spec의 현재 하위 작업을 허용 범위 안에서 구현한다. | approved spec, selected subtask, context | diff, change notes |
@@ -69,6 +69,16 @@
 
 `Reviewing -> Repairing -> Verifying -> Publishing`
 
+### Spec Reopen Path
+
+`Verifying -> Spec Drafting`
+
+`Reviewing -> Spec Drafting`
+
+`Repairing -> Spec Drafting`
+
+`User Validating -> Spec Drafting`
+
 ### Optional Feedback Path
 
 `Reviewing -> Feedback Pending -> Completed`
@@ -86,17 +96,17 @@
 | `Received` | 사용자 요청이 들어왔다. | Router가 요청 유형을 분류했다. | `Routed` |
 | `Routed` | 요청이 `대화`, `모호한 요청`, `즉시 실행 가능한 작업` 중 하나로 분류됐다. | 대화/거절이면 종료, 모호하면 인터뷰 시작, 실행 가능하면 spec drafting을 시작한다. | `Rejected`, `Interviewing`, `Spec Drafting` |
 | `Interviewing` | 요청은 실행 후보지만 single requirement, primary repo, 기본 완료 조건이 아직 모호하다. | ambiguity가 줄어 spec drafting으로 넘어가거나, 더 이상 줄일 수 없다고 판단한다. | `Spec Drafting`, `Blocked`, `Rejected` |
-| `Spec Drafting` | 소크라테스 질문과 초안 정리로 spec을 작성 중이다. | Harness가 충분히 명확하다고 판단하고 사용자가 승인했거나, 더 진행할 수 없다고 판단한다. | `Spec Approved`, `Blocked`, `Rejected` |
+| `Spec Drafting` | 소크라테스 질문과 초안 정리로 spec을 작성 중이다. | Harness가 approval gate를 통과했다고 판단하고 사용자가 승인했거나, 더 진행할 수 없다고 판단한다. | `Spec Approved`, `Blocked`, `Rejected` |
 | `Spec Approved` | 승인된 spec이 존재하고 목표, 하위 작업, write scope, verification, tracking 결정이 잠겼다. | tracking이 필요하면 tracking을 시작하고, 아니면 context pack을 준비한다. | `Tracking`, `Context Ready`, `Blocked` |
 | `Tracking` | approved spec이 issue/PR 또는 subtask issue로 투영돼야 한다. | 필요한 tracking artifact 생성이 끝나거나, tracking 불가 사유가 정리됐다. | `Context Ready`, `Blocked` |
 | `Context Ready` | 현재 하위 작업에 필요한 최소 문서와 write scope가 승인된 spec 기준으로 고정됐다. | Implementer가 변경을 시작하거나, 필요한 source of truth가 부족하다고 판단한다. | `Implementing`, `Interviewing`, `Blocked` |
 | `Implementing` | Implementer가 허용된 범위 안에서 변경을 만든다. | 검증 가능한 diff가 준비되거나, scope drift 또는 외부 blocker가 드러난다. | `Verifying`, `Blocked`, `Spec Drafting` |
-| `Verifying` | 결정론적 검증 명령을 실행한다. | 모든 필수 명령이 통과하거나, 실패/환경 blocker가 발생한다. | `Publishing`, `Repairing`, `Blocked`, `Feedback Pending` |
+| `Verifying` | 결정론적 검증 명령을 실행한다. | 모든 필수 명령이 통과하거나, 수리 가능한 diff defect, spec defect, 환경 blocker가 분류된다. | `Publishing`, `Repairing`, `Spec Drafting`, `Blocked`, `Feedback Pending` |
 | `Publishing` | latest verification이 current diff 기준으로 준비됐고 PR body가 채워졌다. | open PR이 publish되거나, publish를 못 할 이유가 확인된다. | `Reviewing`, `User Validating`, `Blocked` |
-| `Reviewing` | open PR 또는 latest diff에 대해 independent review가 실제로 시작됐다. | 승인하거나, 수정 요청을 남기거나, 검토 불가능한 blocker를 선언한다. | `User Validating`, `Repairing`, `Blocked`, `Feedback Pending` |
-| `Repairing` | verification 실패나 review 요청으로 재작업이 필요하다. | 재시도 가능한 수정이 준비되거나, 계속 진행할 근거가 사라진다. | `Implementing`, `Blocked`, `Rejected` |
+| `Reviewing` | open PR 또는 latest diff에 대해 independent review가 실제로 시작됐다. | 승인하거나, 수정 요청을 남기거나, spec defect 또는 검토 불가능한 blocker를 선언한다. | `User Validating`, `Repairing`, `Spec Drafting`, `Blocked`, `Feedback Pending` |
+| `Repairing` | verification 실패나 review 요청으로 재작업이 필요하다. | 재시도 가능한 수정이 준비되거나, root cause가 spec defect라고 확인되거나, 계속 진행할 근거가 사라진다. | `Implementing`, `Spec Drafting`, `Blocked`, `Rejected` |
 | `Feedback Pending` | blocker, 반복 실패, systemic gap, quality handoff를 정리해야 한다. | feedback이 기록되고 다음 follow-up 여부가 결정됐다. | `User Validating`, `Completed` |
-| `User Validating` | latest verification과 결과 공유가 끝났고, 최종 수용 여부를 사용자 기준으로 닫아야 한다. | 사용자가 spec 대비 결과를 승인하거나, follow-up을 요청한다. | `Completed`, `Repairing`, `Blocked` |
+| `User Validating` | latest verification과 결과 공유가 끝났고, 최종 수용 여부를 사용자 기준으로 닫아야 한다. | 사용자가 spec 대비 결과를 승인하거나, 구현 follow-up 또는 spec defect reopen을 요청한다. | `Completed`, `Repairing`, `Spec Drafting`, `Blocked` |
 | `Completed` | 검증된 결과가 승인된 spec과 맞게 닫혔고, trigger된 review나 feedback이 있다면 그것도 정리됐다. | 없음 | terminal |
 | `Blocked` | 선행조건 미충족, 외부 의존성, write scope 충돌, source 부족으로 더 진행할 수 없다. | blocker 해소 후 다시 진입하거나 작업을 종료한다. | `Interviewing`, `Spec Drafting`, `Spec Approved`, `Context Ready`, terminal |
 | `Rejected` | 대화성 요청, 작업 취소, 범위 밖 요청처럼 실행을 계속하지 않기로 했다. | 없음 | terminal |
@@ -106,14 +116,14 @@
 | Stage | Pass | Fail | Required Consequence |
 | --- | --- | --- | --- |
 | Router | 정확히 하나의 route가 선택됐고 다음 소유자가 명확하다. | route가 중복되거나 비어 있다. | 편집 작업을 시작하지 않고 intake로 되돌린다. |
-| Spec Writer | 질문과 요약만으로 spec을 점점 명확히 만든다. | 즉답, 숨은 가정 추가, 승인 전 구현 착수가 발생한다. | `Interviewing` 또는 `Blocked`로 되돌린다. |
+| Spec Writer | 질문, why, 전제 점검, framing 점검, 요약으로 approval gate를 닫는다. | 즉답, 숨은 가정 추가, approval gate 누락, 승인 전 구현 착수가 발생한다. | `Interviewing`, `Spec Drafting`, 또는 `Blocked`로 되돌린다. |
 | Context Pack | 최소 문서와 금지 범위가 함께 고정됐다. | source of truth가 부족하거나 불필요한 컨텍스트를 과다 공개했다. | `Interviewing` 또는 `Blocked`로 되돌린다. |
 | Implementer | 승인된 spec의 현재 하위 작업을 허용 write scope 안에서 구현한다. | scope drift, 무단 cross-repo 변경, spec 밖 요구사항 추가가 발생한다. | `Blocked` 또는 spec 수정 승인 단계로 되돌린다. |
-| Verification | 모든 필수 검증 명령이 통과하고 증거가 남는다. | 명령 실패, 환경 부족, 증거 누락이 있다. | `Repairing` 또는 `Blocked`로 전환한다. |
+| Verification | 모든 필수 검증 명령이 통과하고 증거가 남는다. | 명령 실패, 환경 부족, 증거 누락, spec defect가 있다. | `Repairing`, `Spec Drafting`, 또는 `Blocked`로 전환한다. |
 | Publishing | latest verification을 반영한 open PR이 생성됐다. | 검증 전 publish를 시도하거나, publish 이유가 불명확하다. | `Blocked` 또는 `Verifying`로 되돌린다. |
-| Reviewer | reviewer가 diff, verification evidence, approved spec을 기준으로 판단한다. | blocking finding, self-approval 시도, 검증과 diff 불일치가 있다. | `Repairing` 또는 `Blocked`로 되돌린다. |
+| Reviewer | reviewer가 diff, verification evidence, approved spec을 기준으로 판단한다. | blocking finding, self-approval 시도, 검증과 diff 불일치, late-discovered spec defect가 있다. | `Repairing`, `Spec Drafting`, 또는 `Blocked`로 되돌린다. |
 | Feedback | 정말 필요한 failure나 follow-up만 기록됐다. | close-out과 후속 guardrail/cleanup 판단이 필요한데 비어 있다. | `Feedback Pending`에 머문다. |
-| User Validator | 사용자가 spec 대비 결과를 승인한다. | spec과 결과가 어긋나거나 follow-up이 필요하다고 판단한다. | `Repairing` 또는 `Blocked`로 되돌린다. |
+| User Validator | 사용자가 spec 대비 결과를 승인한다. | spec과 결과가 어긋나거나, spec lock 자체가 잘못됐거나, follow-up이 필요하다고 판단한다. | `Repairing`, `Spec Drafting`, 또는 `Blocked`로 되돌린다. |
 
 ## Stop Conditions
 
@@ -129,6 +139,7 @@
 - review를 수행할 때만 reviewer separation invariant가 적용된다.
 - reviewer는 diff만이 아니라 verification evidence와 approved spec을 함께 읽어야 한다.
 - 구현 전 승인되지 않은 spec은 canonical source로 간주하지 않는다.
+- 늦게 드러난 spec defect는 current diff patch만으로 흡수하지 않고 spec reopen과 재승인으로 되돌린다.
 - verification이 끝나기 전에는 publish하지 않는다.
 - publish는 review보다 앞설 수 있다. open PR은 검증된 결과를 공유하는 기본 surface다.
 - feedback 단계는 optional이다. blocker, 반복 실패, systemic gap이 있을 때만 들어간다.
