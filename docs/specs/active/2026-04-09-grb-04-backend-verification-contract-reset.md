@@ -35,6 +35,15 @@ legacy verification surface를 backend repo 기준의 repo-local verification co
 - primary repo와 task type은 `git-ranker` / `backend 수정`으로 고정한다.
 - local Docker daemon이 없을 수 있으므로 integration lane 최종 확인은 remote CI evidence를 사용할 수 있다.
 
+## Approval Gate
+- Problem and goal locked: `yes`
+- Non-goals explicit: `yes`
+- Primary repo and write scope locked: `yes`
+- Verification method locked: `yes`
+- Subtask split decided: `yes`
+- Tracking decision locked: `yes`
+- Remaining blockers: `none`
+
 ## Write Scope
 - Primary repo: `git-ranker`
 - Allowed write paths:
