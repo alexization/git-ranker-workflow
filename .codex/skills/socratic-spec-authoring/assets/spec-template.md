@@ -13,9 +13,25 @@
 
 ## Non-goals
 
-## Socratic Clarification Summary
+## Socratic Clarification Log
+
+### Round 1
+- Prompted gap:
+- Why it mattered:
+- User answer / evidence:
+- Closed gap:
+- Remaining blocker:
 
 ## Assumptions And Constraints
+
+## Approval Gate
+- Problem and goal locked:
+- Non-goals explicit:
+- Primary repo and write scope locked:
+- Verification method locked:
+- Subtask split decided:
+- Tracking decision locked:
+- Remaining blockers:
 
 ## Write Scope
 - Primary repo:
