@@ -64,7 +64,7 @@
 
 ## Assumptions And Constraints
 
-- 기존 active spec `GRB-04`, `GRB-06`, `GRW-PR82-review-feedback`는 그대로 유지한다.
+- 기존 active spec `GRB-04`, `GRB-06`는 그대로 유지하고, `GRW-PR82-review-feedback`는 completed history로 보존한다.
 - 새로 추가하는 spec은 requirement seed이므로 `Draft` 상태로 남기고, future execution 시 별도의 Socratic clarification과 사용자 승인으로 `Approved`로 올린다.
 - 이번 작업의 primary context pack은 `workflow-docs`다.
 
@@ -209,4 +209,5 @@
 - `docs/specs/active/2026-04-13-grc-07-frontend-agents-entrypoint-bootstrap.md`
 - `docs/specs/active/2026-04-13-grb-05-backend-gc-baseline-alignment.md`
 - `docs/specs/active/2026-04-13-grc-06-frontend-gc-baseline-alignment.md`
+- `docs/specs/completed/2026-04-13-grw-pr82-review-feedback.md`
 - `docs/specs/completed/2026-04-13-grw-product-to-spec-migration.md`
