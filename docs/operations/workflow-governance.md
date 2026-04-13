@@ -17,8 +17,8 @@
 
 ## Stable Source Of Truth의 Task ID 규칙
 
-- `docs/product/`, `docs/specs/`, GitHub Issue/PR 본문처럼 tracking이 본질인 문서는 work item ID를 직접 써도 된다.
-- `docs/architecture/`, `docs/operations/`, `docs/product/` 같은 stable source of truth 문서에는 future work 설명을 위해 직접적인 work item ID를 남기지 않는다.
+- `docs/specs/`, GitHub Issue/PR 본문처럼 tracking이 본질인 문서는 work item ID를 직접 써도 된다.
+- `docs/architecture/`, `docs/operations/` 같은 stable source of truth 문서에는 future work 설명을 위해 직접적인 work item ID를 남기지 않는다.
 - stable 문서에서 후속 확장을 가리킬 때는 task ID 대신 정책, registry, skill, guardrail 같은 자산 이름을 쓴다.
 
 ## Runtime Principles
@@ -37,6 +37,7 @@
 - 작업 시작 전 [request-routing-policy.md](request-routing-policy.md)로 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류한다.
 - `모호한 요청`은 먼저 single executable requirement로 줄인다.
 - `즉시 실행 가능한 작업`은 곧바로 구현하지 않고 [sdd-spec-policy.md](sdd-spec-policy.md)에 따라 spec을 먼저 만든다.
+- remaining planned work도 별도 roadmap/catalog이 아니라 `docs/specs/active/`의 `Draft` spec으로 유지한다.
 - 승인되지 않은 spec은 canonical source가 아니다.
 - 구현 중 범위가 바뀌면 별도 planning 문서를 만들지 말고 spec을 다시 승인받는다.
 - review나 user validation에서 current spec이 요구사항을 잘못 잠근 것으로 드러나면 구현 수리보다 먼저 spec을 재초안하고 다시 승인받는다.
