@@ -1,6 +1,6 @@
 # 2026-04-09-grb-04-backend-verification-contract-reset
 
-- Status: `In Progress`
+- Status: `Completed`
 - Primary Repo: `git-ranker`
 - Related Issue: `alexization/git-ranker#77`
 - Related PR: `alexization/git-ranker#78`
@@ -55,7 +55,7 @@ legacy verification surface를 backend repo 기준의 repo-local verification co
   - `src/test/java/com/gitranker/api/docs/`
   - `src/test/java/com/gitranker/api/testsupport/`
 - Control-plane artifacts:
-  - `docs/specs/active/2026-04-09-grb-04-backend-verification-contract-reset.md`
+  - `docs/specs/completed/2026-04-09-grb-04-backend-verification-contract-reset.md`
 - Explicitly forbidden:
   - `git-ranker-client` code tree
   - `src/main/` production feature change
@@ -106,3 +106,40 @@ legacy verification surface를 backend repo 기준의 repo-local verification co
 ## Approval
 - Harness judgment: 기존 active work item을 새 spec 체계로 이관해 계속 실행 가능하다고 판단한다.
 - User approval: pre-existing active tracked work를 migration 대상으로 유지한다.
+
+## Verification Summary
+
+- Contract profile: `backend-change`
+- Overall status: `passed`
+- Ran:
+  - `./gradlew test`
+  - `./gradlew integrationTest`
+  - `./gradlew build`
+  - `gh pr checks 78 --repo alexization/git-ranker`
+  - GitHub combined status for `b973b36f191d9bd9f8696a30329995bfec5da493`
+  - `git diff --check`
+- Evidence:
+  - writable backend worktree에서 `./gradlew test`와 `./gradlew build`가 성공했다.
+  - local `./gradlew integrationTest`는 Docker daemon 부재로 Testcontainers 초기화에 실패했지만, spec의 환경 가정대로 remote CI evidence를 사용해 보완했다.
+  - PR #78의 `Unit and Integration Verification` check가 성공했고, pre-deploy gate 복구 commit `b973b36f191d9bd9f8696a30329995bfec5da493`의 combined status에도 success가 남아 있다.
+  - feature branch의 `.github/workflows/deploy.yml`은 `verify` job 뒤에 `docker` job이 이어지도록 바뀌어 deploy 앞단 gate가 복구됐다.
+  - `git diff --check`는 통과했다.
+- Failure or skipped summary:
+  - local integration lane은 Docker 없는 환경이라 direct pass 증거를 만들지 못했고, remote GitHub Actions evidence로 대체했다.
+- Next action: completed
+
+## Final Change Summary
+
+- 레거시 verification surface 제거 뒤 남은 gap을 메우기 위해 backend repo feature branch에 minimal `integrationTest` lane을 되살렸다.
+- `.github/workflows/ci.yml`에 unit + integration verification job을 복구했다.
+- `.github/workflows/deploy.yml`에 pre-deploy `verify` job을 추가해 deploy 전 검증 gate를 다시 걸었다.
+- `build.gradle`에 `integrationTest` task와 필요한 test dependency surface를 되살려 `*IT` 테스트가 orphan lane으로 남지 않게 했다.
+
+## Final User Validation
+
+- 사용자는 `이어서 작업을 진행해주세요.`라고 요청해 sequenced backend follow-up continuation을 직접 승인했다.
+- 이번 slice는 tracked PR/branch와 active spec close-out 정리까지 포함하며, next backend follow-up은 `GRB-07` readiness 판단으로 이어진다.
+
+## Docs Updated
+
+- `docs/specs/completed/2026-04-09-grb-04-backend-verification-contract-reset.md`

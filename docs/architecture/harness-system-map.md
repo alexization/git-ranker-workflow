@@ -167,6 +167,7 @@
 
 - [../operations/request-routing-policy.md](../operations/request-routing-policy.md)는 `Router`, `Interviewing`, `Spec Drafting`, `Rejected` semantics를 세분화한다.
 - [../operations/sdd-spec-policy.md](../operations/sdd-spec-policy.md)는 소크라테스 질문 루프와 spec 승인 기준을 고정한다.
+- [repo-handoff-contract.md](repo-handoff-contract.md)는 workflow가 target repo에 넘기는 minimum handoff, discovery order, bootstrap gap handling을 고정한다.
 - [context-pack-registry.md](context-pack-registry.md)는 승인된 spec에서 `Context Ready`로 가는 규칙을 registry 형태로 고정한다.
 - [../operations/tool-boundary-matrix.md](../operations/tool-boundary-matrix.md)는 `Context Ready`와 `Implementing` 단계의 허용 도구와 write scope 경계를 상세화한다.
 - [../operations/verification-contract-registry.md](../operations/verification-contract-registry.md)는 `Verifying`, `Repairing`, `Blocked` semantics와 retry budget을 명시한다.
