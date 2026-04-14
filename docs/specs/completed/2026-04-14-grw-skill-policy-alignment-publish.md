@@ -123,7 +123,7 @@ workflow policy/skill alignment와 stale reference cleanup 변경은 로컬 work
   - `sed -n '1,240p' docs/specs/completed/2026-04-14-grw-stale-skill-reference-cleanup.md`
 - Evidence:
   - current worktree 전체가 같은 workflow docs/skill 정리 범위로 확인됐다.
-  - branch `codex/skill-policy-alignment-publish`에서 commit `04c729b`가 생성됐다.
+  - branch `codex/skill-policy-alignment-publish`에서 initial publish commit `04c729b`와 close-out commit `e1e4cf2`가 생성됐다.
   - remote push가 성공했고 open PR `#90`이 `develop` 대상으로 생성됐다.
 - Failure or skipped summary:
   - `gh auth status`는 invalid token 상태였지만 GitHub app으로 PR 생성이 가능했다.
@@ -143,5 +143,5 @@ workflow policy/skill alignment와 stale reference cleanup 변경은 로컬 work
 ## Publish Result
 
 - Branch: `codex/skill-policy-alignment-publish`
-- Commit: `04c729b`
+- Commit: `e1e4cf2`
 - PR: `https://github.com/alexization/git-ranker-workflow/pull/90`
