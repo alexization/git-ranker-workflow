@@ -10,6 +10,8 @@
 - 소크라테스 모드의 기본 규칙은 `답 내놓기 금지, 먼저 캐물어라`다.
 - 첫 실행 응답은 구현이나 해답이 아니라 질문, 요약, 가정 점검 중 하나여야 한다.
 - Harness 판단과 사용자 승인이 모두 있어야 spec을 `Approved`로 고정한다.
+- 사용자의 작업 요청 자체는 spec 초안에 대한 승인으로 간주하지 않는다.
+- Harness가 approval gate를 채우기에 더 이상 blocker 질문이 없다고 판단한 뒤에만 사용자에게 spec 승인 요청을 할 수 있다.
 - approval exit conditions를 통과하기 전까지 spec은 `Draft`로 본다.
 - 승인 전에는 구현, issue 분해, 하위 작업 실행, publish를 시작하지 않는다.
 - issue 생성은 추적이 필요할 때만 한다. spec 자체가 항상 먼저다.
@@ -36,9 +38,10 @@
 3. blocker 질문을 던질 때는 닫으려는 공백과 왜 지금 필요한지 함께 말한다.
 4. 각 라운드마다 확정된 점, 뒤집힌 가정, 남은 공백, 논리 충돌 여부를 짧게 요약한다.
 5. approval gate가 비어 있으면 즉답하지 말고 질문 루프를 계속한다.
-6. Harness가 충분히 명확하다고 판단하면 clarification log와 approval gate를 포함한 spec 초안을 작성한다.
-7. 사용자 승인을 받은 뒤에만 spec 상태를 `Approved`로 올린다.
-8. 구현 중 scope가 바뀌거나 verification, review, user validation에서 spec defect가 드러나면 별도 planning 문서를 만들지 말고 spec을 다시 `Draft`로 내려 재승인받아 갱신한다.
+6. Harness가 approval gate를 채우기에 충분하고 더 이상 blocker 질문이 없다고 판단하면 clarification log와 approval gate를 포함한 spec 초안을 작성한다.
+7. 작업 요청 자체를 승인으로 취급하지 말고, 현재 spec 초안에 대한 사용자 승인 요청을 별도로 한다.
+8. 사용자가 그 spec 초안에 명시적으로 승인했을 때만 spec 상태를 `Approved`로 올린다.
+9. 구현 중 scope가 바뀌거나 verification, review, user validation에서 spec defect가 드러나면 별도 planning 문서를 만들지 말고 spec을 다시 `Draft`로 내려 재승인받아 갱신한다.
 
 ## Approval Exit Conditions
 
@@ -53,7 +56,8 @@
 - tracking issue/PR이 필요한지 결정됐다.
 - 남은 blocker가 없거나, 남아 있는 것은 explicit risk/open question으로 승격됐다.
 - Harness가 "이제 구현 가능한 spec"이라고 판단했다.
-- 사용자가 초안을 승인했다.
+- Harness가 현재 spec 초안에 대해 사용자 승인 요청을 했다.
+- 사용자가 작업 요청이 아니라 현재 spec 초안 자체를 명시적으로 승인했다.
 
 ## Spec Minimum Shape
 
@@ -129,6 +133,8 @@ spec의 `Write Scope` 섹션에는 최소한 아래가 있어야 한다.
 
 - spec 없이 구현부터 시작하는 것
 - 질문 대신 가정으로 빈칸을 채우는 것
+- 사용자의 작업 요청을 spec 승인으로 오인하는 것
+- blocker 질문이 남아 있는데 승인 요청부터 하는 것
 - 하위 작업이 필요한데 spec 밖 TODO나 메모로만 남기는 것
 - 추적 issue가 필요하지 않은데 관리용 artifact만 늘리는 것
 - 구현 도중 scope가 바뀌었는데 spec을 다시 승인받지 않는 것

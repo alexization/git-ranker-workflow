@@ -25,9 +25,9 @@
 ## Registry Status
 
 - `skill-creator`: 새 skill 생성, 기존 skill 리팩터링
-- `request-intake`: 새 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류
+- `request-intake`: 새 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류하고 spec authoring stage로 handoff
 - `ambiguity-interview`: `모호한 요청`을 single spec 후보, `Blocked`, `Rejected`로 수렴
-- `socratic-spec-authoring`: 소크라테스 질문으로 spec을 작성하고 승인 상태까지 고정
+- `socratic-spec-authoring`: 소크라테스 질문으로 spec을 세부화하고 질문 루프 종료 뒤 사용자 명시적 승인을 거쳐 승인 상태까지 고정
 - `context-pack-selection`: approved spec 뒤에 primary context pack과 required docs를 고정
 - `boundary-check`: 구현 전에 read/write/network/escalation 경계를 다시 확인
 - `parallel-work-split`: 여러 agent를 투입하기 전에 ownership과 disjoint write set을 고정
@@ -53,6 +53,8 @@
 4. `context-pack-selection`
 5. `boundary-check`
 6. `parallel-work-split` if more than one agent will work on the same spec
+
+`request-intake`는 route와 handoff까지만 담당한다. 현재 spec 초안에 대한 승인 요청과 `Approved` 고정은 `socratic-spec-authoring` 단계에서, 질문 루프가 닫힌 뒤 사용자 명시적 동의를 받아야만 가능하다.
 
 구현 뒤 close-out 순서는 아래 hook을 따른다.
 
