@@ -39,9 +39,6 @@
 - `guardrail-ledger-update`: feedback close-out에서 guardrail ledger entry 작성
 - `failure-to-policy`: normalized failure를 가장 작은 guardrail asset으로 연결
 - `quality-sweep-triage`: quality sweep signal을 cleanup candidate, guardrail follow-up, repair-now, no-action으로 분류
-- `red`
-- `green`
-- `refactor`
 
 ## Recommended Use
 
@@ -65,11 +62,5 @@
 5. `guardrail-ledger-update` once feedback close-out is triggered
 6. `failure-to-policy` when feedback close-out must choose a guardrail promotion target
 7. `quality-sweep-triage` when periodic or targeted quality scan is in scope
-
-구현 skill은 그 다음 slice에 맞춰 쓴다.
-
-1. `red`
-2. `green`
-3. `refactor`
 
 `api-contract-sync`의 canonical backend contract는 `git-ranker/docs/openapi/openapi.json`이다. workflow는 canonical spec을 복제해 소유하지 않고, sync 절차와 evidence를 관리한다.
