@@ -3,7 +3,7 @@
 - Status: `In Progress`
 - Primary Repo: `git-ranker`
 - Related Issue: `alexization/git-ranker#84`
-- Related PR: None
+- Related PR: `alexization/git-ranker#85`
 
 ## Request Summary
 
