@@ -30,7 +30,7 @@
 
 ## Runtime Principles
 
-- 모든 즉시 실행 가능한 작업은 `request -> Socratic spec -> approved spec -> implementation` 순서를 따른다.
+- 모든 즉시 실행 가능한 작업은 `request -> Socratic spec loop -> Harness no-more-questions judgment -> user approval request -> approved spec -> implementation` 순서를 따른다.
 - 추가 planning 문서를 따로 만들지 않는다. 작업을 더 자세히 정의해야 하면 spec을 갱신한다.
 - spec은 요구사항, 하위 작업, write scope, verification, tracking 결정을 함께 소유한다.
 - verification, review, user validation에서 spec defect가 드러나면 patch로 밀어붙이지 말고 spec을 다시 `Draft`로 내려 clarification과 재승인을 반복한다.
@@ -44,6 +44,8 @@
 - 작업 시작 전 [request-routing-policy.md](request-routing-policy.md)로 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류한다.
 - `모호한 요청`은 먼저 single executable requirement로 줄인다.
 - `즉시 실행 가능한 작업`은 곧바로 구현하지 않고 [sdd-spec-policy.md](sdd-spec-policy.md)에 따라 spec을 먼저 만든다.
+- 작업 요청 자체를 spec 승인으로 취급하지 않는다.
+- Harness가 더 이상 blocker 질문이 없다고 판단한 뒤에만 사용자에게 현재 spec 초안의 승인 요청을 할 수 있다.
 - remaining planned work도 별도 roadmap/catalog이 아니라 `docs/specs/active/`의 `Draft` spec으로 유지한다.
 - 승인되지 않은 spec은 canonical source가 아니다.
 - 구현 중 범위가 바뀌면 별도 planning 문서를 만들지 말고 spec을 다시 승인받는다.
@@ -165,20 +167,22 @@ lane은 approved spec이 만들어진 뒤에 고른다.
 ## 현재 기준 실행 순서
 
 1. `request-routing-policy.md`로 요청을 분류한다.
-2. 즉시 실행 가능한 작업이면 소크라테스 질문으로 spec 초안을 만든다.
-3. Harness 판단과 사용자 승인이 끝나면 spec을 `Approved`로 고정한다.
-4. spec이 요구하면 parent issue와 subtask issue를 만든다.
-5. 현재 active subtask를 구현한다.
-6. verification evidence를 남긴다.
-7. publish가 필요한 결과면 open PR을 만든다.
-8. review, feedback, user validation 중 spec defect가 드러나면 spec을 `Draft`로 내려 clarification loop와 재승인을 다시 연다.
-9. review 또는 feedback이 trigger되면 그 evidence를 남긴다.
-10. 사용자 최종 검증으로 완료를 닫는다.
+2. 즉시 실행 가능한 작업이면 소크라테스 질문으로 spec 초안을 세부화한다.
+3. Harness가 approval gate를 채우기에 더 이상 blocker 질문이 없다고 판단하면 현재 spec 초안에 대한 승인 요청을 사용자에게 한다.
+4. 사용자가 그 spec 초안에 명시적으로 동의하면 spec을 `Approved`로 고정한다.
+5. spec이 요구하면 parent issue와 subtask issue를 만든다.
+6. 현재 active subtask를 구현한다.
+7. verification evidence를 남긴다.
+8. publish가 필요한 결과면 open PR을 만든다.
+9. review, feedback, user validation 중 spec defect가 드러나면 spec을 `Draft`로 내려 clarification loop와 재승인을 다시 연다.
+10. review 또는 feedback이 trigger되면 그 evidence를 남긴다.
+11. 사용자 최종 검증으로 완료를 닫는다.
 
 ## 공통 실행 지시
 
 - 이 spec 또는 active subtask의 목표만 수행한다. 범위를 넓히지 않는다.
 - spec이 승인되기 전에는 구현에 들어가지 않는다.
+- draft spec이 있더라도 사용자 명시적 approval이 없으면 `Approved`로 취급하지 않는다.
 - 허용된 write scope 밖의 파일은 수정하지 않는다.
 - 늦게 드러난 spec defect를 code repair나 reviewer note로만 덮지 않는다.
 - network나 escalation이 필요하면 spec 또는 close-out artifact에 남긴다.
