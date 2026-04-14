@@ -1,9 +1,9 @@
 # 2026-04-14-grw-skill-policy-alignment-publish
 
-- Status: `In Progress`
+- Status: `Completed`
 - Primary Repo: `git-ranker-workflow`
 - Related Issue: `없음`
-- Related PR: `not created in this session`
+- Related PR: `#90`
 
 ## Request Summary
 
@@ -59,7 +59,7 @@ workflow policy/skill alignment와 stale reference cleanup 변경은 로컬 work
   - `docs/specs/completed/2026-04-14-grw-skill-policy-alignment-publish.md`
   - `/tmp/`
 - Control-plane artifacts:
-  - `docs/specs/active/2026-04-14-grw-skill-policy-alignment-publish.md`
+  - `docs/specs/completed/2026-04-14-grw-skill-policy-alignment-publish.md`
 - Explicitly forbidden:
   - sibling repo changes
   - current diff requirement 변경
@@ -104,3 +104,44 @@ workflow policy/skill alignment와 stale reference cleanup 변경은 로컬 work
 ## Approval
 - Harness judgment: 현재 worktree는 하나의 publish unit으로 충분히 묶인다.
 - User approval: 사용자가 commit/publish 실행을 직접 요청했다.
+
+## Verification Summary
+
+- Contract profile: `workflow-publish`
+- Overall status: `passed`
+- Ran:
+  - `git status --short`
+  - `git diff --check`
+  - `sed -n '1,220p' docs/operations/request-routing-policy.md`
+  - `sed -n '1,220p' docs/operations/workflow-governance.md`
+  - `sed -n '1,220p' .codex/skills/README.md`
+  - `sed -n '1,180p' .codex/skills/request-intake/SKILL.md`
+  - `sed -n '1,180p' .codex/skills/socratic-spec-authoring/SKILL.md`
+  - `sed -n '1,220p' .codex/skills/ambiguity-interview/SKILL.md`
+  - `sed -n '1,220p' .codex/skills/api-contract-sync/SKILL.md`
+  - `sed -n '1,240p' docs/specs/completed/2026-04-14-grw-socratic-skill-policy-alignment.md`
+  - `sed -n '1,240p' docs/specs/completed/2026-04-14-grw-stale-skill-reference-cleanup.md`
+- Evidence:
+  - current worktree 전체가 같은 workflow docs/skill 정리 범위로 확인됐다.
+  - branch `codex/skill-policy-alignment-publish`에서 commit `04c729b`가 생성됐다.
+  - remote push가 성공했고 open PR `#90`이 `develop` 대상으로 생성됐다.
+- Failure or skipped summary:
+  - `gh auth status`는 invalid token 상태였지만 GitHub app으로 PR 생성이 가능했다.
+- Next action: completed
+
+## Final Change Summary
+
+- workflow docs/skill 정리와 stale reference cleanup 변경을 intentional commit으로 고정했다.
+- branch `codex/skill-policy-alignment-publish`를 remote에 push했다.
+- open PR `#90`으로 publish를 완료했다.
+
+## Final User Validation
+
+- 사용자는 현재 변경분의 commit/publish를 직접 요청했다.
+- 이번 결과는 그 요청에 맞게 branch, commit, push, open PR까지 닫았다.
+
+## Publish Result
+
+- Branch: `codex/skill-policy-alignment-publish`
+- Commit: `04c729b`
+- PR: `https://github.com/alexization/git-ranker-workflow/pull/90`
