@@ -7,3 +7,4 @@
 - [control-plane-map.md](control-plane-map.md)
 - [context-pack-registry.md](context-pack-registry.md)
 - [harness-system-map.md](harness-system-map.md)
+- [repo-handoff-contract.md](repo-handoff-contract.md)

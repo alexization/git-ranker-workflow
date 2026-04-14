@@ -10,6 +10,7 @@
 - 모든 pack은 공통 base context를 먼저 읽고, 그 다음 pack별 required docs를 연다.
 - optional docs는 approved spec이나 hot file 탐색이 명시한 trigger가 있을 때만 연다.
 - 다른 pack의 required docs까지 필요해지면 임의로 pack을 합치지 않고 spec의 subtask split 또는 tracking split로 되돌린다.
+- repo entrypoint와 local skill discovery는 [repo-handoff-contract.md](repo-handoff-contract.md)의 순서를 따른다.
 - target repo entrypoint 문서나 worktree가 없으면 `Context Ready`를 선언하지 않는다.
 
 ## Common Base Context

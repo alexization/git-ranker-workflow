@@ -16,14 +16,14 @@
 | Surface | Workflow control plane owns | Repo-local app owns | Workflow must not own |
 | --- | --- | --- | --- |
 | planning and sequencing | cross-repo request routing, spec, context pack, verification semantics, evidence, publish choreography | repo 안에서의 concrete implementation sequencing | repo-local implementation playbook를 stable workflow policy로 다시 쓰는 것 |
-| runtime entrypoint and knowledge | target repo discovery order, handoff minimum, 다음 source를 고르는 기준 | target repo `AGENTS.md`, `README.md`, 코드, 테스트, repo-local contract docs | app 동작 설명, troubleshooting, config 해석을 workflow 문서로 복제하는 것 |
+| runtime entrypoint and knowledge | [repo-handoff-contract.md](repo-handoff-contract.md)에 정의한 target repo discovery order, handoff minimum, 다음 source를 고르는 기준 | target repo `AGENTS.md`, `README.md`, 코드, 테스트, repo-local contract docs | app 동작 설명, troubleshooting, config 해석을 workflow 문서로 복제하는 것 |
 | verification and guardrail baseline | contract profile vocabulary, evidence minimum, publish/review stage rule | concrete command surface, CI wiring, bootstrap, env preconditions, static analysis config | app verification command/config를 workflow-owned canonical text로 유지하는 것 |
 | skill layer | workflow stage procedure, orchestration handoff wording | repo-local bootstrap and implementation skill | backend/frontend implementation knowledge를 workflow-local skill에 축적하는 것 |
 
 ## 읽기 우선순위
 
 1. 루트 인덱스: `AGENTS.md`, `SPECS.md`
-2. 아키텍처 기준: `docs/architecture/control-plane-map.md`, `docs/architecture/harness-system-map.md`, `docs/architecture/context-pack-registry.md`
+2. 아키텍처 기준: `docs/architecture/control-plane-map.md`, `docs/architecture/harness-system-map.md`, `docs/architecture/context-pack-registry.md`, `docs/architecture/repo-handoff-contract.md`
 3. 공통 운영 규칙: `docs/operations/sdd-spec-policy.md`, `docs/operations/workflow-governance.md`
 4. 해당 작업의 draft/approved spec: `docs/specs/active/*.md`
 5. 완료 기록이 필요할 때의 historical spec: `docs/specs/completed/*.md`
@@ -41,6 +41,7 @@
 
 - sibling app repo에 이미 canonical source가 있으면 workflow는 link, handoff boundary, remaining-work spec만 남긴다.
 - workflow stable docs는 "언제 어디로 넘기는지"까지만 설명하고, command, config path, feature behavior 같은 repo-local detail을 canonical text로 다시 적지 않는다.
+- runtime handoff minimum과 target repo entrypoint requirement는 [repo-handoff-contract.md](repo-handoff-contract.md)에서만 고정한다.
 
 ## Migration Exit Criteria
 
