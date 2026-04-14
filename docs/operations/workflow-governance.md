@@ -21,6 +21,13 @@
 - `docs/architecture/`, `docs/operations/` 같은 stable source of truth 문서에는 future work 설명을 위해 직접적인 work item ID를 남기지 않는다.
 - stable 문서에서 후속 확장을 가리킬 때는 task ID 대신 정책, registry, skill, guardrail 같은 자산 이름을 쓴다.
 
+## Policy / Skill Boundary
+
+- `request-routing-policy.md`는 route 결정과 ambiguity exit condition만 다룬다.
+- `sdd-spec-policy.md`는 Socratic question contract, clarification loop, approval gate를 다룬다.
+- 이 문서는 runtime 순서, artifact/lane 운영, evidence minimum을 다룬다.
+- project-local skill은 위 policy를 대체하지 않고 한 stage의 반복 workflow와 handoff만 다룬다.
+
 ## Runtime Principles
 
 - 모든 즉시 실행 가능한 작업은 `request -> Socratic spec -> approved spec -> implementation` 순서를 따른다.
