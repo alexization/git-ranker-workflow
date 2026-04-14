@@ -2,6 +2,8 @@
 
 이 문서는 사용자 요청을 `대화`, `모호한 요청`, `즉시 실행 가능한 작업`으로 분류하는 intake 규칙을 고정한다.
 
+이 문서의 범위는 route 결정과 handoff 조건까지다. spec-level 소크라테스 질문 규칙, approval gate, write scope, verification lock은 `sdd-spec-policy.md`가 canonical owner다.
+
 ## Routing Decision Order
 
 1. 요청이 응답만으로 끝나는지 판단한다.
@@ -97,4 +99,5 @@ canonical close-out reason은 아래를 사용한다.
 
 - `즉시 실행 가능한 작업`은 구현 전에 항상 spec authoring으로 들어간다.
 - `모호한 요청` 단계에서는 spec, issue, PR, 파일 편집을 시작하지 않는다.
+- `모호한 요청` 단계에서는 single requirement와 primary repo를 잠그는 질문만 하고, spec-level write scope나 verification detail은 미리 잠그지 않는다.
 - `대화`와 `Rejected` close-out은 문서 변경 없이 종료한다.
