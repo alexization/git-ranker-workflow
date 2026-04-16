@@ -1,114 +1,51 @@
 {
   "task_id": "task-socratic-coverage-phase-kickoff",
-  "generated_at": "2026-04-16T07:45:08+00:00",
+  "generated_at": "2026-04-16T08:34:19+00:00",
   "phases": [
     {
-      "id": "phase-1",
-      "title": "clarification-coverage-and-status",
-      "goal": "Add clarification coverage enforcement and expose missing requirement coverage in status output before approval.",
+      "id": "phase-3",
+      "title": "publish-git-ranker-submodule-baseline",
+      "goal": "Reflect the already-completed git-ranker backend baseline in this workflow PR by updating the git-ranker gitlink and restoring review readiness.",
       "inputs": [
         "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
-        "docs/runtime.md",
-        "docs/artifact-model.md",
-        "scripts/workflow_runtime/models.py",
-        "tests/test_workflow_cli.py"
+        "git-ranker"
       ],
-      "allowed_write_paths": [
-        "scripts/workflow_runtime/",
-        "tests/",
-        "docs/",
-        "AGENTS.md",
-        ".codex/skills/",
-        ".githooks/",
-        "workflows/system/"
-      ],
-      "acceptance": {
-        "commands": [
-          "python3 -m unittest tests.test_workflow_cli.WorkflowCliTest.test_approve_requires_coverage_categories_before_locking_intake tests.test_workflow_cli.WorkflowCliTest.test_status_reports_missing_coverage_categories_before_approval -v"
-        ]
-      },
-      "test_policy": {
-        "mode": "require_tests",
-        "evidence": []
-      },
-      "order": 1,
-      "status": "completed",
-      "retry_count": 0,
       "required_reads": [
         "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
-        "docs/runtime.md",
-        "docs/artifact-model.md",
-        "scripts/workflow_runtime/models.py",
-        "tests/test_workflow_cli.py"
+        "workflows/tasks/task-socratic-coverage-phase-kickoff/task.json",
+        "workflows/tasks/task-socratic-coverage-phase-kickoff/phases.json"
       ],
       "starting_points": [
-        "Read the locked spec for task-socratic-coverage-phase-kickoff.",
-        "Inspect the active phase goal: Add clarification coverage enforcement and expose missing requirement coverage in status output before approval.",
-        "Confirm allowed write paths and acceptance commands before editing."
+        "Confirm the follow-up spec now includes the git-ranker gitlink requirement.",
+        "Verify the checked-out git-ranker submodule HEAD matches the backend commit that should be published with this PR.",
+        "Only update the workflow repo gitlink; do not edit backend source inside the workflow repository."
       ],
       "deliverables": [
-        "Add clarification coverage enforcement and expose missing requirement coverage in status output before approval."
+        "The workflow PR branch points git-ranker at backend commit fbc672c6384eb896183f838be7413e195e388dc5.",
+        "The task returns to review_ready with updated evidence."
       ],
-      "completion_signal": "phase-1 acceptance commands pass"
-    },
-    {
-      "id": "phase-2",
-      "title": "phase-kickoff-and-consistency-hardening",
-      "goal": "Require kickoff proof before starting the next phase, persist phase bootstrap metadata, and make incomplete task directories fail with explicit consistency errors.",
-      "inputs": [
-        "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
-        "scripts/workflow_runtime/engine.py",
-        "scripts/workflow_runtime/cli.py",
-        "scripts/workflow_runtime/doctor.py",
-        "tests/test_workflow_cli.py",
-        "docs/runtime.md",
-        "docs/runbook.md",
-        "docs/hooks.md",
-        "AGENTS.md"
-      ],
+      "completion_signal": "The git-ranker gitlink points at fbc672c6384eb896183f838be7413e195e388dc5 and doctor still passes.",
       "allowed_write_paths": [
-        "scripts/workflow_runtime/",
-        "tests/",
-        "docs/",
-        "AGENTS.md",
-        ".codex/skills/",
-        ".githooks/",
-        "workflows/system/"
+        "git-ranker"
       ],
       "acceptance": {
         "commands": [
-          "python3 -m unittest tests.test_workflow_cli.WorkflowCliTest.test_kickoff_is_required_before_starting_next_phase tests.test_workflow_cli.WorkflowCliTest.test_replan_invalidates_existing_kickoff_requirement tests.test_workflow_cli.WorkflowCliTest.test_reopen_resets_kickoff_requirement_for_target_phase tests.test_workflow_cli.WorkflowCliTest.test_doctor_reports_incomplete_task_directory -v",
-          "python3 -m unittest tests.test_workflow_cli -v",
+          "python3 -c \"import subprocess; diff=subprocess.check_output(['git','diff','--submodule=short','--','git-ranker'], text=True); assert 'fbc672c6384eb896183f838be7413e195e388dc5' in diff, diff; print(diff.strip())\"",
+          "python3 -c \"import subprocess; sha=subprocess.check_output(['git','-C','git-ranker','rev-parse','HEAD'], text=True).strip(); assert sha == 'fbc672c6384eb896183f838be7413e195e388dc5', sha; print(sha)\"",
           "python3 scripts/workflow.py doctor"
         ]
       },
       "test_policy": {
-        "mode": "require_tests",
-        "evidence": []
+        "mode": "evidence_only",
+        "evidence": [
+          "No new workflow runtime or backend source code is introduced in this follow-up; the change only publishes the already-completed git-ranker baseline through the workflow repo gitlink.",
+          "The workflow runtime changes remain covered by the previously passed verification run 20260416T081911-d8020d25.",
+          "The backend target commit fbc672c6384eb896183f838be7413e195e388dc5 already corresponds to git-ranker PR #89."
+        ]
       },
-      "order": 2,
+      "order": 1,
       "status": "completed",
-      "retry_count": 0,
-      "required_reads": [
-        "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
-        "scripts/workflow_runtime/engine.py",
-        "scripts/workflow_runtime/cli.py",
-        "scripts/workflow_runtime/doctor.py",
-        "tests/test_workflow_cli.py",
-        "docs/runtime.md",
-        "docs/runbook.md",
-        "docs/hooks.md",
-        "AGENTS.md"
-      ],
-      "starting_points": [
-        "Read the locked spec for task-socratic-coverage-phase-kickoff.",
-        "Inspect the active phase goal: Require kickoff proof before starting the next phase, persist phase bootstrap metadata, and make incomplete task directories fail with explicit consistency errors.",
-        "Confirm allowed write paths and acceptance commands before editing."
-      ],
-      "deliverables": [
-        "Require kickoff proof before starting the next phase, persist phase bootstrap metadata, and make incomplete task directories fail with explicit consistency errors."
-      ],
-      "completion_signal": "phase-2 acceptance commands pass"
+      "retry_count": 0
     }
   ]
 }
