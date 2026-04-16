@@ -213,13 +213,6 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.command == "hook":
-            task = service.load_task(args.task_id) if args.task_id else None
-            phase = None
-            if args.task_id and args.phase_id:
-                _, _, phase = service.current_phase(args.task_id, args.phase_id)
-            elif args.task_id and task and task["active_phase_id"]:
-                _, _, phase = service.current_phase(args.task_id, task["active_phase_id"])
-
             changed_paths = list(args.changed_path)
             if args.staged:
                 changed_paths.extend(service.staged_or_worktree_paths(staged=True))
@@ -227,12 +220,24 @@ def main(argv: list[str] | None = None) -> int:
                 changed_paths.extend(service.staged_or_worktree_paths(staged=False))
             if args.event == "pre_push" and not changed_paths:
                 changed_paths.extend(service.unpushed_paths())
+            changed_paths = service.normalize_changed_paths(changed_paths)
+
+            task_id = args.task_id
+            if not task_id and args.event in {"pre_commit", "pre_push"}:
+                task_id = service.infer_hook_task(args.event, changed_paths)
+
+            task = service.load_task(task_id) if task_id else None
+            phase = None
+            if task_id and args.phase_id:
+                _, _, phase = service.current_phase(task_id, args.phase_id)
+            elif task_id and task and task["active_phase_id"]:
+                _, _, phase = service.current_phase(task_id, task["active_phase_id"])
 
             result = service.run_hooks(
                 args.event,
                 task=task,
                 phase=phase,
-                changed_paths=service.normalize_changed_paths(changed_paths),
+                changed_paths=changed_paths,
                 command=args.command_text,
                 user_validation_note=args.user_validation_note,
             )

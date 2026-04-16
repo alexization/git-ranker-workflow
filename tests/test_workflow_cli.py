@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -34,10 +35,53 @@ class WorkflowCliTest(unittest.TestCase):
     def read_json(self, path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
 
+    def run_hook_script(
+        self,
+        root: Path,
+        hook_name: str,
+        *args: str,
+        expected: int = 0,
+        env_extra: dict[str, str] | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        env = os.environ.copy()
+        env["WORKFLOW_ROOT"] = str(root)
+        if env_extra:
+            env.update(env_extra)
+        result = subprocess.run(
+            [str(root / ".githooks" / hook_name), *args],
+            cwd=root,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(
+            result.returncode,
+            expected,
+            msg=f"stdout={result.stdout}\nstderr={result.stderr}",
+        )
+        return result
+
     def init_git_repo(self, root: Path) -> None:
         subprocess.run(["git", "init"], cwd=root, capture_output=True, text=True, check=True)
         subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=root, capture_output=True, text=True, check=True)
         subprocess.run(["git", "config", "user.name", "Workflow Test"], cwd=root, capture_output=True, text=True, check=True)
+
+    def install_runtime_surface(self, root: Path) -> None:
+        shutil.copytree(
+            REPO_ROOT / "scripts",
+            root / "scripts",
+            dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+        )
+
+    def git_add(self, root: Path, *paths: str) -> None:
+        subprocess.run(["git", "add", *paths], cwd=root, capture_output=True, text=True, check=True)
+
+    def git_commit(self, root: Path, message: str) -> None:
+        subprocess.run(["git", "commit", "-m", message], cwd=root, capture_output=True, text=True, check=True)
+
+    def git_commit_no_verify(self, root: Path, message: str) -> None:
+        subprocess.run(["git", "commit", "--no-verify", "-m", message], cwd=root, capture_output=True, text=True, check=True)
 
     def git_config(self, root: Path, key: str) -> str:
         result = subprocess.run(
@@ -180,6 +224,7 @@ class WorkflowCliTest(unittest.TestCase):
                 "- TDD Guard\n"
                 "- Dangerous Command Guard\n"
                 "- Circuit Breaker\n"
+                "- workflow.py hook\n"
             ),
             encoding="utf-8",
         )
@@ -366,6 +411,160 @@ class WorkflowCliTest(unittest.TestCase):
             self.assertIsNotNone(task["last_verified_run_id"])
             self.assertNotEqual(task["latest_run_id"], task["last_verified_run_id"])
 
+    def test_verify_requires_completed_phase(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(
+                root,
+                "task-005a",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["verification should only run after phase completion"],
+            )
+            self.run_cli(root, "run", "task-005a", "--start")
+
+            result = self.run_cli(root, "verify", "task-005a", expected=1)
+            self.assertIn("verification requires phase status completed", result.stderr)
+
+            task = self.read_json(root / "workflows" / "tasks" / "task-005a" / "task.json")
+            phases = self.read_json(root / "workflows" / "tasks" / "task-005a" / "phases.json")
+            self.assertIsNone(task["last_verified_run_id"])
+            self.assertEqual(task["state"], "in_progress")
+            self.assertEqual(phases["phases"][0]["status"], "in_progress")
+
+    def test_hook_post_change_blocks_missing_tests_without_evidence(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(root, "task-005b")
+            self.run_cli(root, "run", "task-005b", "--start")
+
+            result = self.run_cli(
+                root,
+                "hook",
+                "post_change",
+                "--task-id",
+                "task-005b",
+                "--phase-id",
+                "phase-1",
+                "--changed-path",
+                "scripts/workflow.py",
+                expected=1,
+            )
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "failed")
+            self.assertTrue(any("implementation changes require tests" in message for message in payload["messages"]))
+
+    def test_hook_pre_phase_complete_blocks_out_of_scope_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(
+                root,
+                "task-005c",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["scope guard should still reject out-of-scope files"],
+            )
+            self.run_cli(root, "run", "task-005c", "--start")
+
+            result = self.run_cli(
+                root,
+                "hook",
+                "pre_phase_complete",
+                "--task-id",
+                "task-005c",
+                "--phase-id",
+                "phase-1",
+                "--changed-path",
+                "docs/README.md",
+                expected=1,
+            )
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "failed")
+            self.assertTrue(any("outside allowed_write_paths" in message for message in payload["messages"]))
+
+    def test_hook_pre_review_requires_and_then_accepts_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(root, "task-005d")
+            self.run_cli(root, "run", "task-005d", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-005d",
+                "--complete",
+                "--changed-path",
+                "scripts/workflow.py",
+                "--changed-path",
+                "tests/test_workflow_cli.py",
+            )
+
+            fail_result = self.run_cli(
+                root,
+                "hook",
+                "pre_review",
+                "--task-id",
+                "task-005d",
+                "--phase-id",
+                "phase-1",
+                expected=1,
+            )
+            fail_payload = json.loads(fail_result.stdout)
+            self.assertEqual(fail_payload["status"], "failed")
+            self.assertTrue(any("no passed verification" in message for message in fail_payload["messages"]))
+
+            self.run_cli(root, "verify", "task-005d")
+            pass_result = self.run_cli(
+                root,
+                "hook",
+                "pre_review",
+                "--task-id",
+                "task-005d",
+                "--phase-id",
+                "phase-1",
+            )
+            pass_payload = json.loads(pass_result.stdout)
+            self.assertEqual(pass_payload["status"], "passed")
+            self.assertTrue(any("latest passed verification" in message for message in pass_payload["messages"]))
+
+    def test_hook_pre_complete_requires_user_validation_note(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(
+                root,
+                "task-005e",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["pre_complete should require explicit validation note"],
+            )
+
+            fail_result = self.run_cli(root, "hook", "pre_complete", "--task-id", "task-005e", expected=1)
+            fail_payload = json.loads(fail_result.stdout)
+            self.assertEqual(fail_payload["status"], "failed")
+            self.assertTrue(any("user validation note is required" in message for message in fail_payload["messages"]))
+
+            pass_result = self.run_cli(
+                root,
+                "hook",
+                "pre_complete",
+                "--task-id",
+                "task-005e",
+                "--user-validation-note",
+                "validated",
+            )
+            pass_payload = json.loads(pass_result.stdout)
+            self.assertEqual(pass_payload["status"], "passed")
+            self.assertTrue(any("user validation provided" in message for message in pass_payload["messages"]))
+
+    def test_hook_unknown_pre_phase_start_fails_after_surface_cleanup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(
+                root,
+                "task-005f",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["pre_phase_start event has been removed from the canonical hook surface"],
+            )
+
+            result = self.run_cli(root, "hook", "pre_phase_start", "--task-id", "task-005f", "--phase-id", "phase-1", expected=1)
+            self.assertIn("unknown hook event", result.stderr)
+
     def test_pre_push_requires_verification_for_active_phase_scope(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -414,6 +613,293 @@ class WorkflowCliTest(unittest.TestCase):
                 "git push origin feature",
             )
 
+    def test_hook_requires_explicit_task_when_active_task_is_ambiguous(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(
+                root,
+                "task-006a",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["ambiguous active-task detection should fail closed"],
+            )
+            self.bootstrap_task(
+                root,
+                "task-006b",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["second active task makes hook inference ambiguous"],
+            )
+
+            commit_result = self.run_cli(
+                root,
+                "hook",
+                "pre_commit",
+                "--changed-path",
+                "scripts/workflow.py",
+                expected=1,
+            )
+            self.assertIn("WORKFLOW_TASK_ID", commit_result.stderr)
+
+            push_result = self.run_cli(
+                root,
+                "hook",
+                "pre_push",
+                "--changed-path",
+                "scripts/workflow.py",
+                "--command-text",
+                "git push origin feature",
+                expected=1,
+            )
+            self.assertIn("WORKFLOW_TASK_ID", push_result.stderr)
+
+    def test_githook_pre_commit_blocks_implementation_change_without_tests(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(root, "task-006c")
+
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / "sample.py").write_text("print('sample')\n", encoding="utf-8")
+            self.git_add(root, "scripts/sample.py")
+
+            result = self.run_hook_script(root, "pre-commit", expected=1)
+            self.assertIn("implementation changes require tests", result.stdout)
+
+    def test_githook_pre_commit_passes_with_matching_test_change(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(root, "task-006d")
+
+            scripts_dir = root / "scripts"
+            tests_dir = root / "tests"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            tests_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / "sample.py").write_text("print('sample')\n", encoding="utf-8")
+            (tests_dir / "test_sample.py").write_text("def test_sample():\n    assert True\n", encoding="utf-8")
+            self.git_add(root, "scripts/sample.py", "tests/test_sample.py")
+
+            result = self.run_hook_script(root, "pre-commit")
+            self.assertIn("test changes detected", result.stdout)
+
+    def test_githook_pre_push_blocks_force_push(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+
+            result = self.run_hook_script(root, "pre-push", "origin", "feature", "--force", expected=1)
+            self.assertIn("blocked command", result.stdout)
+
+    def test_githook_pre_push_requires_verification_for_unpushed_scope_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(
+                root,
+                "task-006e",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["pre-push script should enforce latest verification on unpushed scope changes"],
+            )
+
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / "sample.py").write_text("print('sample')\n", encoding="utf-8")
+            self.git_add(root, "scripts/sample.py")
+            self.git_commit(root, "hook pre-push smoke")
+
+            result = self.run_hook_script(root, "pre-push", "origin", "feature", expected=1)
+            self.assertIn("no passed verification recorded for active phase", result.stdout)
+
+    def test_githook_pre_push_passes_after_phase_verification(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(
+                root,
+                "task-006f",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["verified unpushed scope changes should pass pre-push"],
+            )
+
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / "sample.py").write_text("print('sample')\n", encoding="utf-8")
+            self.run_cli(root, "run", "task-006f", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-006f",
+                "--complete",
+                "--changed-path",
+                "scripts/sample.py",
+            )
+            self.run_cli(root, "verify", "task-006f")
+
+            self.git_add(root, "scripts/sample.py")
+            self.git_commit(root, "verified pre-push smoke")
+
+            result = self.run_hook_script(root, "pre-push", "origin", "feature")
+            self.assertIn("latest passed verification", result.stdout)
+
+    def test_githook_pre_push_passes_for_completed_task_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(
+                root,
+                "task-006g",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["completed task scope should still bind pre-push verification"],
+            )
+
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / "sample.py").write_text("print('sample')\n", encoding="utf-8")
+            self.run_cli(root, "run", "task-006g", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-006g",
+                "--complete",
+                "--changed-path",
+                "scripts/sample.py",
+            )
+            self.run_cli(root, "verify", "task-006g")
+            self.run_cli(root, "review", "task-006g", "--note", "ready")
+            self.run_cli(root, "review", "task-006g", "--close", "--user-validation-note", "validated")
+
+            self.git_add(root, "scripts/sample.py", "workflows/tasks/task-006g")
+            self.git_commit_no_verify(root, "completed task pre-push smoke")
+
+            result = self.run_hook_script(root, "pre-push", "origin", "feature")
+            self.assertIn("latest passed verification", result.stdout)
+
+    def test_githook_pre_push_prefers_scoped_completed_task_over_unrelated_active_task(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(
+                root,
+                "task-006h",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["completed task scope should remain usable even when another task is active"],
+            )
+            scripts_dir = root / "scripts"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / "sample.py").write_text("print('sample')\n", encoding="utf-8")
+            self.run_cli(root, "run", "task-006h", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-006h",
+                "--complete",
+                "--changed-path",
+                "scripts/sample.py",
+            )
+            self.run_cli(root, "verify", "task-006h")
+            self.run_cli(root, "review", "task-006h", "--note", "ready")
+            self.run_cli(root, "review", "task-006h", "--close", "--user-validation-note", "validated")
+
+            self.git_add(root, "scripts/sample.py", "workflows/tasks/task-006h")
+            self.git_commit_no_verify(root, "completed task with unrelated active task")
+
+            self.bootstrap_task(
+                root,
+                "task-006i",
+                allowed_write_paths=["docs/"],
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["unrelated active task should not steal pre-push context"],
+            )
+
+            result = self.run_hook_script(root, "pre-push", "origin", "feature")
+            self.assertIn("latest passed verification", result.stdout)
+
+    def test_githook_pre_push_fails_when_unpushed_diff_only_partially_maps_to_task(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(
+                root,
+                "task-006j",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["pre-push inference must require the full unpushed diff to map to one task"],
+            )
+
+            scripts_dir = root / "scripts"
+            notes_dir = root / "notes"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            notes_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / "sample.py").write_text("print('sample')\n", encoding="utf-8")
+            (notes_dir / "mixed.txt").write_text("not covered by any task scope\n", encoding="utf-8")
+            self.run_cli(root, "run", "task-006j", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-006j",
+                "--complete",
+                "--changed-path",
+                "scripts/sample.py",
+            )
+            self.run_cli(root, "verify", "task-006j")
+            self.run_cli(root, "review", "task-006j", "--note", "ready")
+            self.run_cli(root, "review", "task-006j", "--close", "--user-validation-note", "validated")
+
+            self.git_add(root, "scripts/sample.py", "notes/mixed.txt", "workflows/tasks/task-006j")
+            self.git_commit_no_verify(root, "mixed scope pre-push smoke")
+
+            result = self.run_hook_script(root, "pre-push", "origin", "feature", expected=1)
+            self.assertIn("do not map to a single task", result.stderr)
+
+    def test_githook_pre_push_passes_without_task_when_no_unpushed_changes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+
+            result = self.run_hook_script(root, "pre-push", "origin", "feature")
+            self.assertIn("no changed paths detected", result.stdout)
+
+    def test_doctor_detects_runtime_surface_drift_and_init_resyncs(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+
+            hooks_path = root / "workflows" / "system" / "hooks.json"
+            pre_push_path = root / ".githooks" / "pre-push"
+            hooks_payload = self.read_json(hooks_path)
+            hooks_payload["guards"]["dangerous_cmd_guard"]["blocked_patterns"] = []
+            hooks_path.write_text(json.dumps(hooks_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+            pre_push_path.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+
+            drift_result = self.run_cli(root, "doctor", expected=1)
+            drift_report = json.loads(drift_result.stdout)
+            self.assertTrue(any("hooks.json is out of sync" in error for error in drift_report["errors"]))
+            self.assertTrue(any(".githooks/pre-push is out of sync" in error for error in drift_report["errors"]))
+
+            self.run_cli(root, "init")
+            self.assertEqual(hooks_path.read_text(encoding="utf-8"), (REPO_ROOT / "workflows" / "system" / "hooks.json").read_text(encoding="utf-8"))
+            self.assertEqual(pre_push_path.read_text(encoding="utf-8"), (REPO_ROOT / ".githooks" / "pre-push").read_text(encoding="utf-8"))
+            self.run_cli(root, "doctor")
+
     def test_reopen_resets_failed_task_for_repair_loop(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -444,6 +930,39 @@ class WorkflowCliTest(unittest.TestCase):
             self.assertIsNone(task["last_verified_run_id"])
             self.assertEqual(task["active_phase_id"], "phase-1")
             self.assertEqual(phases["phases"][0]["status"], "pending")
+
+    def test_reopen_resets_completed_task_for_follow_up(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(
+                root,
+                "task-007a",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["completed task should reopen into a rerunnable phase"],
+            )
+            self.run_cli(root, "run", "task-007a", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-007a",
+                "--complete",
+                "--changed-path",
+                "scripts/workflow.py",
+            )
+            self.run_cli(root, "verify", "task-007a")
+            self.run_cli(root, "review", "task-007a", "--note", "ready")
+            self.run_cli(root, "review", "task-007a", "--close", "--user-validation-note", "validated")
+            self.run_cli(root, "reopen", "task-007a", "--note", "follow-up change")
+
+            task = self.read_json(root / "workflows" / "tasks" / "task-007a" / "task.json")
+            phases = self.read_json(root / "workflows" / "tasks" / "task-007a" / "phases.json")
+            self.assertEqual(task["state"], "approved")
+            self.assertEqual(task["active_phase_id"], "phase-1")
+            self.assertIsNone(task["last_verified_run_id"])
+            self.assertFalse(task["user_validated"])
+            self.assertEqual(phases["phases"][0]["status"], "pending")
+
+            self.run_cli(root, "run", "task-007a", "--start")
 
     def test_circuit_breaker_triggers_from_verification_failures(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -544,6 +1063,30 @@ class WorkflowCliTest(unittest.TestCase):
             result = self.run_cli(root, "doctor", expected=1)
             report = json.loads(result.stdout)
             self.assertTrue(any("core.hooksPath" in error for error in report["errors"]))
+
+    def test_check_fails_when_approved_task_points_to_completed_phase(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_task(
+                root,
+                "task-010",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["artifact consistency check should reject non-startable approved phase"],
+            )
+
+            task_path = root / "workflows" / "tasks" / "task-010" / "task.json"
+            task = self.read_json(task_path)
+            task["state"] = "approved"
+            task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            phases_path = root / "workflows" / "tasks" / "task-010" / "phases.json"
+            phases = self.read_json(phases_path)
+            phases["phases"][0]["status"] = "completed"
+            phases_path.write_text(json.dumps(phases, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            result = self.run_cli(root, "status", "--check", "--all", expected=1)
+            payload = json.loads(result.stdout)
+            self.assertTrue(any("approved task requires active phase status pending" in error for error in payload["errors"]))
 
     def test_doctor_fails_when_runbook_loses_socratic_contract(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
