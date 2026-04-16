@@ -72,4 +72,5 @@ python3 scripts/workflow.py hook pre_push --command-text "git push origin featur
 ```
 
 `pre_commit`은 active task가 여러 개라면 자동 추론을 중단하고 실패한다. 이 경우 `WORKFLOW_TASK_ID` 또는 `--task-id`로 명시적으로 task binding을 넣는다.
-`pre_push`는 먼저 unpushed diff를 task scope에 매핑한다. active task가 없어도 completed task scope 하나로 매핑되면 그 task를 재사용하고, 단일 task로 정해지지 않으면 실패한다.
+`pre_push`는 먼저 현재 브랜치가 `main`인지와 로컬 `main`/`develop` tip이 같은지 확인한다. 이 조건을 만족하면 `develop` 동기화 publish로 보고 task-bound guard를 건너뛴다.
+그 외 경우에는 기존처럼 unpushed diff를 task scope에 매핑한다. active task가 없어도 completed task scope 하나로 매핑되면 그 task를 재사용하고, 단일 task로 정해지지 않으면 실패한다.

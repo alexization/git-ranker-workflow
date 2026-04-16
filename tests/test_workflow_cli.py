@@ -696,6 +696,41 @@ class WorkflowCliTest(unittest.TestCase):
             result = self.run_hook_script(root, "pre-push", "origin", "feature", "--force", expected=1)
             self.assertIn("blocked command", result.stdout)
 
+    def test_githook_pre_push_passes_for_main_sync_publish_when_head_matches_develop(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+
+            self.git_add(root, ".")
+            self.git_commit_no_verify(root, "bootstrap runtime surface")
+            subprocess.run(["git", "branch", "-M", "main"], cwd=root, capture_output=True, text=True, check=True)
+            subprocess.run(["git", "branch", "develop", "HEAD"], cwd=root, capture_output=True, text=True, check=True)
+
+            result = self.run_hook_script(root, "pre-push", "origin", "main")
+            self.assertIn("command allowed", result.stdout)
+            self.assertNotIn("requires explicit --task-id", result.stderr)
+
+    def test_githook_pre_push_keeps_task_guard_when_main_differs_from_develop(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+
+            self.git_add(root, ".")
+            self.git_commit_no_verify(root, "bootstrap runtime surface")
+            subprocess.run(["git", "branch", "-M", "main"], cwd=root, capture_output=True, text=True, check=True)
+            subprocess.run(["git", "branch", "develop", "HEAD"], cwd=root, capture_output=True, text=True, check=True)
+
+            (root / "notes.txt").write_text("main diverged from develop\n", encoding="utf-8")
+            self.git_add(root, "notes.txt")
+            self.git_commit_no_verify(root, "main diverged")
+
+            result = self.run_hook_script(root, "pre-push", "origin", "main", expected=1)
+            self.assertIn("do not map to a single task", result.stderr)
+
     def test_githook_pre_push_requires_verification_for_unpushed_scope_changes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

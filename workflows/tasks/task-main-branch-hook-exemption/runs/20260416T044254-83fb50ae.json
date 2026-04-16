@@ -1,0 +1,20 @@
+{
+  "id": "20260416T044254-83fb50ae",
+  "task_id": "task-main-branch-hook-exemption",
+  "phase_id": "phase-1",
+  "event": "review_closeout",
+  "commands": [
+    {
+      "command": "complete task",
+      "status": "passed",
+      "output": "사용자가 main 동기화 hook 예외 변경을 커밋하고 원격에 올리도록 요청함"
+    }
+  ],
+  "result": "passed",
+  "evidence": [
+    "사용자가 main 동기화 hook 예외 변경을 커밋하고 원격에 올리도록 요청함"
+  ],
+  "error_fingerprint": null,
+  "next_action": "done",
+  "timestamp": "2026-04-16T04:42:54+00:00"
+}

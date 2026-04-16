@@ -1,0 +1,20 @@
+{
+  "id": "20260416T044034-57b90731",
+  "task_id": "task-main-branch-hook-exemption",
+  "phase_id": "phase-1",
+  "event": "review_ready",
+  "commands": [
+    {
+      "command": "review gate",
+      "status": "passed",
+      "output": "latest passed verification: 20260416T044031-46f9f315"
+    }
+  ],
+  "result": "passed",
+  "evidence": [
+    "main==develop 동기화 publish 예외 검토 완료"
+  ],
+  "error_fingerprint": null,
+  "next_action": "user validation",
+  "timestamp": "2026-04-16T04:40:34+00:00"
+}

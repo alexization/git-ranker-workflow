@@ -11,6 +11,7 @@
 - 내부 런타임 구현은 `scripts/workflow_runtime/`이 가진다.
 - skill은 위 규칙을 복제하지 않고, 한 단계의 handoff와 CLI 진입점만 안내한다.
 - `python3 scripts/workflow.py init`는 runtime surface를 source 기준으로 다시 동기화하고, `doctor`는 drift를 실패로 보고한다.
+- `main` 브랜치의 `develop` 동기화 publish 예외처럼 branch-specific hook 정책은 `docs/hooks.md`와 `.githooks/`가 소유하고, skill은 그 정책을 다시 정의하지 않는다.
 
 ## Active Skill Set
 

@@ -38,6 +38,7 @@
 
 - `pre_review`에서는 active phase에 대한 latest passed verification을 요구한다.
 - `pre_push`에서는 unpushed diff를 기준으로 task를 먼저 해석하고, 그 scope와 겹칠 때 latest passed verification을 요구한다.
+- 단, `.githooks/pre-push`는 현재 브랜치가 `main`이고 로컬 `main` tip이 로컬 `develop` tip과 같으면 task 추론 전에 동기화 publish로 간주하고 통과시킨다.
 - active task가 없더라도 unpushed diff가 정확히 하나의 completed task scope에 매핑되면 그 task를 push gate context로 재사용한다.
 - unpushed diff가 어느 task에도 단일하게 매핑되지 않으면 `pre_push`는 fail-closed 한다.
 
@@ -64,4 +65,4 @@ git hook만으로는 충분하지 않다. 로컬 CLI와 phase runner가 같은 h
 `init`는 `.githooks/pre-commit`, `.githooks/pre-push`, `workflows/system/hooks.json`을 source 기준으로 다시 동기화한다.
 `doctor`는 위 runtime surface가 source와 drift하면 실패하고 `python3 scripts/workflow.py init`를 다시 요구한다.
 `pre_commit`은 active task가 하나로 추론되지 않으면 fail-closed 한다. 이때는 `WORKFLOW_TASK_ID` 또는 `--task-id`로 task binding을 명시해야 한다.
-`pre_push`는 먼저 unpushed diff를 task scope에 매핑한다. scope가 단일 task로 정해지지 않으면 역시 fail-closed 한다.
+`pre_push`는 먼저 현재 브랜치가 `main`인지와 로컬 `main`/`develop` tip 일치를 확인한다. 이 동기화 publish가 아니면 기존처럼 unpushed diff를 task scope에 매핑하고, scope가 단일 task로 정해지지 않으면 fail-closed 한다.
