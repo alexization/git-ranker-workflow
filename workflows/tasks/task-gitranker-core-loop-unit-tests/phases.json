@@ -1,0 +1,126 @@
+{
+  "task_id": "task-gitranker-core-loop-unit-tests",
+  "generated_at": "2026-04-16T05:48:14+00:00",
+  "phases": [
+    {
+      "id": "phase-1",
+      "title": "existing-tests-and-domain-core",
+      "goal": "Harden existing unit tests and add detailed value/domain/orchestrator coverage for the core feedback loop without expanding beyond narrow unit tests.",
+      "inputs": [
+        "workflows/tasks/task-gitranker-core-loop-unit-tests/spec.md",
+        "git-ranker/AGENTS.md",
+        "git-ranker/src/main/java/com/gitranker/api/domain/",
+        "git-ranker/src/test/java/"
+      ],
+      "allowed_write_paths": [
+        "git-ranker/src/test/java/"
+      ],
+      "acceptance": {
+        "commands": [
+          "cd git-ranker && ./gradlew test --tests 'com.gitranker.api.domain.auth.service.*' --tests 'com.gitranker.api.domain.badge.*' --tests 'com.gitranker.api.domain.log.*' --tests 'com.gitranker.api.domain.ranking.*' --tests 'com.gitranker.api.domain.user.*' --tests 'com.gitranker.api.global.util.*'"
+        ]
+      },
+      "test_policy": {
+        "mode": "require_tests",
+        "evidence": []
+      },
+      "order": 1,
+      "status": "completed",
+      "retry_count": 1,
+      "required_reads": [
+        "workflows/tasks/task-gitranker-core-loop-unit-tests/spec.md",
+        "git-ranker/AGENTS.md",
+        "git-ranker/src/main/java/com/gitranker/api/domain/",
+        "git-ranker/src/test/java/"
+      ],
+      "starting_points": [
+        "Read the locked spec for task-gitranker-core-loop-unit-tests.",
+        "Inspect the active phase goal: Harden existing unit tests and add detailed value/domain/orchestrator coverage for the core feedback loop without expanding beyond narrow unit tests.",
+        "Confirm allowed write paths and acceptance commands before editing."
+      ],
+      "deliverables": [
+        "Harden existing unit tests and add detailed value/domain/orchestrator coverage for the core feedback loop without expanding beyond narrow unit tests."
+      ],
+      "completion_signal": "phase-1 acceptance commands pass"
+    },
+    {
+      "id": "phase-2",
+      "title": "batch-feedback-loop-tests",
+      "goal": "Add fine-grained batch feedback and verification loop unit tests covering boundary cases, skip/retry/error translation, and side effects.",
+      "inputs": [
+        "workflows/tasks/task-gitranker-core-loop-unit-tests/spec.md",
+        "git-ranker/src/main/java/com/gitranker/api/batch/",
+        "git-ranker/src/test/java/"
+      ],
+      "allowed_write_paths": [
+        "git-ranker/src/test/java/"
+      ],
+      "acceptance": {
+        "commands": [
+          "cd git-ranker && ./gradlew test --tests 'com.gitranker.api.batch.*'"
+        ]
+      },
+      "test_policy": {
+        "mode": "require_tests",
+        "evidence": []
+      },
+      "order": 2,
+      "status": "completed",
+      "retry_count": 1,
+      "required_reads": [
+        "workflows/tasks/task-gitranker-core-loop-unit-tests/spec.md",
+        "git-ranker/src/main/java/com/gitranker/api/batch/",
+        "git-ranker/src/test/java/"
+      ],
+      "starting_points": [
+        "Read the locked spec for task-gitranker-core-loop-unit-tests.",
+        "Inspect the active phase goal: Add fine-grained batch feedback and verification loop unit tests covering boundary cases, skip/retry/error translation, and side effects.",
+        "Confirm allowed write paths and acceptance commands before editing."
+      ],
+      "deliverables": [
+        "Add fine-grained batch feedback and verification loop unit tests covering boundary cases, skip/retry/error translation, and side effects."
+      ],
+      "completion_signal": "phase-2 acceptance commands pass"
+    },
+    {
+      "id": "phase-3",
+      "title": "github-infra-and-full-suite",
+      "goal": "Add exhaustive GitHub collection and error translation unit tests, then confirm the full git-ranker unit-test baseline stays green.",
+      "inputs": [
+        "workflows/tasks/task-gitranker-core-loop-unit-tests/spec.md",
+        "git-ranker/src/main/java/com/gitranker/api/infrastructure/github/",
+        "git-ranker/src/test/java/"
+      ],
+      "allowed_write_paths": [
+        "git-ranker/src/test/java/"
+      ],
+      "acceptance": {
+        "commands": [
+          "cd git-ranker && ./gradlew test --tests 'com.gitranker.api.infrastructure.github.*'",
+          "cd git-ranker && ./gradlew test"
+        ]
+      },
+      "test_policy": {
+        "mode": "require_tests",
+        "evidence": []
+      },
+      "order": 3,
+      "status": "completed",
+      "retry_count": 2,
+      "required_reads": [
+        "workflows/tasks/task-gitranker-core-loop-unit-tests/spec.md",
+        "git-ranker/src/main/java/com/gitranker/api/infrastructure/github/",
+        "git-ranker/src/test/java/"
+      ],
+      "starting_points": [
+        "Read the locked spec for task-gitranker-core-loop-unit-tests.",
+        "Inspect the active phase goal: Add exhaustive GitHub collection and error translation unit tests, then confirm the full git-ranker unit-test baseline stays green.",
+        "Confirm allowed write paths and acceptance commands before editing."
+      ],
+      "deliverables": [
+        "Add exhaustive GitHub collection and error translation unit tests, then confirm the full git-ranker unit-test baseline stays green."
+      ],
+      "completion_signal": "phase-3 acceptance commands pass"
+    }
+  ]
+}

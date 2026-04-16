@@ -1,0 +1,23 @@
+{
+  "id": "20260416T061201-60068c66",
+  "task_id": "task-gitranker-core-loop-unit-tests",
+  "phase_id": "phase-3",
+  "event": "verification",
+  "commands": [
+    {
+      "command": "cd git-ranker && ./gradlew test --tests 'com.gitranker.api.infrastructure.github.*'",
+      "status": "passed",
+      "output": "> Task :compileJava UP-TO-DATE\n> Task :processResources UP-TO-DATE\n> Task :classes UP-TO-DATE\n> Task :compileTestJava UP-TO-DATE\n> Task :processTestResources NO-SOURCE\n> Task :testClasses UP-TO-DATE\n> Task :test\n\nBUILD SUCCESSFUL in 2s\n4 actionable tasks: 1 executed, 3 up-to-date\nConsider enabling configuration cache to speed up this build: https://docs.gradle.org/9.2.1/userguide/configuration_cache_enabling.html\n\nOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended"
+    },
+    {
+      "command": "cd git-ranker && ./gradlew test",
+      "status": "failed",
+      "output": "> Task :compileJava UP-TO-DATE\n> Task :processResources UP-TO-DATE\n> Task :classes UP-TO-DATE\n> Task :compileTestJava UP-TO-DATE\n> Task :processTestResources NO-SOURCE\n> Task :testClasses UP-TO-DATE\n\n> Task :test FAILED\n\nGitHubGraphQLClientTest > getAllActivities merges merged-pr block and yearly contribution response FAILED\n    org.mockito.exceptions.verification.opentest4j.ArgumentsAreDifferent at GitHubGraphQLClientTest.java:172\n4 actionable tasks: 1 executed, 3 up-to-date\n\nOpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has be..."
+    }
+  ],
+  "result": "failed",
+  "evidence": [],
+  "error_fingerprint": "verification:phase-3:cd git-ranker && ./gradlew test",
+  "next_action": "repair",
+  "timestamp": "2026-04-16T06:12:01+00:00"
+}
