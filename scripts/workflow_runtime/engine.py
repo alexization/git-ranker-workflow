@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from workflow_runtime.constants import PHASE_TRANSITIONS, TASK_TRANSITIONS
+from workflow_runtime.constants import CURRENT_TASK_CONTRACT_VERSION, PHASE_TRANSITIONS, TASK_TRANSITIONS
 from workflow_runtime.doctor import build_doctor_report
 from workflow_runtime.git_ops import git_paths, unpushed_git_paths
 from workflow_runtime.guards import (
@@ -32,6 +32,7 @@ from workflow_runtime.models import (
     now_iso,
     read_json,
     scope_matches,
+    task_contract_version,
     validate_phases,
     validate_relative_repo_path,
     validate_run,
@@ -110,6 +111,9 @@ class WorkflowService:
             raise WorkflowError(f"task not found: {task_id}")
         payload = read_json(path)
         validate_task(payload)
+        payload["contract_version"] = task_contract_version(payload)
+        payload.setdefault("kickoff_required_for_phase", None)
+        payload.setdefault("last_kickoff_run_id", None)
         return payload
 
     def save_task(self, task_id: str, payload: dict[str, Any]) -> None:
@@ -122,6 +126,7 @@ class WorkflowService:
             raise WorkflowError(f"phases not found: {task_id}")
         payload = read_json(path)
         validate_phases(payload)
+        payload["phases"] = [self.apply_phase_bootstrap_defaults(task_id, copy.deepcopy(phase)) for phase in payload["phases"]]
         return payload
 
     def save_phases(self, task_id: str, payload: dict[str, Any]) -> None:
@@ -178,11 +183,75 @@ class WorkflowService:
         if task_dir.exists():
             raise WorkflowError(f"task already exists: {task_id}")
         task_dir.mkdir(parents=True, exist_ok=False)
-        self.runs_dir(task_id).mkdir(parents=True, exist_ok=True)
+        try:
+            self.runs_dir(task_id).mkdir(parents=True, exist_ok=True)
+            self.spec_path(task_id).write_text(default_spec(task_id, title, primary_repo), encoding="utf-8")
+            self.save_task(task_id, empty_task_payload(task_id, title, primary_repo))
+            self.save_phases(task_id, empty_phases_payload(task_id))
+        except Exception:
+            shutil.rmtree(task_dir, ignore_errors=True)
+            raise
 
-        self.spec_path(task_id).write_text(default_spec(task_id, title, primary_repo), encoding="utf-8")
-        self.save_task(task_id, empty_task_payload(task_id, title, primary_repo))
-        self.save_phases(task_id, empty_phases_payload(task_id))
+    def apply_phase_bootstrap_defaults(self, task_id: str, phase: dict[str, Any]) -> dict[str, Any]:
+        required_reads = [item.strip() for item in phase.get("required_reads", []) if isinstance(item, str) and item.strip()]
+        if not required_reads:
+            required_reads = [item.strip() for item in phase.get("inputs", []) if isinstance(item, str) and item.strip()]
+
+        starting_points = [item.strip() for item in phase.get("starting_points", []) if isinstance(item, str) and item.strip()]
+        if not starting_points:
+            starting_points = [
+                f"Read the locked spec for {task_id}.",
+                f"Inspect the active phase goal: {phase['goal']}",
+                "Confirm allowed write paths and acceptance commands before editing.",
+            ]
+
+        deliverables = [item.strip() for item in phase.get("deliverables", []) if isinstance(item, str) and item.strip()]
+        if not deliverables:
+            deliverables = [phase["goal"]]
+
+        completion_signal = phase.get("completion_signal")
+        if not isinstance(completion_signal, str) or not completion_signal.strip():
+            completion_signal = f"{phase['id']} acceptance commands pass"
+
+        if required_reads:
+            phase["required_reads"] = required_reads
+        else:
+            phase.pop("required_reads", None)
+        phase["starting_points"] = starting_points
+        phase["deliverables"] = deliverables
+        phase["completion_signal"] = completion_signal.strip()
+        return phase
+
+    def phase_bootstrap_summary(self, task_id: str, phase: dict[str, Any]) -> dict[str, Any]:
+        phase = self.apply_phase_bootstrap_defaults(task_id, copy.deepcopy(phase))
+        return {
+            "phase_id": phase["id"],
+            "title": phase["title"],
+            "goal": phase["goal"],
+            "required_reads": phase.get("required_reads", []),
+            "starting_points": phase["starting_points"],
+            "deliverables": phase["deliverables"],
+            "completion_signal": phase["completion_signal"],
+            "allowed_write_paths": phase["allowed_write_paths"],
+            "acceptance_commands": phase["acceptance"]["commands"],
+        }
+
+    def kickoff_required(self, task: dict[str, Any], phase: dict[str, Any]) -> bool:
+        return task.get("kickoff_required_for_phase") == phase["id"]
+
+    def incomplete_task_error(self, task_dir: Path) -> str | None:
+        missing = []
+        if not (task_dir / "spec.md").exists():
+            missing.append("spec.md")
+        if not (task_dir / "task.json").exists():
+            missing.append("task.json")
+        if not (task_dir / "phases.json").exists():
+            missing.append("phases.json")
+        if not (task_dir / "runs").exists():
+            missing.append("runs/")
+        if missing:
+            return f"{task_dir.name}: incomplete task directory missing {', '.join(missing)}"
+        return None
 
     def update_task_state(self, task: dict[str, Any], next_state: str) -> None:
         current = task["state"]
@@ -215,8 +284,18 @@ class WorkflowService:
         if not note.strip():
             raise WorkflowError("approval note is required")
 
-        intake = validate_spec_for_approval(self.spec_path(task_id))
+        require_coverage = task["contract_version"] >= 2
+        if not require_coverage:
+            coverage_probe = inspect_spec(self.spec_path(task_id), require_coverage=True)
+            require_coverage = coverage_probe["ready_for_approval"]
+
+        intake = validate_spec_for_approval(
+            self.spec_path(task_id),
+            require_coverage=require_coverage,
+        )
         timestamp = now_iso()
+        if require_coverage:
+            task["contract_version"] = CURRENT_TASK_CONTRACT_VERSION
         task["state"] = "approved"
         task["approved_at"] = timestamp
         task["approval"] = {"actor": actor, "note": note.strip(), "timestamp": timestamp}
@@ -243,7 +322,7 @@ class WorkflowService:
                 "mode": policy["mode"],
                 "evidence": [item.strip() for item in policy.get("evidence", []) if item.strip()],
             }
-            return phase
+            return self.apply_phase_bootstrap_defaults("task", phase)
         except KeyError as exc:
             raise WorkflowError(f"phase input missing key: {exc.args[0]}") from exc
 
@@ -253,10 +332,10 @@ class WorkflowService:
             raise WorkflowError("plan requires approved task")
         if source_payload is None:
             raise WorkflowError("plan requires explicit phase input via --from or --stdin")
-        spec = inspect_spec(self.spec_path(task_id))
+        spec = inspect_spec(self.spec_path(task_id), require_coverage=task["contract_version"] >= 2)
         if not spec["ready_for_approval"]:
             raise WorkflowError("plan requires approval-ready spec.md")
-        intake = ensure_locked_intake(task["intake"])
+        intake = ensure_locked_intake(task["intake"], require_coverage=task["contract_version"] >= 2)
         if intake != spec["intake"]:
             raise WorkflowError("spec.md and task.intake are out of sync; rerun approve before plan")
 
@@ -266,6 +345,7 @@ class WorkflowService:
 
         normalized = [self.normalize_phase(phase, index) for index, phase in enumerate(phases_input, start=1)]
         normalized = sorted(normalized, key=lambda item: item["order"])
+        normalized = [self.apply_phase_bootstrap_defaults(task_id, phase) for phase in normalized]
         phases_payload = {
             "task_id": task_id,
             "generated_at": now_iso(),
@@ -275,6 +355,8 @@ class WorkflowService:
 
         task["active_phase_id"] = normalized[0]["id"]
         task["last_verified_run_id"] = None
+        task["kickoff_required_for_phase"] = None
+        task["last_kickoff_run_id"] = None
         task["blocked_reason"] = None
         task["user_validated"] = False
         task["user_validation_note"] = None
@@ -511,14 +593,56 @@ class WorkflowService:
             raise WorkflowError(f"task state does not allow start: {task['state']}")
         if phase["status"] not in {"pending", "failed", "blocked"}:
             raise WorkflowError(f"phase state does not allow start: {phase['status']}")
+        if self.kickoff_required(task, phase):
+            run_id = task.get("last_kickoff_run_id")
+            if not run_id:
+                raise WorkflowError(f"kickoff is required before starting {phase['id']}")
+            run = self.load_run(task_id, run_id)
+            if run["event"] != "phase_kickoff" or run["result"] != "passed" or run["phase_id"] != phase["id"]:
+                raise WorkflowError(f"kickoff is required before starting {phase['id']}")
 
         self.update_phase_state(phase, "in_progress")
         task["state"] = "in_progress"
         task["active_phase_id"] = phase["id"]
+        task["kickoff_required_for_phase"] = None
         task["blocked_reason"] = None
         task["last_verified_run_id"] = None
         self.save_phases(task_id, phases_payload)
         self.save_task(task_id, task)
+
+    def kickoff_phase(self, task_id: str, phase_id: str | None = None) -> dict[str, Any]:
+        task, _, phase = self.current_phase(task_id, phase_id)
+        if phase["status"] not in {"pending", "failed", "blocked"}:
+            raise WorkflowError("kickoff requires a startable phase")
+        if not self.kickoff_required(task, phase):
+            raise WorkflowError(f"kickoff is not required for {phase['id']}")
+
+        summary = self.phase_bootstrap_summary(task_id, phase)
+        run = self.build_run(
+            task_id,
+            phase["id"],
+            "phase_kickoff",
+            [{"command": "phase kickoff", "status": "passed", "output": f"kickoff recorded for {phase['id']}"}],
+            "passed",
+            [
+                f"required_reads: {', '.join(summary['required_reads'])}",
+                f"starting_points: {', '.join(summary['starting_points'])}",
+                f"completion_signal: {summary['completion_signal']}",
+            ],
+            None,
+            "start phase",
+        )
+        self.write_run(task_id, run)
+        task["latest_run_id"] = run["id"]
+        task["last_kickoff_run_id"] = run["id"]
+        self.save_task(task_id, task)
+        return {
+            "status": "kickoff_recorded",
+            "task_id": task_id,
+            "phase_id": phase["id"],
+            "run_id": run["id"],
+            "summary": summary,
+        }
 
     def complete_phase(
         self,
@@ -687,13 +811,17 @@ class WorkflowService:
             if phase["status"] == "completed" and next_phase:
                 task["active_phase_id"] = next_phase
                 task["state"] = "approved"
+                task["kickoff_required_for_phase"] = next_phase
+                task["last_kickoff_run_id"] = None
             else:
                 task["state"] = "in_progress"
+                task["kickoff_required_for_phase"] = None
             self.save_phases(task_id, phases_payload)
             self.save_task(task_id, task)
             return 0
 
         task["last_verified_run_id"] = None
+        task["kickoff_required_for_phase"] = None
         if phase["status"] != "failed":
             self.update_phase_state(phase, "failed" if overall == "failed" else "blocked")
         phase["retry_count"] += 1
@@ -806,10 +934,14 @@ class WorkflowService:
         task["state"] = "approved"
         task["blocked_reason"] = None
         task["last_verified_run_id"] = None
+        task["last_kickoff_run_id"] = None
         task["user_validated"] = False
         task["user_validation_note"] = None
         if target_phase is not None:
             task["active_phase_id"] = target_phase["id"]
+            task["kickoff_required_for_phase"] = target_phase["id"] if target_phase["order"] > 1 else None
+        else:
+            task["kickoff_required_for_phase"] = None
 
         run = self.build_run(
             task_id,
@@ -827,7 +959,19 @@ class WorkflowService:
         self.save_task(task_id, task)
 
     def status_payload(self, task_id: str) -> dict[str, Any]:
-        return {"task": self.load_task(task_id), "phases": self.load_phases(task_id), "spec": inspect_spec(self.spec_path(task_id))}
+        task = self.load_task(task_id)
+        phases = self.load_phases(task_id)
+        active_phase = None
+        if task["active_phase_id"]:
+            active_phase = next((phase for phase in phases["phases"] if phase["id"] == task["active_phase_id"]), None)
+        payload = {
+            "task": task,
+            "phases": phases,
+            "spec": inspect_spec(self.spec_path(task_id), require_coverage=task["contract_version"] >= 2),
+        }
+        if active_phase is not None:
+            payload["active_phase_bootstrap"] = self.phase_bootstrap_summary(task_id, active_phase)
+        return payload
 
     def check_all(self) -> list[str]:
         self.ensure_layout()
@@ -837,9 +981,12 @@ class WorkflowService:
                 continue
             task_id = task_dir.name
             try:
+                incomplete = self.incomplete_task_error(task_dir)
+                if incomplete:
+                    raise WorkflowError(incomplete.removeprefix(f"{task_id}: "))
                 task = self.load_task(task_id)
                 phases = self.load_phases(task_id)
-                spec = inspect_spec(self.spec_path(task_id))
+                spec = inspect_spec(self.spec_path(task_id), require_coverage=task["contract_version"] >= 2)
                 active_phase = None
                 if task["active_phase_id"] is not None:
                     active_phase = next((phase for phase in phases["phases"] if phase["id"] == task["active_phase_id"]), None)
@@ -862,7 +1009,7 @@ class WorkflowService:
                 if task["state"] != "draft":
                     if not spec["ready_for_approval"]:
                         raise WorkflowError("approved-or-later task requires approval-ready spec.md")
-                    if ensure_locked_intake(task["intake"]) != spec["intake"]:
+                    if ensure_locked_intake(task["intake"], require_coverage=task["contract_version"] >= 2) != spec["intake"]:
                         raise WorkflowError("task.intake is out of sync with spec.md")
                 if task["latest_run_id"] is not None:
                     self.load_run(task_id, task["latest_run_id"])

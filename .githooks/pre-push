@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+# Phase-boundary kickoff proof is enforced by workflow runtime, not by git hooks.
+
 python3 scripts/workflow.py doctor
 python3 scripts/workflow.py hook pre_command --command-text "git push $*"
 

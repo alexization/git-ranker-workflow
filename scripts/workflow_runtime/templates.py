@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from workflow_runtime.constants import CURRENT_TASK_CONTRACT_VERSION
 from workflow_runtime.models import empty_task_intake, now_iso
 
 
@@ -22,8 +23,8 @@ def default_spec(task_id: str, title: str, primary_repo: str) -> str:
         "## Acceptance\n\n"
         "- TODO: 완료를 판단할 수 있는 관찰 가능한 기준을 적는다.\n\n"
         "## Socratic Clarification Log\n\n"
-        "- TODO: Q/A/Decision triplet으로 잠근 결정만 남긴다.\n"
-        "- Q: ...\n"
+        "- TODO: `[scope]`, `[goal]`, `[non_goal]`, `[constraint]`, `[acceptance]` coverage를 모두 채운 Q/A/Decision triplet만 남긴다.\n"
+        "- Q: [scope] ...\n"
         "- A: ...\n"
         "- Decision: ...\n"
     )
@@ -33,6 +34,7 @@ def empty_task_payload(task_id: str, title: str, primary_repo: str) -> dict[str,
     return {
         "id": task_id,
         "title": title,
+        "contract_version": CURRENT_TASK_CONTRACT_VERSION,
         "state": "draft",
         "primary_repo": primary_repo,
         "created_at": now_iso(),
@@ -41,6 +43,8 @@ def empty_task_payload(task_id: str, title: str, primary_repo: str) -> dict[str,
         "active_phase_id": None,
         "latest_run_id": None,
         "last_verified_run_id": None,
+        "kickoff_required_for_phase": None,
+        "last_kickoff_run_id": None,
         "blocked_reason": None,
         "user_validated": False,
         "user_validation_note": None,

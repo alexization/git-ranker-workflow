@@ -145,9 +145,21 @@ class WorkflowCliTest(unittest.TestCase):
                 "## Acceptance\n\n"
                 "- approve/plan/run/verify/review/reopen 흐름이 CLI와 테스트로 검증된다.\n\n"
                 "## Socratic Clarification Log\n\n"
-                "- Q: 문서 구조는 어떻게 정리할까?\n"
+                "- Q: [scope] 문서 구조는 어떻게 정리할까?\n"
                 "- A: `tasks/`와 `system/`으로 역할을 나눈다.\n"
                 "- Decision: 초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.\n"
+                "- Q: [goal] 이 workflow가 반드시 보장해야 하는 핵심 목표는 무엇일까?\n"
+                "- A: spec 승인, phase 실행, verification, review의 제어 지점을 JSON state로 잠그는 것이다.\n"
+                "- Decision: workflow는 승인과 실행 상태를 artifact 기반으로 고정해야 한다.\n"
+                "- Q: [non_goal] 이번 harness가 다시 설계하지 않을 범위는 무엇일까?\n"
+                "- A: 앱 저장소 자체의 제품 동작이나 runtime contract는 여기서 다시 설계하지 않는다.\n"
+                "- Decision: control plane만 강화하고 앱 동작 재설계는 제외한다.\n"
+                "- Q: [constraint] 구현 시 반드시 지켜야 하는 운영 제약은 무엇일까?\n"
+                "- A: 기존 저장소 구조를 유지하고 workflow.py CLI를 단일 진입점으로 써야 한다.\n"
+                "- Decision: 공식 상태 전이와 hook enforcement는 workflow CLI를 통해서만 수행한다.\n"
+                "- Q: [acceptance] 완료를 무엇으로 판단할까?\n"
+                "- A: approve/plan/run/verify/review/reopen 흐름이 CLI와 테스트로 검증되어야 한다.\n"
+                "- Decision: 완료 판단 기준은 CLI 흐름이 테스트로 고정되는 것이다.\n"
             ),
             encoding="utf-8",
         )
@@ -157,34 +169,99 @@ class WorkflowCliTest(unittest.TestCase):
         root: Path,
         commands: list[str],
         *,
+        phase_count: int = 1,
+        inputs: list[str] | None = None,
         allowed_write_paths: list[str] | None = None,
         test_policy_mode: str = "require_tests",
         test_policy_evidence: list[str] | None = None,
+        include_bootstrap_fields: bool = True,
     ) -> Path:
         phase_file = root / "phase-input.json"
+        phases = []
+        for index in range(1, phase_count + 1):
+            phase = {
+                "id": f"phase-{index}",
+                "title": f"build-runtime-{index}",
+                "goal": f"create workflow runtime {index}",
+                "inputs": inputs if inputs is not None else ["spec.md"],
+                "allowed_write_paths": allowed_write_paths or ["scripts/", "tests/"],
+                "acceptance": {"commands": commands if index == 1 else [f"python3 -c \"print('phase {index} ok')\""]},
+                "test_policy": {
+                    "mode": test_policy_mode,
+                    "evidence": test_policy_evidence or [],
+                },
+            }
+            if include_bootstrap_fields:
+                phase.update(
+                    {
+                        "required_reads": ["spec.md", "task.json", "phases.json"],
+                        "starting_points": [f"Inspect active phase {index}", "Review allowed write scope"],
+                        "deliverables": [f"Complete phase {index} changes"],
+                        "completion_signal": f"phase-{index} acceptance commands pass",
+                    }
+                )
+            phases.append(phase)
         phase_file.write_text(
             json.dumps(
-                {
-                    "phases": [
-                        {
-                            "id": "phase-1",
-                            "title": "build-runtime",
-                            "goal": "create workflow runtime",
-                            "inputs": ["spec.md"],
-                            "allowed_write_paths": allowed_write_paths or ["scripts/", "tests/"],
-                            "acceptance": {"commands": commands},
-                            "test_policy": {
-                                "mode": test_policy_mode,
-                                "evidence": test_policy_evidence or [],
-                            },
-                        }
-                    ]
-                },
+                {"phases": phases},
                 ensure_ascii=False,
             ),
             encoding="utf-8",
         )
         return phase_file
+
+    def write_spec_with_clarifications(
+        self,
+        root: Path,
+        task_id: str,
+        clarifications: list[tuple[str, str, str, str]],
+        *,
+        title: str = "Harness V2",
+    ) -> None:
+        lines = [
+            f"# {title}",
+            "",
+            f"- Task ID: `{task_id}`",
+            "- Primary Repo: `git-ranker-workflow`",
+            "- Status: `draft`",
+            "",
+            "## Request",
+            "",
+            "- Codex 기준 workflow control plane을 강화한다.",
+            "",
+            "## Problem",
+            "",
+            "- 승인, phase, verification, hook contract가 느슨해서 자동화 신뢰도가 떨어진다.",
+            "",
+            "## Goals",
+            "",
+            "- spec 승인, phase 실행, verification, review를 JSON state로 강제한다.",
+            "",
+            "## Non-goals",
+            "",
+            "- 앱 저장소 동작 자체를 다시 설계하지 않는다.",
+            "",
+            "## Constraints",
+            "",
+            "- 기존 저장소 위에서 추가 요구사항을 계속 수용해야 한다.",
+            "",
+            "## Acceptance",
+            "",
+            "- approve/plan/run/verify/review/reopen 흐름이 CLI와 테스트로 검증된다.",
+            "",
+            "## Socratic Clarification Log",
+            "",
+        ]
+        for category, question, answer, decision in clarifications:
+            lines.extend(
+                [
+                    f"- Q: [{category}] {question}",
+                    f"- A: {answer}",
+                    f"- Decision: {decision}",
+                ]
+            )
+        spec_path = root / "workflows" / "tasks" / task_id / "spec.md"
+        spec_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     def write_repo_docs(self, root: Path) -> None:
         docs_dir = root / "docs"
@@ -204,6 +281,8 @@ class WorkflowCliTest(unittest.TestCase):
                 "- task.json\n"
                 "- intake\n"
                 "- clarifications\n"
+                "- kickoff_required_for_phase\n"
+                "- required_reads\n"
             ),
             encoding="utf-8",
         )
@@ -213,6 +292,7 @@ class WorkflowCliTest(unittest.TestCase):
                 "1. 소크라테스 질문\n"
                 "2. approve\n"
                 "3. plan\n"
+                "4. kickoff\n"
                 "4. review --close\n"
             ),
             encoding="utf-8",
@@ -234,6 +314,7 @@ class WorkflowCliTest(unittest.TestCase):
                 "- 사용자가 현재 spec 초안에 명시적으로 동의하면 approve 한다.\n"
                 "- approve\n"
                 "- plan\n"
+                "- kickoff\n"
             ),
             encoding="utf-8",
         )
@@ -305,7 +386,13 @@ class WorkflowCliTest(unittest.TestCase):
             self.run_cli(root, "new", "task-002a", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
             spec_path = root / "workflows" / "tasks" / "task-002a" / "spec.md"
             self.finalize_spec(root, "task-002a")
-            spec_path.write_text(spec_path.read_text(encoding="utf-8").replace("- Decision: 초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.\n", ""), encoding="utf-8")
+            spec_path.write_text(
+                spec_path.read_text(encoding="utf-8").replace(
+                    "- Decision: 완료 판단 기준은 CLI 흐름이 테스트로 고정되는 것이다.\n",
+                    "",
+                ),
+                encoding="utf-8",
+            )
 
             result = self.run_cli(root, "approve", "task-002a", "--note", "approved by user", expected=1)
             self.assertIn("Socratic Clarification Log", result.stderr)
@@ -316,8 +403,9 @@ class WorkflowCliTest(unittest.TestCase):
             task = self.read_json(root / "workflows" / "tasks" / "task-002a" / "task.json")
             self.assertEqual(task["intake"]["request_summary"], "Codex 기준 workflow control plane을 강화한다.")
             self.assertEqual(task["intake"]["goals"], ["spec 승인, phase 실행, verification, review를 JSON state로 강제한다."])
-            self.assertEqual(len(task["intake"]["clarifications"]), 1)
+            self.assertEqual(len(task["intake"]["clarifications"]), 5)
             self.assertEqual(task["intake"]["clarifications"][0]["decision"], "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.")
+            self.assertEqual(task["intake"]["clarifications"][0]["category"], "scope")
 
     def test_plan_requires_locked_intake_even_for_approved_task(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -341,14 +429,119 @@ class WorkflowCliTest(unittest.TestCase):
             self.run_cli(root, "new", "task-002c", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
             self.finalize_spec(root, "task-002c")
             spec_path = root / "workflows" / "tasks" / "task-002c" / "spec.md"
-            spec_path.write_text(spec_path.read_text(encoding="utf-8").replace("- Decision: 초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.\n", ""), encoding="utf-8")
+            spec_path.write_text(
+                spec_path.read_text(encoding="utf-8").replace(
+                    "- Decision: 완료 판단 기준은 CLI 흐름이 테스트로 고정되는 것이다.\n",
+                    "",
+                ),
+                encoding="utf-8",
+            )
 
             result = self.run_cli(root, "status", "task-002c")
             payload = json.loads(result.stdout)
             self.assertEqual(payload["task"]["state"], "draft")
             self.assertFalse(payload["spec"]["ready_for_approval"])
-            self.assertEqual(payload["spec"]["clarification_count"], 0)
+            self.assertEqual(payload["spec"]["clarification_count"], 4)
             self.assertTrue(payload["spec"]["unresolved_clarifications"])
+            self.assertIn("acceptance", payload["spec"]["coverage_missing"])
+
+    def test_plan_keeps_legacy_empty_inputs_compatible_without_required_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-002cc", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+
+            task_path = root / "workflows" / "tasks" / "task-002cc" / "task.json"
+            task = self.read_json(task_path)
+            task.pop("contract_version", None)
+            task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            self.finalize_spec(root, "task-002cc")
+            spec_path = root / "workflows" / "tasks" / "task-002cc" / "spec.md"
+            legacy_text = spec_path.read_text(encoding="utf-8")
+            for category in ("scope", "goal", "non_goal", "constraint", "acceptance"):
+                legacy_text = legacy_text.replace(f"Q: [{category}] ", "Q: ")
+            spec_path.write_text(legacy_text, encoding="utf-8")
+
+            self.run_cli(root, "approve", "task-002cc", "--note", "approved by user")
+            phase_file = self.write_phase_input(
+                root,
+                ["python3 -c \"print('ok')\""],
+                inputs=[],
+                include_bootstrap_fields=False,
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["legacy empty-input plans should remain plannable"],
+            )
+
+            self.run_cli(root, "plan", "task-002cc", "--from", str(phase_file))
+
+            phases = self.read_json(root / "workflows" / "tasks" / "task-002cc" / "phases.json")
+            self.assertNotIn("required_reads", phases["phases"][0])
+
+            status = json.loads(self.run_cli(root, "status", "task-002cc").stdout)
+            self.assertEqual(status["active_phase_bootstrap"]["required_reads"], [])
+
+    def test_approve_requires_coverage_categories_before_locking_intake(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-002d", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+            self.write_spec_with_clarifications(
+                root,
+                "task-002d",
+                [
+                    ("scope", "문서 구조는 어떻게 정리할까?", "`tasks/`와 `system/`으로 역할을 나눈다.", "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다."),
+                    ("goal", "이 workflow의 목표는 무엇일까?", "승인과 실행 상태를 artifact로 잠근다.", "workflow는 승인과 실행 상태를 artifact 기반으로 고정해야 한다."),
+                ],
+            )
+
+            result = self.run_cli(root, "approve", "task-002d", "--note", "approved by user", expected=1)
+            self.assertIn("missing coverage categories", result.stderr)
+            self.assertIn("non_goal", result.stderr)
+            self.assertIn("constraint", result.stderr)
+            self.assertIn("acceptance", result.stderr)
+
+            self.finalize_spec(root, "task-002d")
+            self.run_cli(root, "approve", "task-002d", "--note", "approved by user")
+
+            task = self.read_json(root / "workflows" / "tasks" / "task-002d" / "task.json")
+            categories = {item["category"] for item in task["intake"]["clarifications"]}
+            self.assertEqual(categories, {"scope", "goal", "non_goal", "constraint", "acceptance"})
+
+    def test_status_reports_missing_coverage_categories_before_approval(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-002e", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+            self.write_spec_with_clarifications(
+                root,
+                "task-002e",
+                [
+                    ("scope", "문서 구조는 어떻게 정리할까?", "`tasks/`와 `system/`으로 역할을 나눈다.", "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다."),
+                    ("goal", "이 workflow의 목표는 무엇일까?", "승인과 실행 상태를 artifact로 잠근다.", "workflow는 승인과 실행 상태를 artifact 기반으로 고정해야 한다."),
+                ],
+            )
+
+            result = self.run_cli(root, "status", "task-002e")
+            payload = json.loads(result.stdout)
+            self.assertFalse(payload["spec"]["ready_for_approval"])
+            self.assertEqual(payload["spec"]["coverage_present"], ["goal", "scope"])
+            self.assertEqual(payload["spec"]["coverage_missing"], ["non_goal", "constraint", "acceptance"])
+            self.assertTrue(any("missing coverage categories" in item for item in payload["spec"]["unresolved_clarifications"]))
+
+    def test_legacy_task_upgrades_to_v2_when_reapproved_with_categorized_spec(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-002f", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+
+            task_path = root / "workflows" / "tasks" / "task-002f" / "task.json"
+            task = self.read_json(task_path)
+            task.pop("contract_version", None)
+            task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            self.finalize_spec(root, "task-002f")
+            self.run_cli(root, "approve", "task-002f", "--note", "approved by user")
+
+            task = self.read_json(task_path)
+            self.assertEqual(task["contract_version"], 2)
+            self.assertEqual({item["category"] for item in task["intake"]["clarifications"]}, {"scope", "goal", "non_goal", "constraint", "acceptance"})
 
     def test_tdd_guard_blocks_completion_without_tests(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -966,6 +1159,155 @@ class WorkflowCliTest(unittest.TestCase):
             self.assertEqual(task["active_phase_id"], "phase-1")
             self.assertEqual(phases["phases"][0]["status"], "pending")
 
+    def test_kickoff_is_required_before_starting_next_phase(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-007b", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+            self.finalize_spec(root, "task-007b")
+            self.run_cli(root, "approve", "task-007b", "--note", "approved by user")
+            phase_file = self.write_phase_input(
+                root,
+                ["python3 -c \"print('ok')\""],
+                phase_count=2,
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["kickoff gate is exercised by CLI tests"],
+            )
+            self.run_cli(root, "plan", "task-007b", "--from", str(phase_file))
+            self.run_cli(root, "run", "task-007b", "--start")
+            self.run_cli(root, "run", "task-007b", "--complete", "--changed-path", "scripts/workflow.py")
+            self.run_cli(root, "verify", "task-007b")
+
+            status = json.loads(self.run_cli(root, "status", "task-007b").stdout)
+            self.assertEqual(status["task"]["state"], "approved")
+            self.assertEqual(status["task"]["active_phase_id"], "phase-2")
+            self.assertEqual(status["task"]["kickoff_required_for_phase"], "phase-2")
+            self.assertIsNone(status["task"]["last_kickoff_run_id"])
+
+            start_result = self.run_cli(root, "run", "task-007b", "--start", expected=1)
+            self.assertIn("kickoff is required", start_result.stderr)
+
+            kickoff_result = self.run_cli(root, "kickoff", "task-007b")
+            kickoff_payload = json.loads(kickoff_result.stdout)
+            self.assertEqual(kickoff_payload["status"], "kickoff_recorded")
+            self.assertEqual(kickoff_payload["phase_id"], "phase-2")
+            self.assertEqual(kickoff_payload["summary"]["completion_signal"], "phase-2 acceptance commands pass")
+
+            self.run_cli(root, "run", "task-007b", "--start")
+            status = json.loads(self.run_cli(root, "status", "task-007b").stdout)
+            self.assertEqual(status["task"]["state"], "in_progress")
+            self.assertIsNone(status["task"]["kickoff_required_for_phase"])
+            self.assertIsNotNone(status["task"]["last_kickoff_run_id"])
+
+    def test_legacy_multi_phase_task_still_requires_kickoff_for_phase_two(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-007bb", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+
+            task_path = root / "workflows" / "tasks" / "task-007bb" / "task.json"
+            task = self.read_json(task_path)
+            task.pop("contract_version", None)
+            task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            self.finalize_spec(root, "task-007bb")
+            spec_path = root / "workflows" / "tasks" / "task-007bb" / "spec.md"
+            legacy_text = spec_path.read_text(encoding="utf-8")
+            for category in ("scope", "goal", "non_goal", "constraint", "acceptance"):
+                legacy_text = legacy_text.replace(f"Q: [{category}] ", "Q: ")
+            spec_path.write_text(legacy_text, encoding="utf-8")
+
+            self.run_cli(root, "approve", "task-007bb", "--note", "approved by user")
+            phase_file = self.write_phase_input(
+                root,
+                ["python3 -c \"print('ok')\""],
+                phase_count=2,
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["legacy tasks should still require kickoff for later phases"],
+            )
+            self.run_cli(root, "plan", "task-007bb", "--from", str(phase_file))
+            self.run_cli(root, "run", "task-007bb", "--start")
+            self.run_cli(root, "run", "task-007bb", "--complete", "--changed-path", "scripts/workflow.py")
+            self.run_cli(root, "verify", "task-007bb")
+
+            status = json.loads(self.run_cli(root, "status", "task-007bb").stdout)
+            self.assertEqual(status["task"]["active_phase_id"], "phase-2")
+            self.assertEqual(status["task"]["kickoff_required_for_phase"], "phase-2")
+
+            start_result = self.run_cli(root, "run", "task-007bb", "--start", expected=1)
+            self.assertIn("kickoff is required", start_result.stderr)
+
+    def test_replan_invalidates_existing_kickoff_requirement(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-007c", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+            self.finalize_spec(root, "task-007c")
+            self.run_cli(root, "approve", "task-007c", "--note", "approved by user")
+            phase_file = self.write_phase_input(
+                root,
+                ["python3 -c \"print('ok')\""],
+                phase_count=2,
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["kickoff reset is exercised by CLI tests"],
+            )
+            self.run_cli(root, "plan", "task-007c", "--from", str(phase_file))
+            self.run_cli(root, "run", "task-007c", "--start")
+            self.run_cli(root, "run", "task-007c", "--complete", "--changed-path", "scripts/workflow.py")
+            self.run_cli(root, "verify", "task-007c")
+            self.run_cli(root, "kickoff", "task-007c")
+
+            replan_file = self.write_phase_input(
+                root,
+                ["python3 -c \"print('replanned ok')\""],
+                phase_count=2,
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["replanned phases should clear stale kickoff receipts"],
+            )
+            self.run_cli(root, "plan", "task-007c", "--from", str(replan_file))
+
+            status = json.loads(self.run_cli(root, "status", "task-007c").stdout)
+            self.assertEqual(status["task"]["active_phase_id"], "phase-1")
+            self.assertIsNone(status["task"]["kickoff_required_for_phase"])
+            self.assertIsNone(status["task"]["last_kickoff_run_id"])
+
+    def test_reopen_resets_kickoff_requirement_for_target_phase(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-007d", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+            self.finalize_spec(root, "task-007d")
+            self.run_cli(root, "approve", "task-007d", "--note", "approved by user")
+            phase_file = self.write_phase_input(
+                root,
+                ["python3 -c \"print('ok')\""],
+                phase_count=2,
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["reopen should require a fresh kickoff for the repaired phase"],
+            )
+            self.run_cli(root, "plan", "task-007d", "--from", str(phase_file))
+            self.run_cli(root, "run", "task-007d", "--start")
+            self.run_cli(root, "run", "task-007d", "--complete", "--changed-path", "scripts/workflow.py")
+            self.run_cli(root, "verify", "task-007d")
+            self.run_cli(root, "kickoff", "task-007d")
+            self.run_cli(root, "run", "task-007d", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-007d",
+                "--fail",
+                "--phase-id",
+                "phase-2",
+                "--error-fingerprint",
+                "phase-2-boom",
+                "--note",
+                "boom",
+                expected=1,
+            )
+            self.run_cli(root, "reopen", "task-007d", "--note", "retry after repair", "--phase-id", "phase-2")
+
+            status = json.loads(self.run_cli(root, "status", "task-007d").stdout)
+            self.assertEqual(status["task"]["state"], "approved")
+            self.assertEqual(status["task"]["active_phase_id"], "phase-2")
+            self.assertEqual(status["task"]["kickoff_required_for_phase"], "phase-2")
+            self.assertIsNone(status["task"]["last_kickoff_run_id"])
+
     def test_reopen_resets_completed_task_for_follow_up(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -998,6 +1340,22 @@ class WorkflowCliTest(unittest.TestCase):
             self.assertEqual(phases["phases"][0]["status"], "pending")
 
             self.run_cli(root, "run", "task-007a", "--start")
+
+    def test_doctor_reports_incomplete_task_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.write_repo_docs(root)
+            self.write_valid_agents(root)
+
+            broken_runs = root / "workflows" / "tasks" / "task-broken" / "runs"
+            broken_runs.mkdir(parents=True, exist_ok=True)
+
+            result = self.run_cli(root, "doctor", expected=1)
+            report = json.loads(result.stdout)
+            self.assertTrue(any("incomplete task directory" in error for error in report["errors"]))
 
     def test_circuit_breaker_triggers_from_verification_failures(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
