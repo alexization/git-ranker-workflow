@@ -325,9 +325,9 @@ class WorkflowService:
             return active[0]
         return None
 
-    def task_matches_changed_paths(self, task: dict[str, Any], phase: dict[str, Any], changed_paths: list[str]) -> bool:
+    def task_covers_changed_paths(self, task: dict[str, Any], phase: dict[str, Any], changed_paths: list[str]) -> bool:
         scopes = phase_scope(task["id"], phase)
-        return any(any(scope_matches(path, scope) for scope in scopes) for path in changed_paths)
+        return all(any(scope_matches(path, scope) for scope in scopes) for path in changed_paths)
 
     def scoped_task_ids(self, changed_paths: list[str], *, states: set[str]) -> list[str]:
         if not changed_paths:
@@ -343,7 +343,7 @@ class WorkflowService:
                 _, _, phase = self.current_phase(task_id, active_phase_id)
             except WorkflowError:
                 continue
-            if self.task_matches_changed_paths(task, phase, changed_paths):
+            if self.task_covers_changed_paths(task, phase, changed_paths):
                 matches.append(task_id)
         return matches
 

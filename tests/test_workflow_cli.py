@@ -828,6 +828,44 @@ class WorkflowCliTest(unittest.TestCase):
             result = self.run_hook_script(root, "pre-push", "origin", "feature")
             self.assertIn("latest passed verification", result.stdout)
 
+    def test_githook_pre_push_fails_when_unpushed_diff_only_partially_maps_to_task(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.install_runtime_surface(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(
+                root,
+                "task-006j",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["pre-push inference must require the full unpushed diff to map to one task"],
+            )
+
+            scripts_dir = root / "scripts"
+            notes_dir = root / "notes"
+            scripts_dir.mkdir(parents=True, exist_ok=True)
+            notes_dir.mkdir(parents=True, exist_ok=True)
+            (scripts_dir / "sample.py").write_text("print('sample')\n", encoding="utf-8")
+            (notes_dir / "mixed.txt").write_text("not covered by any task scope\n", encoding="utf-8")
+            self.run_cli(root, "run", "task-006j", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-006j",
+                "--complete",
+                "--changed-path",
+                "scripts/sample.py",
+            )
+            self.run_cli(root, "verify", "task-006j")
+            self.run_cli(root, "review", "task-006j", "--note", "ready")
+            self.run_cli(root, "review", "task-006j", "--close", "--user-validation-note", "validated")
+
+            self.git_add(root, "scripts/sample.py", "notes/mixed.txt", "workflows/tasks/task-006j")
+            self.git_commit_no_verify(root, "mixed scope pre-push smoke")
+
+            result = self.run_hook_script(root, "pre-push", "origin", "feature", expected=1)
+            self.assertIn("do not map to a single task", result.stderr)
+
     def test_githook_pre_push_passes_without_task_when_no_unpushed_changes(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
