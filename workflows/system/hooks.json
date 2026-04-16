@@ -1,0 +1,88 @@
+{
+  "version": 1,
+  "events": {
+    "pre_command": [
+      "dangerous_cmd_guard"
+    ],
+    "pre_commit": [
+      "write_scope_guard",
+      "tdd_guard"
+    ],
+    "pre_phase_start": [],
+    "post_change": [
+      "tdd_guard"
+    ],
+    "pre_phase_complete": [
+      "write_scope_guard",
+      "tdd_guard"
+    ],
+    "pre_review": [
+      "latest_verified_run_guard"
+    ],
+    "pre_complete": [
+      "user_validation_guard"
+    ],
+    "pre_push": [
+      "dangerous_cmd_guard",
+      "latest_verified_run_guard"
+    ]
+  },
+  "guards": {
+    "tdd_guard": {
+      "strict": true,
+      "implementation_patterns": [
+        "*.py",
+        "*.sh",
+        "*.js",
+        "*.jsx",
+        "*.ts",
+        "*.tsx",
+        "*.java",
+        "*.kt"
+      ],
+      "test_patterns": [
+        "tests/**",
+        "**/*_test.py",
+        "**/*test*.py",
+        "**/*.spec.ts",
+        "**/*.test.ts",
+        "**/*.spec.tsx",
+        "**/*.test.tsx",
+        "**/src/test/**"
+      ],
+      "ignore_patterns": [
+        "docs/**",
+        "workflows/**",
+        ".github/**",
+        "*.md",
+        "*.json",
+        "*.yml",
+        "*.yaml"
+      ]
+    },
+    "dangerous_cmd_guard": {
+      "blocked_patterns": [
+        "rm\\s+-rf",
+        "git\\s+reset\\s+--hard",
+        "git\\s+checkout\\s+--",
+        "git\\s+clean\\s+-fd",
+        "git\\s+push(?:\\s+\\S+)*\\s+--force(?:\\S+)?",
+        "git\\s+push(?:\\s+\\S+)*\\s+-[A-Za-z]*f[A-Za-z]*",
+        "DROP\\s+TABLE",
+        "TRUNCATE\\s+TABLE"
+      ],
+      "allowlist": []
+    },
+    "latest_verified_run_guard": {
+      "require_phase_match": true,
+      "scope_sensitive_events": [
+        "pre_push"
+      ]
+    },
+    "circuit_breaker": {
+      "window_seconds": 60,
+      "threshold": 5,
+      "state_file": "workflows/system/circuit-breaker.json"
+    }
+  }
+}

@@ -1,0 +1,48 @@
+name: Workflow Control Plane
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "docs/**"
+      - "workflows/**"
+      - "scripts/**"
+      - ".githooks/**"
+      - ".codex/skills/**"
+      - "tests/**"
+  push:
+    branches:
+      - main
+    paths:
+      - "AGENTS.md"
+      - "docs/**"
+      - "workflows/**"
+      - "scripts/**"
+      - ".githooks/**"
+      - ".codex/skills/**"
+      - "tests/**"
+
+jobs:
+  workflow-control-plane:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Initialize workflow runtime
+        run: python3 scripts/workflow.py init
+
+      - name: Run unit tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Run doctor
+        run: python3 scripts/workflow.py doctor
+
+      - name: Validate tracked workflow tasks
+        run: python3 scripts/workflow.py status --all --check
+
+      - name: Check diff formatting
+        run: git diff --check
