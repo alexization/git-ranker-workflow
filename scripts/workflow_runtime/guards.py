@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import shlex
 from typing import Any, Callable
 
 from workflow_runtime.models import HookResult, path_matches, scope_matches
@@ -71,6 +72,24 @@ def tdd_guard(config: dict[str, Any], changed_paths: list[str], phase: dict[str,
 
 
 def dangerous_cmd_guard(config: dict[str, Any], command: str) -> HookResult:
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        tokens = command.split()
+
+    if tokens and tokens[0].lower() == "git":
+        try:
+            push_index = next(index for index, token in enumerate(tokens[1:], start=1) if token.lower() == "push")
+        except StopIteration:
+            push_index = None
+        if push_index is not None:
+            for token in tokens[push_index + 1 :]:
+                normalized = token.lower()
+                if normalized.startswith("--force"):
+                    return HookResult("dangerous_cmd_guard", "failed", [f"blocked command: {command}"])
+                if re.fullmatch(r"-[A-Za-z]*f[A-Za-z]*", token):
+                    return HookResult("dangerous_cmd_guard", "failed", [f"blocked command: {command}"])
+
     for pattern in config["blocked_patterns"]:
         if re.search(pattern, command, flags=re.I):
             return HookResult("dangerous_cmd_guard", "failed", [f"blocked command: {command}"])

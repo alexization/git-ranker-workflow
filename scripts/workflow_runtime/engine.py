@@ -34,6 +34,7 @@ from workflow_runtime.models import (
     validate_relative_repo_path,
     validate_run,
     validate_spec_for_approval,
+    validate_task_id,
     validate_task,
     write_json,
 )
@@ -70,7 +71,7 @@ class WorkflowService:
                     shutil.copy2(source_hook_script, target_hook_script)
 
     def task_dir(self, task_id: str) -> Path:
-        return self.tasks_dir / task_id
+        return self.tasks_dir / validate_task_id(task_id)
 
     def task_path(self, task_id: str) -> Path:
         return self.task_dir(task_id) / "task.json"

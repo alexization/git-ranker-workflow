@@ -58,6 +58,19 @@ def normalize_repo_path(value: str) -> str:
     return normalized
 
 
+def validate_task_id(value: str) -> str:
+    task_id = _require_string(value, "task_id").strip()
+    if task_id in {".", ".."}:
+        raise WorkflowError(f"task_id must not be {task_id!r}")
+    if "/" in task_id or "\\" in task_id:
+        raise WorkflowError(f"task_id must not contain path separators: {value}")
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", task_id):
+        raise WorkflowError(
+            "task_id may only contain letters, numbers, dot, underscore, and hyphen, and must start with an alphanumeric character"
+        )
+    return task_id
+
+
 def path_matches(path: str, patterns: list[str]) -> bool:
     normalized = path.replace("\\", "/")
     pure = PurePosixPath(normalized)

@@ -484,6 +484,42 @@ class WorkflowCliTest(unittest.TestCase):
             self.assertEqual(task["state"], "blocked")
             self.assertEqual(task["blocked_reason"], "repeated verification failure in phase-1")
 
+    def test_dangerous_command_guard_blocks_short_force_push(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "init")
+
+            result = self.run_cli(
+                root,
+                "hook",
+                "pre_command",
+                "--command-text",
+                "git push -f origin feature",
+                expected=1,
+            )
+            payload = json.loads(result.stdout)
+            self.assertEqual(payload["status"], "failed")
+            self.assertTrue(any("blocked command" in message for message in payload["messages"]))
+
+    def test_new_rejects_task_id_path_traversal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "init")
+
+            result = self.run_cli(
+                root,
+                "new",
+                "../../../escape-task",
+                "--title",
+                "Harness V2",
+                "--primary-repo",
+                "git-ranker-workflow",
+                expected=1,
+            )
+            self.assertIn("task_id", result.stderr)
+            self.assertFalse((root / "escape-task").exists())
+            self.assertFalse((root / "workflows" / "escape-task").exists())
+
     def test_doctor_fails_when_agents_constitution_is_incomplete(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
