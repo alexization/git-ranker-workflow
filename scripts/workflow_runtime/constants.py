@@ -20,7 +20,7 @@ PHASE_TRANSITIONS = {
     "in_progress": {"completed", "failed", "blocked"},
     "failed": {"pending", "in_progress", "blocked"},
     "blocked": {"pending", "in_progress"},
-    "completed": {"failed", "blocked"},
+    "completed": {"pending", "failed", "blocked"},
 }
 
 SPEC_REQUIRED_SECTIONS = [
@@ -64,7 +64,7 @@ DOC_REQUIRED_MARKERS = {
     "docs/README.md": ["AGENTS.md", "docs/runtime.md", "docs/artifact-model.md"],
     "docs/artifact-model.md": ["task.json", "intake", "clarifications"],
     "docs/runtime.md": ["소크라테스 질문", "approve", "plan", "review --close"],
-    "docs/hooks.md": [".githooks/", "TDD Guard", "Dangerous Command Guard", "Circuit Breaker"],
+    "docs/hooks.md": [".githooks/", "TDD Guard", "Dangerous Command Guard", "Circuit Breaker", "workflow.py hook"],
     "docs/runbook.md": ["사용자가 현재 spec 초안에 명시적으로 동의하면 approve 한다.", "approve", "plan"],
 }
 
@@ -77,6 +77,7 @@ STALE_REFERENCE_PATTERNS = [
     "workflows/config/",
     "workflows/runtime/",
     "workflows/schemas/",
+    "scripts/hooks/",
     "workflow_lib.py",
 ]
 

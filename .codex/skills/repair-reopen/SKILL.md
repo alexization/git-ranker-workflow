@@ -21,7 +21,7 @@ description: failed, blocked, review follow-up, 추가 요구사항이 들어온
 
 1. 왜 reopen이 필요한지 note를 한 줄로 잠근다.
 2. 필요하면 target phase를 정한다.
-3. `python3 scripts/workflow.py reopen <task-id> --note "..." [--phase-id ...]`로 task를 `approved` 상태로 되돌린다.
+3. `python3 scripts/workflow.py reopen <task-id> --note "..." [--phase-id ...]`로 task를 `approved` 상태로 되돌리고 target phase를 `pending`으로 복구한다.
 4. 추가 요구사항이면 먼저 `spec.md`를 다시 잠근다.
 5. spec이 바뀌었으면 `python3 scripts/workflow.py approve <task-id> --note "..."`로 `task.json.intake`를 다시 잠근다.
 6. 필요하면 `plan`으로 phase를 다시 적재한다.
@@ -30,5 +30,6 @@ description: failed, blocked, review follow-up, 추가 요구사항이 들어온
 ## 결과
 
 - `state=approved`인 `task.json`
+- rerunnable target phase (`status=pending`)
 - cleared `blocked_reason`
 - new reopen run evidence

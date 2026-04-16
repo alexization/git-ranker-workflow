@@ -13,6 +13,13 @@ from workflow_runtime.constants import (
     STALE_REFERENCE_SCAN_EXCLUDES,
 )
 
+SOURCE_ROOT = Path(__file__).resolve().parents[2]
+RUNTIME_SURFACE_FILES = (
+    Path(".githooks/pre-commit"),
+    Path(".githooks/pre-push"),
+    Path("workflows/system/hooks.json"),
+)
+
 
 def validate_agents_constitution(agents_path: Path) -> list[str]:
     text = agents_path.read_text(encoding="utf-8", errors="ignore")
@@ -79,6 +86,21 @@ def stale_reference_errors(root: Path) -> list[str]:
     return errors
 
 
+def runtime_surface_errors(root: Path) -> list[str]:
+    errors: list[str] = []
+    for relative in RUNTIME_SURFACE_FILES:
+        target = root / relative
+        source = SOURCE_ROOT / relative
+        if not target.exists():
+            errors.append(f"missing canonical artifact: {relative}")
+            continue
+        if not source.exists():
+            continue
+        if target.read_bytes() != source.read_bytes():
+            errors.append(f"{relative} is out of sync with source; run `python3 scripts/workflow.py init`")
+    return errors
+
+
 def build_doctor_report(
     root: Path,
     *,
@@ -105,6 +127,12 @@ def build_doctor_report(
     else:
         checks.append("task artifacts are internally consistent")
 
+    runtime_errors = runtime_surface_errors(root)
+    if runtime_errors:
+        errors.extend(runtime_errors)
+    else:
+        checks.append("runtime surface matches source")
+
     repo_surface = any((root / name).exists() for name in ("AGENTS.md", "docs", ".github", ".codex"))
     if repo_surface:
         agents_path = root / "AGENTS.md"
@@ -125,11 +153,16 @@ def build_doctor_report(
             markers = DOC_REQUIRED_MARKERS.get(relative)
             if markers:
                 errors.extend(validate_doc_markers(doc_path, relative, markers))
-        for relative in (".githooks/pre-commit", ".githooks/pre-push", "workflows/system/hooks.json"):
-            if not (root / relative).exists():
-                errors.append(f"missing canonical artifact: {relative}")
-        for legacy_dir in ("workflows/config", "workflows/runtime", "workflows/schemas"):
-            if (root / legacy_dir).exists():
+        for legacy_dir in ("workflows/config", "workflows/runtime", "workflows/schemas", "scripts/hooks"):
+            legacy_path = root / legacy_dir
+            if not legacy_path.exists():
+                continue
+            legacy_files = [
+                candidate
+                for candidate in legacy_path.rglob("*")
+                if candidate.is_file() and "__pycache__" not in candidate.parts and candidate.suffix != ".pyc"
+            ]
+            if legacy_files:
                 errors.append(f"legacy directory must not exist: {legacy_dir}")
 
         stale_errors = stale_reference_errors(root)

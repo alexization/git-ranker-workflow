@@ -8,7 +8,7 @@ python3 scripts/workflow.py doctor
 python3 -m unittest discover -s tests -v
 ```
 
-`init`가 로컬 git 저장소의 `core.hooksPath`를 `.githooks`로 맞춘다. `doctor`는 이 값이 어긋나면 실패한다.
+`init`가 로컬 git 저장소의 `core.hooksPath`를 `.githooks`로 맞추고 `.githooks/*`, `workflows/system/hooks.json`을 source 기준으로 다시 동기화한다. `doctor`는 이 값이나 runtime surface가 어긋나면 실패한다.
 
 ## 새 작업 시작
 
@@ -41,6 +41,8 @@ cat /tmp/task-001-phases.json | python3 scripts/workflow.py plan task-001 --stdi
 
 ## 실행과 검증
 
+`verify`는 `run --complete`로 닫힌 phase에 대해서만 실행한다.
+
 ```bash
 python3 scripts/workflow.py run task-001 --start
 python3 scripts/workflow.py run task-001 --complete --changed-path scripts/workflow.py --changed-path tests/test_workflow_cli.py
@@ -51,7 +53,7 @@ python3 scripts/workflow.py review task-001 --close --user-validation-note "vali
 
 ## Repair / Reopen
 
-실패, block, review follow-up, 추가 요구사항이 들어오면 `reopen`으로 다시 `approved` 상태로 되돌린다. 추가 요구사항이면 `spec.md`를 다시 잠근 뒤 `approve`를 다시 실행하고, 그 다음 `plan`으로 phase를 갱신한다.
+실패, block, review follow-up, 추가 요구사항이 들어오면 `reopen`으로 다시 `approved` 상태로 되돌린다. `reopen`은 target phase를 `pending`으로 복구해서 바로 `run --start`로 재개할 수 있게 만든다. 추가 요구사항이면 `spec.md`를 다시 잠근 뒤 `approve`를 다시 실행하고, 그 다음 `plan`으로 phase를 갱신한다.
 
 ```bash
 python3 scripts/workflow.py reopen task-001 --note "추가 요구사항 반영"
@@ -68,3 +70,6 @@ python3 scripts/workflow.py hook pre_command --command-text "git push origin fea
 python3 scripts/workflow.py hook pre_commit --staged
 python3 scripts/workflow.py hook pre_push --command-text "git push origin feature"
 ```
+
+`pre_commit`은 active task가 여러 개라면 자동 추론을 중단하고 실패한다. 이 경우 `WORKFLOW_TASK_ID` 또는 `--task-id`로 명시적으로 task binding을 넣는다.
+`pre_push`는 먼저 unpushed diff를 task scope에 매핑한다. active task가 없어도 completed task scope 하나로 매핑되면 그 task를 재사용하고, 단일 task로 정해지지 않으면 실패한다.

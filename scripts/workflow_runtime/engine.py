@@ -17,6 +17,7 @@ from workflow_runtime.guards import (
     dangerous_cmd_guard,
     latest_verified_run_guard,
     out_of_scope_paths,
+    phase_scope,
     tdd_guard,
     user_validation_guard,
     write_scope_guard,
@@ -30,6 +31,7 @@ from workflow_runtime.models import (
     normalize_repo_path,
     now_iso,
     read_json,
+    scope_matches,
     validate_phases,
     validate_relative_repo_path,
     validate_run,
@@ -42,6 +44,8 @@ from workflow_runtime.templates import approval_block, default_spec, empty_phase
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ROOT = Path(os.environ.get("WORKFLOW_ROOT", SOURCE_ROOT))
+ACTIVE_TASK_STATES = {"approved", "in_progress", "failed", "blocked", "review_ready"}
+PRE_PUSH_TASK_STATES = ACTIVE_TASK_STATES | {"completed"}
 
 
 class WorkflowService:
@@ -52,23 +56,31 @@ class WorkflowService:
         self.tasks_dir = self.workflows_dir / "tasks"
         self.hooks_config_path = self.system_dir / "hooks.json"
 
-    def ensure_layout(self) -> None:
+    def sync_runtime_surface(self, *, overwrite: bool) -> None:
+        surfaces = (
+            (SOURCE_ROOT / "workflows" / "system" / "hooks.json", self.hooks_config_path),
+            (SOURCE_ROOT / ".githooks" / "pre-commit", self.root / ".githooks" / "pre-commit"),
+            (SOURCE_ROOT / ".githooks" / "pre-push", self.root / ".githooks" / "pre-push"),
+        )
+        for source, target in surfaces:
+            if not source.exists():
+                continue
+            if source == target:
+                continue
+            if target.exists():
+                try:
+                    if source.samefile(target):
+                        continue
+                except FileNotFoundError:
+                    pass
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if overwrite or not target.exists():
+                shutil.copy2(source, target)
+
+    def ensure_layout(self, *, sync: bool = False) -> None:
         self.system_dir.mkdir(parents=True, exist_ok=True)
         self.tasks_dir.mkdir(parents=True, exist_ok=True)
-
-        source_hook = SOURCE_ROOT / "workflows" / "system" / "hooks.json"
-        if not self.hooks_config_path.exists() and source_hook.exists():
-            shutil.copy2(source_hook, self.hooks_config_path)
-
-        source_githooks_dir = SOURCE_ROOT / ".githooks"
-        target_githooks_dir = self.root / ".githooks"
-        if source_githooks_dir.exists():
-            target_githooks_dir.mkdir(parents=True, exist_ok=True)
-            for hook_name in ("pre-commit", "pre-push"):
-                source_hook_script = source_githooks_dir / hook_name
-                target_hook_script = target_githooks_dir / hook_name
-                if not target_hook_script.exists() and source_hook_script.exists():
-                    shutil.copy2(source_hook_script, target_hook_script)
+        self.sync_runtime_surface(overwrite=sync)
 
     def task_dir(self, task_id: str) -> Path:
         return self.tasks_dir / validate_task_id(task_id)
@@ -148,7 +160,7 @@ class WorkflowService:
         return ".githooks"
 
     def init_workspace(self) -> dict[str, Any]:
-        self.ensure_layout()
+        self.ensure_layout(sync=True)
         hooks_path = self.configure_git_hooks()
         return {
             "status": "ready",
@@ -288,9 +300,10 @@ class WorkflowService:
         )
         return pending[0]["id"] if pending else None
 
-    def infer_active_task(self) -> str | None:
+    def task_ids_by_state(self, states: set[str]) -> list[str]:
         if not self.tasks_dir.exists():
-            return None
+            return []
+
         active = []
         for candidate in sorted(self.tasks_dir.iterdir()):
             if not candidate.is_dir():
@@ -299,8 +312,61 @@ class WorkflowService:
             if not task_file.exists():
                 continue
             task = read_json(task_file)
-            if task.get("state") in {"approved", "in_progress", "failed", "blocked", "review_ready"}:
-                active.append(task["id"])
+            if task.get("state") in states:
+                active.append(task.get("id") or candidate.name)
+        return active
+
+    def active_task_ids(self) -> list[str]:
+        return self.task_ids_by_state(ACTIVE_TASK_STATES)
+
+    def infer_active_task(self) -> str | None:
+        active = self.active_task_ids()
+        if len(active) == 1:
+            return active[0]
+        return None
+
+    def task_matches_changed_paths(self, task: dict[str, Any], phase: dict[str, Any], changed_paths: list[str]) -> bool:
+        scopes = phase_scope(task["id"], phase)
+        return any(any(scope_matches(path, scope) for scope in scopes) for path in changed_paths)
+
+    def scoped_task_ids(self, changed_paths: list[str], *, states: set[str]) -> list[str]:
+        if not changed_paths:
+            return []
+
+        matches: list[str] = []
+        for task_id in self.task_ids_by_state(states):
+            task = self.load_task(task_id)
+            active_phase_id = task.get("active_phase_id")
+            if not active_phase_id:
+                continue
+            try:
+                _, _, phase = self.current_phase(task_id, active_phase_id)
+            except WorkflowError:
+                continue
+            if self.task_matches_changed_paths(task, phase, changed_paths):
+                matches.append(task_id)
+        return matches
+
+    def infer_hook_task(self, event: str, changed_paths: list[str]) -> str | None:
+        if event == "pre_push":
+            if not changed_paths:
+                return None
+            matches = self.scoped_task_ids(changed_paths, states=PRE_PUSH_TASK_STATES)
+            if len(matches) == 1:
+                return matches[0]
+            if len(matches) > 1:
+                raise WorkflowError(
+                    f"{event} requires explicit --task-id or WORKFLOW_TASK_ID when changed paths match multiple tasks: {', '.join(matches)}"
+                )
+            raise WorkflowError(
+                f"{event} requires explicit --task-id or WORKFLOW_TASK_ID when unpushed changes do not map to a single task"
+            )
+
+        active = self.active_task_ids()
+        if len(active) > 1:
+            raise WorkflowError(
+                f"{event} requires explicit --task-id or WORKFLOW_TASK_ID when multiple active tasks exist: {', '.join(active)}"
+            )
         if len(active) == 1:
             return active[0]
         return None
@@ -395,15 +461,18 @@ class WorkflowService:
             elif guard_name == "write_scope_guard":
                 result = write_scope_guard(task["id"] if task else None, phase, changed_paths or [])
             elif guard_name == "latest_verified_run_guard":
-                if task is None:
+                if task is None and event == "pre_push" and not (changed_paths or []):
+                    result = HookResult("latest_verified_run_guard", "passed", ["no changed paths detected"])
+                elif task is None:
                     raise WorkflowError(f"{event} requires task context")
-                result = latest_verified_run_guard(
-                    task,
-                    phase,
-                    changed_paths or [],
-                    load_run=self.load_run,
-                    scope_sensitive=(event == "pre_push"),
-                )
+                else:
+                    result = latest_verified_run_guard(
+                        task,
+                        phase,
+                        changed_paths or [],
+                        load_run=self.load_run,
+                        scope_sensitive=(event == "pre_push"),
+                    )
             elif guard_name == "user_validation_guard":
                 if task is None:
                     raise WorkflowError("pre_complete requires task context")
@@ -442,10 +511,6 @@ class WorkflowService:
             raise WorkflowError(f"task state does not allow start: {task['state']}")
         if phase["status"] not in {"pending", "failed", "blocked"}:
             raise WorkflowError(f"phase state does not allow start: {phase['status']}")
-
-        hook_result = self.run_hooks("pre_phase_start", task=task, phase=phase)
-        if hook_result.status != "passed":
-            raise WorkflowError("; ".join(hook_result.messages))
 
         self.update_phase_state(phase, "in_progress")
         task["state"] = "in_progress"
@@ -572,8 +637,8 @@ class WorkflowService:
 
     def verify_task(self, task_id: str, phase_id: str | None, commands: list[str] | None, evidence: list[str]) -> int:
         task, phases_payload, phase = self.current_phase(task_id, phase_id)
-        if phase["status"] not in {"completed", "in_progress"}:
-            raise WorkflowError("verification requires phase status completed or in_progress")
+        if phase["status"] != "completed":
+            raise WorkflowError("verification requires phase status completed")
 
         command_list = commands or phase["acceptance"]["commands"]
         if not command_list:
@@ -735,7 +800,7 @@ class WorkflowService:
                         target_phase = candidate
                         break
 
-        if target_phase and target_phase["status"] in {"failed", "blocked"}:
+        if target_phase and target_phase["status"] in {"failed", "blocked", "completed"}:
             self.update_phase_state(target_phase, "pending")
 
         task["state"] = "approved"
@@ -775,10 +840,25 @@ class WorkflowService:
                 task = self.load_task(task_id)
                 phases = self.load_phases(task_id)
                 spec = inspect_spec(self.spec_path(task_id))
-                if task["active_phase_id"] is not None and not any(
-                    phase["id"] == task["active_phase_id"] for phase in phases["phases"]
-                ):
-                    raise WorkflowError("active phase does not exist")
+                active_phase = None
+                if task["active_phase_id"] is not None:
+                    active_phase = next((phase for phase in phases["phases"] if phase["id"] == task["active_phase_id"]), None)
+                    if active_phase is None:
+                        raise WorkflowError("active phase does not exist")
+                elif task["state"] != "draft" and phases["phases"]:
+                    raise WorkflowError("planned task requires active phase")
+
+                if active_phase is not None:
+                    if task["state"] == "approved" and active_phase["status"] != "pending":
+                        raise WorkflowError("approved task requires active phase status pending")
+                    if task["state"] == "in_progress" and active_phase["status"] not in {"in_progress", "completed"}:
+                        raise WorkflowError("in_progress task requires active phase status in_progress or completed")
+                    if task["state"] == "failed" and active_phase["status"] != "failed":
+                        raise WorkflowError("failed task requires active phase status failed")
+                    if task["state"] == "blocked" and active_phase["status"] != "blocked":
+                        raise WorkflowError("blocked task requires active phase status blocked")
+                    if task["state"] in {"review_ready", "completed"} and active_phase["status"] != "completed":
+                        raise WorkflowError(f"{task['state']} task requires active phase status completed")
                 if task["state"] != "draft":
                     if not spec["ready_for_approval"]:
                         raise WorkflowError("approved-or-later task requires approval-ready spec.md")
