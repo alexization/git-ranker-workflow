@@ -1,8 +1,8 @@
 <!--
 Reader-first PR body only.
 Each section should usually be one short paragraph or 1-3 bullets.
-Keep raw verification commands, spec paths, full file inventories, reviewer runtime dumps,
-and guardrail ledger details in approved spec or linked artifacts.
+Keep raw verification commands, task artifact paths, full file inventories, reviewer runtime dumps,
+and low-level workflow evidence in `workflows/tasks/<task-id>/` artifacts.
 If a section does not apply, write `없음`.
 -->
 

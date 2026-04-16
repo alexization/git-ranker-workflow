@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+
+task_id="${WORKFLOW_TASK_ID:-}"
+if [ -z "$task_id" ]; then
+  task_id="$(python3 scripts/workflow.py status --infer-active-task 2>/dev/null || true)"
+fi
+
+if [ -n "$task_id" ]; then
+  phase_id="${WORKFLOW_PHASE_ID:-}"
+  if [ -z "$phase_id" ]; then
+    phase_id="$(python3 scripts/workflow.py status "$task_id" --field active_phase_id 2>/dev/null || true)"
+  fi
+  python3 scripts/workflow.py hook pre_commit --task-id "$task_id" --phase-id "$phase_id" --staged
+else
+  python3 scripts/workflow.py hook pre_commit --staged
+fi
