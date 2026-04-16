@@ -170,6 +170,7 @@ class WorkflowCliTest(unittest.TestCase):
         commands: list[str],
         *,
         phase_count: int = 1,
+        inputs: list[str] | None = None,
         allowed_write_paths: list[str] | None = None,
         test_policy_mode: str = "require_tests",
         test_policy_evidence: list[str] | None = None,
@@ -182,7 +183,7 @@ class WorkflowCliTest(unittest.TestCase):
                 "id": f"phase-{index}",
                 "title": f"build-runtime-{index}",
                 "goal": f"create workflow runtime {index}",
-                "inputs": ["spec.md"],
+                "inputs": inputs if inputs is not None else ["spec.md"],
                 "allowed_write_paths": allowed_write_paths or ["scripts/", "tests/"],
                 "acceptance": {"commands": commands if index == 1 else [f"python3 -c \"print('phase {index} ok')\""]},
                 "test_policy": {
@@ -443,6 +444,41 @@ class WorkflowCliTest(unittest.TestCase):
             self.assertEqual(payload["spec"]["clarification_count"], 4)
             self.assertTrue(payload["spec"]["unresolved_clarifications"])
             self.assertIn("acceptance", payload["spec"]["coverage_missing"])
+
+    def test_plan_keeps_legacy_empty_inputs_compatible_without_required_reads(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-002cc", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+
+            task_path = root / "workflows" / "tasks" / "task-002cc" / "task.json"
+            task = self.read_json(task_path)
+            task.pop("contract_version", None)
+            task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            self.finalize_spec(root, "task-002cc")
+            spec_path = root / "workflows" / "tasks" / "task-002cc" / "spec.md"
+            legacy_text = spec_path.read_text(encoding="utf-8")
+            for category in ("scope", "goal", "non_goal", "constraint", "acceptance"):
+                legacy_text = legacy_text.replace(f"Q: [{category}] ", "Q: ")
+            spec_path.write_text(legacy_text, encoding="utf-8")
+
+            self.run_cli(root, "approve", "task-002cc", "--note", "approved by user")
+            phase_file = self.write_phase_input(
+                root,
+                ["python3 -c \"print('ok')\""],
+                inputs=[],
+                include_bootstrap_fields=False,
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["legacy empty-input plans should remain plannable"],
+            )
+
+            self.run_cli(root, "plan", "task-002cc", "--from", str(phase_file))
+
+            phases = self.read_json(root / "workflows" / "tasks" / "task-002cc" / "phases.json")
+            self.assertNotIn("required_reads", phases["phases"][0])
+
+            status = json.loads(self.run_cli(root, "status", "task-002cc").stdout)
+            self.assertEqual(status["active_phase_bootstrap"]["required_reads"], [])
 
     def test_approve_requires_coverage_categories_before_locking_intake(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

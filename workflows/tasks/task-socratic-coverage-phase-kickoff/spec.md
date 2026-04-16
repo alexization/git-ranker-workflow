@@ -17,6 +17,7 @@
 - 현재 phase 상태는 JSON에 기록되지만, 다음 phase를 새 세션에서 시작하기 전에 어떤 정보를 읽고 어떤 순서로 시작해야 하는지까지는 runtime contract로 고정되어 있지 않다.
 - 이 상태에서는 spec 품질이 얕은 문답으로 승인될 수 있고, multi-phase 작업에서 다음 phase가 이전 채팅 맥락에 암묵적으로 의존하게 되어 control plane이 세션 독립성을 보장하지 못한다.
 - 현재 PR 브랜치에는 workflow control-plane 변경만 있고, 같은 작업 흐름에서 이미 완료된 `git-ranker` backend 기준 커밋을 가리키는 submodule gitlink는 빠져 있어 reviewer가 실제 baseline을 한 번에 확인하기 어렵다.
+- bootstrap metadata default를 도입한 뒤, legacy phase payload가 `inputs=[]`와 bootstrap field omission을 함께 사용하면 `plan`이 빈 `required_reads`를 저장하려다 검증에서 실패하는 회귀가 생길 수 있다.
 
 ## Goals
 
@@ -27,6 +28,7 @@
 - `doctor`와 consistency check가 incomplete task artifact를 더 명확하게 보고하도록 개선한다.
 - 관련 문서, skills, hooks surface, 테스트를 함께 갱신한다.
 - workflow control-plane 변경을 publish할 때 함께 검토되어야 하는 `git-ranker` submodule pointer를 같은 PR 브랜치에 반영한다.
+- legacy phase payload가 빈 `inputs`와 omitted bootstrap field를 사용하더라도 `plan`이 회귀 없이 계속 통과하도록 bootstrap default 적용을 backward compatible하게 유지한다.
 
 ## Non-goals
 
@@ -53,6 +55,7 @@
 - 새 CLI 프로세스 기준 테스트로 `phase-1 verify -> phase-2 kickoff -> phase-2 start` 흐름이 검증된다.
 - incomplete task directory가 있을 때 consistency check/doctor가 원인을 명확히 보고한다.
 - PR 브랜치의 `git-ranker` gitlink가 backend PR `#89`의 커밋 `fbc672c6384eb896183f838be7413e195e388dc5`를 가리키고, review summary에도 그 사실이 반영된다.
+- bootstrap field가 없는 legacy phase plan에서 `inputs=[]`여도 `plan`이 실패하지 않고, status bootstrap summary는 빈 `required_reads`를 안전하게 노출한다.
 
 ## Socratic Clarification Log
 
@@ -79,5 +82,5 @@
 ## Approval
 
 - Actor: `user`
-- Timestamp: `2026-04-16T08:33:23+00:00`
-- Note: User requested that the published PR also include the git-ranker submodule pointer update.
+- Timestamp: `2026-04-16T09:51:41+00:00`
+- Note: User asked to address PR review feedback about legacy empty-input phase compatibility.

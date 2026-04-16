@@ -213,7 +213,10 @@ class WorkflowService:
         if not isinstance(completion_signal, str) or not completion_signal.strip():
             completion_signal = f"{phase['id']} acceptance commands pass"
 
-        phase["required_reads"] = required_reads
+        if required_reads:
+            phase["required_reads"] = required_reads
+        else:
+            phase.pop("required_reads", None)
         phase["starting_points"] = starting_points
         phase["deliverables"] = deliverables
         phase["completion_signal"] = completion_signal.strip()
@@ -225,7 +228,7 @@ class WorkflowService:
             "phase_id": phase["id"],
             "title": phase["title"],
             "goal": phase["goal"],
-            "required_reads": phase["required_reads"],
+            "required_reads": phase.get("required_reads", []),
             "starting_points": phase["starting_points"],
             "deliverables": phase["deliverables"],
             "completion_signal": phase["completion_signal"],

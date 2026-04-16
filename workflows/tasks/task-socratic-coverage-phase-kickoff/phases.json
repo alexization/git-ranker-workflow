@@ -1,47 +1,46 @@
 {
   "task_id": "task-socratic-coverage-phase-kickoff",
-  "generated_at": "2026-04-16T08:34:19+00:00",
+  "generated_at": "2026-04-16T09:51:58+00:00",
   "phases": [
     {
-      "id": "phase-3",
-      "title": "publish-git-ranker-submodule-baseline",
-      "goal": "Reflect the already-completed git-ranker backend baseline in this workflow PR by updating the git-ranker gitlink and restoring review readiness.",
+      "id": "phase-4",
+      "title": "legacy-empty-input-bootstrap-compatibility",
+      "goal": "Preserve backward compatibility for legacy phase plans that omit bootstrap fields and use empty inputs while keeping the kickoff bootstrap contract intact.",
       "inputs": [
         "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
-        "git-ranker"
+        "scripts/workflow_runtime/engine.py",
+        "tests/test_workflow_cli.py"
       ],
       "required_reads": [
         "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
-        "workflows/tasks/task-socratic-coverage-phase-kickoff/task.json",
-        "workflows/tasks/task-socratic-coverage-phase-kickoff/phases.json"
+        "scripts/workflow_runtime/engine.py",
+        "scripts/workflow_runtime/models.py",
+        "tests/test_workflow_cli.py"
       ],
       "starting_points": [
-        "Confirm the follow-up spec now includes the git-ranker gitlink requirement.",
-        "Verify the checked-out git-ranker submodule HEAD matches the backend commit that should be published with this PR.",
-        "Only update the workflow repo gitlink; do not edit backend source inside the workflow repository."
+        "Inspect the review comment about empty required_reads regression in legacy phase payloads.",
+        "Confirm the fix preserves bootstrap summaries without writing invalid empty required_reads into phases.json.",
+        "Add a regression test that plans a legacy empty-input phase without bootstrap metadata."
       ],
       "deliverables": [
-        "The workflow PR branch points git-ranker at backend commit fbc672c6384eb896183f838be7413e195e388dc5.",
-        "The task returns to review_ready with updated evidence."
+        "Bootstrap defaults no longer force invalid empty required_reads into stored phases.",
+        "A regression test covers legacy empty-input phase planning."
       ],
-      "completion_signal": "The git-ranker gitlink points at fbc672c6384eb896183f838be7413e195e388dc5 and doctor still passes.",
+      "completion_signal": "Legacy empty-input phase plans remain plannable and the full CLI test suite still passes.",
       "allowed_write_paths": [
-        "git-ranker"
+        "scripts/workflow_runtime/",
+        "tests/"
       ],
       "acceptance": {
         "commands": [
-          "python3 -c \"import subprocess; diff=subprocess.check_output(['git','diff','--submodule=short','--','git-ranker'], text=True); assert 'fbc672c6384eb896183f838be7413e195e388dc5' in diff, diff; print(diff.strip())\"",
-          "python3 -c \"import subprocess; sha=subprocess.check_output(['git','-C','git-ranker','rev-parse','HEAD'], text=True).strip(); assert sha == 'fbc672c6384eb896183f838be7413e195e388dc5', sha; print(sha)\"",
+          "python3 -m unittest tests.test_workflow_cli.WorkflowCliTest.test_plan_keeps_legacy_empty_inputs_compatible_without_required_reads -v",
+          "python3 -m unittest tests.test_workflow_cli -v",
           "python3 scripts/workflow.py doctor"
         ]
       },
       "test_policy": {
-        "mode": "evidence_only",
-        "evidence": [
-          "No new workflow runtime or backend source code is introduced in this follow-up; the change only publishes the already-completed git-ranker baseline through the workflow repo gitlink.",
-          "The workflow runtime changes remain covered by the previously passed verification run 20260416T081911-d8020d25.",
-          "The backend target commit fbc672c6384eb896183f838be7413e195e388dc5 already corresponds to git-ranker PR #89."
-        ]
+        "mode": "require_tests",
+        "evidence": []
       },
       "order": 1,
       "status": "completed",
