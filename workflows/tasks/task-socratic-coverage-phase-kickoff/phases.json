@@ -1,0 +1,114 @@
+{
+  "task_id": "task-socratic-coverage-phase-kickoff",
+  "generated_at": "2026-04-16T07:45:08+00:00",
+  "phases": [
+    {
+      "id": "phase-1",
+      "title": "clarification-coverage-and-status",
+      "goal": "Add clarification coverage enforcement and expose missing requirement coverage in status output before approval.",
+      "inputs": [
+        "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
+        "docs/runtime.md",
+        "docs/artifact-model.md",
+        "scripts/workflow_runtime/models.py",
+        "tests/test_workflow_cli.py"
+      ],
+      "allowed_write_paths": [
+        "scripts/workflow_runtime/",
+        "tests/",
+        "docs/",
+        "AGENTS.md",
+        ".codex/skills/",
+        ".githooks/",
+        "workflows/system/"
+      ],
+      "acceptance": {
+        "commands": [
+          "python3 -m unittest tests.test_workflow_cli.WorkflowCliTest.test_approve_requires_coverage_categories_before_locking_intake tests.test_workflow_cli.WorkflowCliTest.test_status_reports_missing_coverage_categories_before_approval -v"
+        ]
+      },
+      "test_policy": {
+        "mode": "require_tests",
+        "evidence": []
+      },
+      "order": 1,
+      "status": "completed",
+      "retry_count": 0,
+      "required_reads": [
+        "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
+        "docs/runtime.md",
+        "docs/artifact-model.md",
+        "scripts/workflow_runtime/models.py",
+        "tests/test_workflow_cli.py"
+      ],
+      "starting_points": [
+        "Read the locked spec for task-socratic-coverage-phase-kickoff.",
+        "Inspect the active phase goal: Add clarification coverage enforcement and expose missing requirement coverage in status output before approval.",
+        "Confirm allowed write paths and acceptance commands before editing."
+      ],
+      "deliverables": [
+        "Add clarification coverage enforcement and expose missing requirement coverage in status output before approval."
+      ],
+      "completion_signal": "phase-1 acceptance commands pass"
+    },
+    {
+      "id": "phase-2",
+      "title": "phase-kickoff-and-consistency-hardening",
+      "goal": "Require kickoff proof before starting the next phase, persist phase bootstrap metadata, and make incomplete task directories fail with explicit consistency errors.",
+      "inputs": [
+        "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
+        "scripts/workflow_runtime/engine.py",
+        "scripts/workflow_runtime/cli.py",
+        "scripts/workflow_runtime/doctor.py",
+        "tests/test_workflow_cli.py",
+        "docs/runtime.md",
+        "docs/runbook.md",
+        "docs/hooks.md",
+        "AGENTS.md"
+      ],
+      "allowed_write_paths": [
+        "scripts/workflow_runtime/",
+        "tests/",
+        "docs/",
+        "AGENTS.md",
+        ".codex/skills/",
+        ".githooks/",
+        "workflows/system/"
+      ],
+      "acceptance": {
+        "commands": [
+          "python3 -m unittest tests.test_workflow_cli.WorkflowCliTest.test_kickoff_is_required_before_starting_next_phase tests.test_workflow_cli.WorkflowCliTest.test_replan_invalidates_existing_kickoff_requirement tests.test_workflow_cli.WorkflowCliTest.test_reopen_resets_kickoff_requirement_for_target_phase tests.test_workflow_cli.WorkflowCliTest.test_doctor_reports_incomplete_task_directory -v",
+          "python3 -m unittest tests.test_workflow_cli -v",
+          "python3 scripts/workflow.py doctor"
+        ]
+      },
+      "test_policy": {
+        "mode": "require_tests",
+        "evidence": []
+      },
+      "order": 2,
+      "status": "completed",
+      "retry_count": 0,
+      "required_reads": [
+        "workflows/tasks/task-socratic-coverage-phase-kickoff/spec.md",
+        "scripts/workflow_runtime/engine.py",
+        "scripts/workflow_runtime/cli.py",
+        "scripts/workflow_runtime/doctor.py",
+        "tests/test_workflow_cli.py",
+        "docs/runtime.md",
+        "docs/runbook.md",
+        "docs/hooks.md",
+        "AGENTS.md"
+      ],
+      "starting_points": [
+        "Read the locked spec for task-socratic-coverage-phase-kickoff.",
+        "Inspect the active phase goal: Require kickoff proof before starting the next phase, persist phase bootstrap metadata, and make incomplete task directories fail with explicit consistency errors.",
+        "Confirm allowed write paths and acceptance commands before editing."
+      ],
+      "deliverables": [
+        "Require kickoff proof before starting the next phase, persist phase bootstrap metadata, and make incomplete task directories fail with explicit consistency errors."
+      ],
+      "completion_signal": "phase-2 acceptance commands pass"
+    }
+  ]
+}

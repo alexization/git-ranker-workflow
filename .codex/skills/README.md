@@ -29,8 +29,8 @@
 1. `request-intake`
 2. `socratic-spec-authoring`
 3. `phase-planner`
-4. `boundary-check -> phase-executor -> verification-runner`를 active phase마다 반복
+4. `boundary-check -> phase-executor -> verification-runner`를 active phase마다 반복한다. 단, `task.json.kickoff_required_for_phase`가 active phase와 같으면 새 세션이 먼저 `kickoff`를 실행해야 한다.
 5. 모든 phase가 끝나면 `review-closeout`
 6. 실패, block, follow-up이면 `repair-reopen`
 
-새 workflow에서는 markdown spec과 JSON state를 분리한다. `spec.md`는 사람용 요구사항 초안이고, `approve`가 이를 `task.json.intake`로 잠근다. `task.json`/`phases.json`/`runs/*.json`은 자동화용 canonical source다.
+새 workflow에서는 markdown spec과 JSON state를 분리한다. `spec.md`는 사람용 요구사항 초안이고, `approve`가 이를 `task.json.intake`로 잠근다. 새 spec contract에서는 clarification coverage category를 모두 채워야 승인된다. `task.json`/`phases.json`/`runs/*.json`은 자동화용 canonical source고, phase boundary kickoff proof도 여기 남긴다.

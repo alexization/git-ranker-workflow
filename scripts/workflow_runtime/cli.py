@@ -78,6 +78,10 @@ def build_parser() -> argparse.ArgumentParser:
     review_parser.add_argument("--close", action="store_true")
     review_parser.add_argument("--user-validation-note")
 
+    kickoff_parser = subparsers.add_parser("kickoff")
+    kickoff_parser.add_argument("task_id")
+    kickoff_parser.add_argument("--phase-id")
+
     reopen_parser = subparsers.add_parser("reopen")
     reopen_parser.add_argument("task_id")
     reopen_parser.add_argument("--note", required=True)
@@ -165,6 +169,10 @@ def main(argv: list[str] | None = None) -> int:
                 return 0
             service.review_task(args.task_id, args.note)
             emit({"status": "review_ready", "task_id": args.task_id})
+            return 0
+
+        if args.command == "kickoff":
+            emit(service.kickoff_phase(args.task_id, args.phase_id))
             return 0
 
         if args.command == "reopen":

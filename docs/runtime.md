@@ -7,12 +7,14 @@
 3. 사용자가 현재 spec 초안에 명시적으로 동의하면 `approve`로 승인 고정
 4. `approve`가 `spec.md`를 `task.json.intake`로 잠금
 5. `plan`으로 `phases.json` 적재
-6. active phase 실행
+6. phase-1 실행
 7. `run --complete`로 phase closure
 8. `verify`로 completed phase의 acceptance command 실행
-9. 모든 phase 완료 후 `review`
-10. `review --close`로 user validation과 완료 고정
-11. 필요하면 `reopen`으로 repair loop 재개
+9. 다음 pending phase가 있으면 `kickoff`로 bootstrap proof 기록
+10. 새 세션이 `run --start`로 다음 phase 실행
+11. 모든 phase 완료 후 `review`
+12. `review --close`로 user validation과 완료 고정
+13. 필요하면 `reopen`으로 repair loop 재개
 
 ## Task States
 
@@ -36,16 +38,22 @@
 
 - `approve` 전에는 `plan`, `run`, `verify`, `review`를 허용하지 않는다.
 - `approve`는 `spec.md`의 필수 section, placeholder 제거 여부, `Socratic Clarification Log`의 `Q/A/Decision` triplet 형식을 검증한다.
+- 새 task contract에서 `approve`는 clarification coverage도 검증한다. `scope`, `goal`, `non_goal`, `constraint`, `acceptance`가 모두 없으면 승인되지 않는다.
 - `approve`는 승인된 spec을 `task.json.intake`로 잠그며, 이후 `spec.md`를 수정했으면 `approve`를 다시 실행해 intake를 재잠가야 한다.
 - `plan`은 명시적 phase 입력 없이는 실행되지 않는다.
-- `plan`은 `task.json.intake`와 현재 `spec.md`가 일치할 때만 허용한다.
-- `status`는 `spec.md`를 읽어 `ready_for_approval`, `clarification_count`, `unresolved_clarifications`를 JSON으로 노출한다.
+- `plan`은 `task.json.intake`와 현재 `spec.md`가 일치할 때만 허용하며, 각 phase를 새 세션이 시작할 수 있도록 bootstrap metadata를 함께 적재한다.
+- `status`는 `spec.md`를 읽어 `ready_for_approval`, `clarification_count`, `coverage_present`, `coverage_missing`, `unresolved_clarifications`를 JSON으로 노출한다.
+- `status`는 active phase의 `required_reads`, `starting_points`, `deliverables`, `completion_signal`도 함께 노출해 다음 세션 시작점을 복원한다.
 - `run --complete`는 `allowed_write_paths`와 `workflows/tasks/<task-id>/` 밖 변경을 차단한다.
+- `run --start`는 `task.json.kickoff_required_for_phase`가 active phase와 일치하면, matching `phase_kickoff` evidence 없이는 시작되지 않는다.
 - `verify`는 completed active phase 또는 지정된 completed phase의 `acceptance.commands`를 실행해 run evidence를 남긴다.
 - phase completion 뒤 verification이 통과하기 전까지 `last_verified_run_id`는 비어 있어야 한다.
+- verification이 다음 pending phase를 활성화하면 task를 `approved`로 되돌리고, 다음 phase에 대한 `kickoff_required_for_phase`를 기록한다.
+- `kickoff`는 active pending phase의 bootstrap summary를 `runs/*.json`에 기록한다. 이 증거는 실제 외부 session ID가 아니라 control-plane proof 역할을 한다.
 - `review`는 `last_verified_run_id`가 active phase와 일치하는 passed verification일 때만 허용한다.
 - task-level review는 모든 phase가 `completed`일 때만 연다.
 - `review --close --user-validation-note ...`만 최종 완료를 닫을 수 있다.
+- incomplete task directory는 `doctor`와 `status --check`에서 명시적 consistency error로 보고된다.
 
 ## Internal Runtime Structure
 
@@ -68,4 +76,5 @@
 - 동일한 `error_fingerprint`가 짧은 시간 안에 반복되면 Circuit Breaker가 `blocked`로 전이한다.
 - `blocked`는 외부 입력, spec 재정의, phase 재계획이 필요한 상태다.
 - `reopen`은 `failed`, `blocked`, `review_ready`, `completed` task를 다시 `approved`로 되돌리고 target phase를 `pending`으로 복구한 뒤 repair loop를 재시작한다.
+- reopened target phase가 2번째 이상 phase면 kickoff proof를 다시 요구한다.
 - 추가 요구사항이면 `reopen` 뒤 `spec.md`를 다시 잠그고 `approve`를 재실행한 뒤 `plan`으로 phase를 다시 적재한다.

@@ -8,7 +8,13 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-from workflow_runtime.constants import PHASE_STATES, SPEC_REQUIRED_SECTIONS, TASK_STATES
+from workflow_runtime.constants import (
+    CLARIFICATION_REQUIRED_CATEGORIES,
+    CURRENT_TASK_CONTRACT_VERSION,
+    PHASE_STATES,
+    SPEC_REQUIRED_SECTIONS,
+    TASK_STATES,
+)
 
 
 class WorkflowError(Exception):
@@ -170,6 +176,15 @@ def empty_task_intake() -> dict[str, Any]:
     }
 
 
+def task_contract_version(payload: dict[str, Any]) -> int:
+    value = payload.get("contract_version")
+    if value is None:
+        return 1
+    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+        raise WorkflowError("task.contract_version must be an integer >= 1")
+    return value
+
+
 def _strip_markdown_prefix(line: str) -> str:
     stripped = line.strip()
     stripped = re.sub(r"^[-*+]\s+", "", stripped)
@@ -195,7 +210,21 @@ def _normalize_items(body: str, label: str) -> list[str]:
     return items
 
 
-def _normalize_clarifications(body: str, *, strict: bool) -> tuple[list[dict[str, Any]], list[str]]:
+def _parse_clarification_question(raw: str, *, strict: bool) -> tuple[str | None, str]:
+    match = re.match(r"^\[([A-Za-z][A-Za-z0-9_-]*)\]\s*(.*)$", raw)
+    if not match:
+        if strict:
+            raise WorkflowError("Socratic Clarification Log must declare a coverage category like [scope] on each question")
+        return None, raw
+
+    category = match.group(1).strip().lower().replace("-", "_")
+    question = match.group(2).strip()
+    if not question:
+        raise WorkflowError("Socratic Clarification Log contains an empty question")
+    return category, question
+
+
+def _normalize_clarifications(body: str, *, strict: bool, require_coverage: bool) -> tuple[list[dict[str, Any]], list[str]]:
     clarifications: list[dict[str, Any]] = []
     errors: list[str] = []
     current: dict[str, Any] = {}
@@ -210,11 +239,18 @@ def _normalize_clarifications(body: str, *, strict: bool) -> tuple[list[dict[str
             if current:
                 push_error("must use complete Q/A/Decision triplets")
                 current = {}
-            question = line[2:].strip()
-            if not question:
+            raw_question = line[2:].strip()
+            if not raw_question:
                 push_error("contains an empty question")
                 continue
+            try:
+                category, question = _parse_clarification_question(raw_question, strict=require_coverage)
+            except WorkflowError as exc:
+                push_error(str(exc).replace("Socratic Clarification Log ", ""))
+                continue
             current = {"question": question}
+            if category is not None:
+                current["category"] = category
             continue
 
         if line.startswith("A:"):
@@ -249,13 +285,15 @@ def _normalize_clarifications(body: str, *, strict: bool) -> tuple[list[dict[str
     return clarifications, errors
 
 
-def inspect_spec(spec_path: Path) -> dict[str, Any]:
+def inspect_spec(spec_path: Path, *, require_coverage: bool = False) -> dict[str, Any]:
     readiness = {
         "ready_for_approval": False,
         "missing_sections": [],
         "placeholder_sections": [],
         "validation_errors": [],
         "clarification_count": 0,
+        "coverage_present": [],
+        "coverage_missing": [],
         "unresolved_clarifications": [],
         "intake": empty_task_intake(),
     }
@@ -283,7 +321,11 @@ def inspect_spec(spec_path: Path) -> dict[str, Any]:
         return readiness
 
     try:
-        clarifications, clarification_errors = _normalize_clarifications(sections["Socratic Clarification Log"], strict=False)
+        clarifications, clarification_errors = _normalize_clarifications(
+            sections["Socratic Clarification Log"],
+            strict=False,
+            require_coverage=require_coverage,
+        )
         intake = {
             "request_summary": _normalize_summary(sections["Request"], "Request"),
             "problem_summary": _normalize_summary(sections["Problem"], "Problem"),
@@ -299,6 +341,16 @@ def inspect_spec(spec_path: Path) -> dict[str, Any]:
     except WorkflowError as exc:
         readiness["validation_errors"].append(str(exc))
 
+    present_categories = sorted({item["category"] for item in readiness["intake"]["clarifications"] if item.get("category")})
+    readiness["coverage_present"] = present_categories
+    if require_coverage:
+        missing_categories = [item for item in CLARIFICATION_REQUIRED_CATEGORIES if item not in present_categories]
+        readiness["coverage_missing"] = missing_categories
+        if missing_categories:
+            readiness["validation_errors"].append(
+                f"Socratic Clarification Log missing coverage categories: {', '.join(missing_categories)}"
+            )
+
     if readiness["clarification_count"] == 0:
         readiness["unresolved_clarifications"].append("Socratic Clarification Log requires at least one complete Q/A/Decision triplet")
     readiness["unresolved_clarifications"].extend(readiness["validation_errors"])
@@ -308,8 +360,8 @@ def inspect_spec(spec_path: Path) -> dict[str, Any]:
     return readiness
 
 
-def validate_spec_for_approval(spec_path: Path) -> dict[str, Any]:
-    readiness = inspect_spec(spec_path)
+def validate_spec_for_approval(spec_path: Path, *, require_coverage: bool = False) -> dict[str, Any]:
+    readiness = inspect_spec(spec_path, require_coverage=require_coverage)
     if readiness["missing_sections"]:
         raise WorkflowError(f"spec.md missing required sections: {', '.join(readiness['missing_sections'])}")
     if readiness["placeholder_sections"]:
@@ -352,6 +404,16 @@ def validate_locked_intake(payload: dict[str, Any], label: str = "task.intake") 
         _require_keys(clarification, ["question", "answer", "decision", "resolved"], f"{label}.clarifications[{index}]")
         normalized_clarifications.append(
             {
+                **(
+                    {
+                        "category": _require_string(
+                            clarification["category"],
+                            f"{label}.clarifications[{index}].category",
+                        )
+                    }
+                    if "category" in clarification
+                    else {}
+                ),
                 "question": _require_string(clarification["question"], f"{label}.clarifications[{index}].question"),
                 "answer": _require_string(clarification["answer"], f"{label}.clarifications[{index}].answer"),
                 "decision": _require_string(clarification["decision"], f"{label}.clarifications[{index}].decision"),
@@ -370,7 +432,7 @@ def validate_locked_intake(payload: dict[str, Any], label: str = "task.intake") 
     }
 
 
-def ensure_locked_intake(payload: dict[str, Any], label: str = "task.intake") -> dict[str, Any]:
+def ensure_locked_intake(payload: dict[str, Any], label: str = "task.intake", *, require_coverage: bool = False) -> dict[str, Any]:
     intake = validate_locked_intake(payload, label)
     required_list_fields = ["goals", "non_goals", "constraints", "acceptance", "clarifications"]
     if intake["request_summary"] is None:
@@ -383,6 +445,17 @@ def ensure_locked_intake(payload: dict[str, Any], label: str = "task.intake") ->
     unresolved = [item["question"] for item in intake["clarifications"] if not item["resolved"]]
     if unresolved:
         raise WorkflowError(f"{label}.clarifications must all be resolved")
+    if require_coverage:
+        uncategorized = [item["question"] for item in intake["clarifications"] if not item.get("category")]
+        if uncategorized:
+            raise WorkflowError(f"{label}.clarifications require category for every question")
+        missing_categories = [
+            item
+            for item in CLARIFICATION_REQUIRED_CATEGORIES
+            if item not in {entry["category"] for entry in intake["clarifications"] if entry.get("category")}
+        ]
+        if missing_categories:
+            raise WorkflowError(f"{label}.clarifications missing coverage categories: {', '.join(missing_categories)}")
     return intake
 
 
@@ -411,6 +484,7 @@ def validate_task(payload: dict[str, Any]) -> None:
     _require_string(payload["id"], "task.id")
     _require_string(payload["title"], "task.title")
     _require_string(payload["primary_repo"], "task.primary_repo")
+    contract_version = task_contract_version(payload)
     if payload["state"] not in TASK_STATES:
         raise WorkflowError(f"task.state must be one of {sorted(TASK_STATES)}")
     _require_string(payload["created_at"], "task.created_at")
@@ -418,6 +492,8 @@ def validate_task(payload: dict[str, Any]) -> None:
     _require_optional_string(payload["active_phase_id"], "task.active_phase_id")
     _require_optional_string(payload["latest_run_id"], "task.latest_run_id")
     _require_optional_string(payload["last_verified_run_id"], "task.last_verified_run_id")
+    _require_optional_string(payload.get("kickoff_required_for_phase"), "task.kickoff_required_for_phase")
+    _require_optional_string(payload.get("last_kickoff_run_id"), "task.last_kickoff_run_id")
     _require_optional_string(payload["blocked_reason"], "task.blocked_reason")
     _require_bool(payload["user_validated"], "task.user_validated")
     _require_optional_string(payload["user_validation_note"], "task.user_validation_note")
@@ -446,7 +522,7 @@ def validate_task(payload: dict[str, Any]) -> None:
     if payload["state"] in {"review_ready", "completed"} and not payload["last_verified_run_id"]:
         raise WorkflowError("review_ready/completed task requires last_verified_run_id")
     if payload["state"] != "draft":
-        ensure_locked_intake(intake)
+        ensure_locked_intake(intake, require_coverage=contract_version >= CURRENT_TASK_CONTRACT_VERSION)
 
 
 def validate_phases(payload: dict[str, Any]) -> None:
@@ -492,6 +568,14 @@ def validate_phases(payload: dict[str, Any]) -> None:
         acceptance = _require_mapping(phase["acceptance"], f"phase[{index}].acceptance")
         _require_keys(acceptance, ["commands"], f"phase[{index}].acceptance")
         _require_string_list(acceptance["commands"], f"phase[{index}].acceptance.commands", allow_empty=False)
+        if "required_reads" in phase:
+            _require_string_list(phase["required_reads"], f"phase[{index}].required_reads", allow_empty=False)
+        if "starting_points" in phase:
+            _require_string_list(phase["starting_points"], f"phase[{index}].starting_points", allow_empty=False)
+        if "deliverables" in phase:
+            _require_string_list(phase["deliverables"], f"phase[{index}].deliverables", allow_empty=False)
+        if "completion_signal" in phase:
+            _require_string(phase["completion_signal"], f"phase[{index}].completion_signal")
 
         if phase["status"] not in PHASE_STATES:
             raise WorkflowError(f"phase[{index}].status must be one of {sorted(PHASE_STATES)}")

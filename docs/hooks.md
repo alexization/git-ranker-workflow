@@ -61,6 +61,7 @@
 - `.github/workflows/workflow-control-plane.yml`
 
 git hook만으로는 충분하지 않다. 로컬 CLI와 phase runner가 같은 hook 설정을 읽어야 guard가 유지된다.
+phase boundary의 fresh-session kickoff proof는 git hook이 아니라 workflow runtime이 `kickoff`와 `run --start` 사이에서 직접 강제한다.
 `python3 scripts/workflow.py init`는 로컬 git 저장소의 `core.hooksPath`를 `.githooks`로 맞추고, `doctor`는 이 설정이 빠지면 실패한다.
 `init`는 `.githooks/pre-commit`, `.githooks/pre-push`, `workflows/system/hooks.json`을 source 기준으로 다시 동기화한다.
 `doctor`는 위 runtime surface가 source와 drift하면 실패하고 `python3 scripts/workflow.py init`를 다시 요구한다.

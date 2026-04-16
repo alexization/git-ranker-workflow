@@ -1,0 +1,18 @@
+{
+  "id": "20260416T074940-adfc4b6b",
+  "task_id": "task-socratic-coverage-phase-kickoff",
+  "phase_id": "phase-1",
+  "event": "verification",
+  "commands": [
+    {
+      "command": "python3 -m unittest tests.test_workflow_cli.WorkflowCliTest.test_approve_requires_coverage_categories_before_locking_intake tests.test_workflow_cli.WorkflowCliTest.test_status_reports_missing_coverage_categories_before_approval -v",
+      "status": "passed",
+      "output": "test_approve_requires_coverage_categories_before_locking_intake (tests.test_workflow_cli.WorkflowCliTest.test_approve_requires_coverage_categories_before_locking_intake) ... ok\ntest_status_reports_missing_coverage_categories_before_approval (tests.test_workflow_cli.WorkflowCliTest.test_status_reports_missing_coverage_categories_before_approval) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.240s\n\nOK"
+    }
+  ],
+  "result": "passed",
+  "evidence": [],
+  "error_fingerprint": null,
+  "next_action": "review",
+  "timestamp": "2026-04-16T07:49:40+00:00"
+}
