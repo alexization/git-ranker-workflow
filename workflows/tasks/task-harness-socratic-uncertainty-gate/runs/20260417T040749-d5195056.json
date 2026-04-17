@@ -1,0 +1,20 @@
+{
+  "id": "20260417T040749-d5195056",
+  "task_id": "task-harness-socratic-uncertainty-gate",
+  "phase_id": "phase-1",
+  "event": "reopened",
+  "commands": [
+    {
+      "command": "reopen task",
+      "status": "passed",
+      "output": "repair upstream reopen semantics"
+    }
+  ],
+  "result": "passed",
+  "evidence": [
+    "repair upstream reopen semantics"
+  ],
+  "error_fingerprint": null,
+  "next_action": "plan or run",
+  "timestamp": "2026-04-17T04:07:49+00:00"
+}

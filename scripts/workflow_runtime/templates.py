@@ -23,10 +23,9 @@ def default_spec(task_id: str, title: str, primary_repo: str) -> str:
         "## Acceptance\n\n"
         "- TODO: 완료를 판단할 수 있는 관찰 가능한 기준을 적는다.\n\n"
         "## Socratic Clarification Log\n\n"
-        "- TODO: `[scope]`, `[goal]`, `[non_goal]`, `[constraint]`, `[acceptance]` coverage를 모두 채운 Q/A/Decision triplet만 남긴다.\n"
-        "- Q: [scope] ...\n"
-        "- A: ...\n"
-        "- Decision: ...\n"
+        "- TODO: spec 작성 중 생기는 질문을 `Q:`, 선택적 `A:`, `Status:` 형식으로 기록한다. `Status: open` 질문이 남아 있으면 approve 할 수 없다.\n"
+        "- Q: 아직 확인이 필요한 요구사항은 무엇인가?\n"
+        "- Status: open\n"
     )
 
 

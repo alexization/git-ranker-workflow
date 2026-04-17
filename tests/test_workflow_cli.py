@@ -145,21 +145,14 @@ class WorkflowCliTest(unittest.TestCase):
                 "## Acceptance\n\n"
                 "- approve/plan/run/verify/review/reopen 흐름이 CLI와 테스트로 검증된다.\n\n"
                 "## Socratic Clarification Log\n\n"
-                "- Q: [scope] 문서 구조는 어떻게 정리할까?\n"
+                "- Q: 문서 구조는 어떻게 정리할까?\n"
                 "- A: `tasks/`와 `system/`으로 역할을 나눈다.\n"
                 "- Decision: 초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.\n"
-                "- Q: [goal] 이 workflow가 반드시 보장해야 하는 핵심 목표는 무엇일까?\n"
+                "- Status: resolved\n"
+                "- Q: 이 workflow가 반드시 보장해야 하는 핵심 목표는 무엇일까?\n"
                 "- A: spec 승인, phase 실행, verification, review의 제어 지점을 JSON state로 잠그는 것이다.\n"
                 "- Decision: workflow는 승인과 실행 상태를 artifact 기반으로 고정해야 한다.\n"
-                "- Q: [non_goal] 이번 harness가 다시 설계하지 않을 범위는 무엇일까?\n"
-                "- A: 앱 저장소 자체의 제품 동작이나 runtime contract는 여기서 다시 설계하지 않는다.\n"
-                "- Decision: control plane만 강화하고 앱 동작 재설계는 제외한다.\n"
-                "- Q: [constraint] 구현 시 반드시 지켜야 하는 운영 제약은 무엇일까?\n"
-                "- A: 기존 저장소 구조를 유지하고 workflow.py CLI를 단일 진입점으로 써야 한다.\n"
-                "- Decision: 공식 상태 전이와 hook enforcement는 workflow CLI를 통해서만 수행한다.\n"
-                "- Q: [acceptance] 완료를 무엇으로 판단할까?\n"
-                "- A: approve/plan/run/verify/review/reopen 흐름이 CLI와 테스트로 검증되어야 한다.\n"
-                "- Decision: 완료 판단 기준은 CLI 흐름이 테스트로 고정되는 것이다.\n"
+                "- Status: resolved\n"
             ),
             encoding="utf-8",
         )
@@ -214,7 +207,7 @@ class WorkflowCliTest(unittest.TestCase):
         self,
         root: Path,
         task_id: str,
-        clarifications: list[tuple[str, str, str, str]],
+        clarifications: list[tuple[str, str | None, str | None, str]],
         *,
         title: str = "Harness V2",
     ) -> None:
@@ -252,14 +245,13 @@ class WorkflowCliTest(unittest.TestCase):
             "## Socratic Clarification Log",
             "",
         ]
-        for category, question, answer, decision in clarifications:
-            lines.extend(
-                [
-                    f"- Q: [{category}] {question}",
-                    f"- A: {answer}",
-                    f"- Decision: {decision}",
-                ]
-            )
+        for question, answer, decision, status in clarifications:
+            lines.append(f"- Q: {question}")
+            if answer is not None:
+                lines.append(f"- A: {answer}")
+            if decision is not None:
+                lines.append(f"- Decision: {decision}")
+            lines.append(f"- Status: {status}")
         spec_path = root / "workflows" / "tasks" / task_id / "spec.md"
         spec_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -281,6 +273,7 @@ class WorkflowCliTest(unittest.TestCase):
                 "- task.json\n"
                 "- intake\n"
                 "- clarifications\n"
+                "- status\n"
                 "- kickoff_required_for_phase\n"
                 "- required_reads\n"
             ),
@@ -290,6 +283,7 @@ class WorkflowCliTest(unittest.TestCase):
             (
                 "# Runtime\n\n"
                 "1. 소크라테스 질문\n"
+                "2. Status: open\n"
                 "2. approve\n"
                 "3. plan\n"
                 "4. kickoff\n"
@@ -311,6 +305,7 @@ class WorkflowCliTest(unittest.TestCase):
         (docs_dir / "runbook.md").write_text(
             (
                 "# Runbook\n\n"
+                "- Status: open\n"
                 "- 사용자가 현재 spec 초안에 명시적으로 동의하면 approve 한다.\n"
                 "- approve\n"
                 "- plan\n"
@@ -363,7 +358,7 @@ class WorkflowCliTest(unittest.TestCase):
 
             task = self.read_json(root / "workflows" / "tasks" / "task-001" / "task.json")
             self.assertEqual(task["state"], "approved")
-            self.assertEqual(task["intake"]["clarifications"][0]["resolved"], True)
+            self.assertEqual(task["intake"]["clarifications"][0]["status"], "resolved")
             self.assertTrue((root / "workflows" / "system" / "hooks.json").exists())
             self.assertFalse((root / "workflows" / "config").exists())
             self.assertFalse((root / "workflows" / "schemas").exists())
@@ -388,14 +383,15 @@ class WorkflowCliTest(unittest.TestCase):
             self.finalize_spec(root, "task-002a")
             spec_path.write_text(
                 spec_path.read_text(encoding="utf-8").replace(
-                    "- Decision: 완료 판단 기준은 CLI 흐름이 테스트로 고정되는 것이다.\n",
+                    "- Status: resolved\n",
                     "",
+                    1,
                 ),
                 encoding="utf-8",
             )
 
             result = self.run_cli(root, "approve", "task-002a", "--note", "approved by user", expected=1)
-            self.assertIn("Socratic Clarification Log", result.stderr)
+            self.assertIn("Status", result.stderr)
 
             self.finalize_spec(root, "task-002a")
             self.run_cli(root, "approve", "task-002a", "--note", "approved by user")
@@ -403,9 +399,9 @@ class WorkflowCliTest(unittest.TestCase):
             task = self.read_json(root / "workflows" / "tasks" / "task-002a" / "task.json")
             self.assertEqual(task["intake"]["request_summary"], "Codex 기준 workflow control plane을 강화한다.")
             self.assertEqual(task["intake"]["goals"], ["spec 승인, phase 실행, verification, review를 JSON state로 강제한다."])
-            self.assertEqual(len(task["intake"]["clarifications"]), 5)
+            self.assertEqual(len(task["intake"]["clarifications"]), 2)
             self.assertEqual(task["intake"]["clarifications"][0]["decision"], "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.")
-            self.assertEqual(task["intake"]["clarifications"][0]["category"], "scope")
+            self.assertEqual(task["intake"]["clarifications"][0]["status"], "resolved")
 
     def test_plan_requires_locked_intake_even_for_approved_task(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -416,34 +412,35 @@ class WorkflowCliTest(unittest.TestCase):
 
             task_path = root / "workflows" / "tasks" / "task-002b" / "task.json"
             task = self.read_json(task_path)
-            task["intake"]["clarifications"] = []
+            task["intake"]["clarifications"][0]["status"] = "open"
+            task["intake"]["clarifications"][0]["decision"] = None
             task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
             phase_file = self.write_phase_input(root, ["python3 -c \"print('ok')\""])
             result = self.run_cli(root, "plan", "task-002b", "--from", str(phase_file), expected=1)
-            self.assertIn("task.intake.clarifications", result.stderr)
+            self.assertIn("must all be resolved", result.stderr)
 
     def test_status_reports_spec_readiness_for_draft_task(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.run_cli(root, "new", "task-002c", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
-            self.finalize_spec(root, "task-002c")
-            spec_path = root / "workflows" / "tasks" / "task-002c" / "spec.md"
-            spec_path.write_text(
-                spec_path.read_text(encoding="utf-8").replace(
-                    "- Decision: 완료 판단 기준은 CLI 흐름이 테스트로 고정되는 것이다.\n",
-                    "",
-                ),
-                encoding="utf-8",
+            self.write_spec_with_clarifications(
+                root,
+                "task-002c",
+                [
+                    ("문서 구조는 어떻게 정리할까?", "`tasks/`와 `system/`으로 역할을 나눈다.", "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.", "resolved"),
+                    ("사용자 확인이 더 필요한 부분은 무엇일까?", None, None, "open"),
+                ],
             )
 
             result = self.run_cli(root, "status", "task-002c")
             payload = json.loads(result.stdout)
             self.assertEqual(payload["task"]["state"], "draft")
             self.assertFalse(payload["spec"]["ready_for_approval"])
-            self.assertEqual(payload["spec"]["clarification_count"], 4)
-            self.assertTrue(payload["spec"]["unresolved_clarifications"])
-            self.assertIn("acceptance", payload["spec"]["coverage_missing"])
+            self.assertEqual(payload["spec"]["clarification_count"], 2)
+            self.assertEqual(payload["spec"]["open_clarification_count"], 1)
+            self.assertEqual(payload["spec"]["resolved_clarification_count"], 1)
+            self.assertEqual(payload["spec"]["open_clarifications"], ["사용자 확인이 더 필요한 부분은 무엇일까?"])
 
     def test_plan_keeps_legacy_empty_inputs_compatible_without_required_reads(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -456,12 +453,6 @@ class WorkflowCliTest(unittest.TestCase):
             task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
             self.finalize_spec(root, "task-002cc")
-            spec_path = root / "workflows" / "tasks" / "task-002cc" / "spec.md"
-            legacy_text = spec_path.read_text(encoding="utf-8")
-            for category in ("scope", "goal", "non_goal", "constraint", "acceptance"):
-                legacy_text = legacy_text.replace(f"Q: [{category}] ", "Q: ")
-            spec_path.write_text(legacy_text, encoding="utf-8")
-
             self.run_cli(root, "approve", "task-002cc", "--note", "approved by user")
             phase_file = self.write_phase_input(
                 root,
@@ -480,7 +471,7 @@ class WorkflowCliTest(unittest.TestCase):
             status = json.loads(self.run_cli(root, "status", "task-002cc").stdout)
             self.assertEqual(status["active_phase_bootstrap"]["required_reads"], [])
 
-    def test_approve_requires_coverage_categories_before_locking_intake(self) -> None:
+    def test_approve_rejects_open_clarifications_before_locking_intake(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.run_cli(root, "new", "task-002d", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
@@ -488,25 +479,21 @@ class WorkflowCliTest(unittest.TestCase):
                 root,
                 "task-002d",
                 [
-                    ("scope", "문서 구조는 어떻게 정리할까?", "`tasks/`와 `system/`으로 역할을 나눈다.", "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다."),
-                    ("goal", "이 workflow의 목표는 무엇일까?", "승인과 실행 상태를 artifact로 잠근다.", "workflow는 승인과 실행 상태를 artifact 기반으로 고정해야 한다."),
+                    ("문서 구조는 어떻게 정리할까?", "`tasks/`와 `system/`으로 역할을 나눈다.", "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.", "resolved"),
+                    ("추가로 확인이 필요한 구현 포인트는 무엇일까?", None, None, "open"),
                 ],
             )
 
             result = self.run_cli(root, "approve", "task-002d", "--note", "approved by user", expected=1)
-            self.assertIn("missing coverage categories", result.stderr)
-            self.assertIn("non_goal", result.stderr)
-            self.assertIn("constraint", result.stderr)
-            self.assertIn("acceptance", result.stderr)
+            self.assertIn("open clarifications", result.stderr)
 
             self.finalize_spec(root, "task-002d")
             self.run_cli(root, "approve", "task-002d", "--note", "approved by user")
 
             task = self.read_json(root / "workflows" / "tasks" / "task-002d" / "task.json")
-            categories = {item["category"] for item in task["intake"]["clarifications"]}
-            self.assertEqual(categories, {"scope", "goal", "non_goal", "constraint", "acceptance"})
+            self.assertTrue(all(item["status"] == "resolved" for item in task["intake"]["clarifications"]))
 
-    def test_status_reports_missing_coverage_categories_before_approval(self) -> None:
+    def test_status_reports_open_clarifications_before_approval(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.run_cli(root, "new", "task-002e", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
@@ -514,34 +501,35 @@ class WorkflowCliTest(unittest.TestCase):
                 root,
                 "task-002e",
                 [
-                    ("scope", "문서 구조는 어떻게 정리할까?", "`tasks/`와 `system/`으로 역할을 나눈다.", "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다."),
-                    ("goal", "이 workflow의 목표는 무엇일까?", "승인과 실행 상태를 artifact로 잠근다.", "workflow는 승인과 실행 상태를 artifact 기반으로 고정해야 한다."),
+                    ("문서 구조는 어떻게 정리할까?", "`tasks/`와 `system/`으로 역할을 나눈다.", "초안 작성은 `spec.md`, 승인 고정은 `task.json.intake`가 소유한다.", "resolved"),
+                    ("이 구현에서 아직 애매한 부분은 무엇일까?", "상태 전이 규칙은 정했지만 출력 형식이 더 필요하다.", None, "open"),
                 ],
             )
 
             result = self.run_cli(root, "status", "task-002e")
             payload = json.loads(result.stdout)
             self.assertFalse(payload["spec"]["ready_for_approval"])
-            self.assertEqual(payload["spec"]["coverage_present"], ["goal", "scope"])
-            self.assertEqual(payload["spec"]["coverage_missing"], ["non_goal", "constraint", "acceptance"])
-            self.assertTrue(any("missing coverage categories" in item for item in payload["spec"]["unresolved_clarifications"]))
+            self.assertEqual(payload["spec"]["clarification_count"], 2)
+            self.assertEqual(payload["spec"]["open_clarification_count"], 1)
+            self.assertEqual(payload["spec"]["resolved_clarification_count"], 1)
+            self.assertEqual(payload["spec"]["open_clarifications"], ["이 구현에서 아직 애매한 부분은 무엇일까?"])
 
-    def test_legacy_task_upgrades_to_v2_when_reapproved_with_categorized_spec(self) -> None:
+    def test_reapprove_upgrades_task_to_v3(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.run_cli(root, "new", "task-002f", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
 
             task_path = root / "workflows" / "tasks" / "task-002f" / "task.json"
             task = self.read_json(task_path)
-            task.pop("contract_version", None)
+            task["contract_version"] = 2
             task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
             self.finalize_spec(root, "task-002f")
             self.run_cli(root, "approve", "task-002f", "--note", "approved by user")
 
             task = self.read_json(task_path)
-            self.assertEqual(task["contract_version"], 2)
-            self.assertEqual({item["category"] for item in task["intake"]["clarifications"]}, {"scope", "goal", "non_goal", "constraint", "acceptance"})
+            self.assertEqual(task["contract_version"], 3)
+            self.assertTrue(all(item["status"] == "resolved" for item in task["intake"]["clarifications"]))
 
     def test_tdd_guard_blocks_completion_without_tests(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -1198,30 +1186,26 @@ class WorkflowCliTest(unittest.TestCase):
             self.assertIsNone(status["task"]["kickoff_required_for_phase"])
             self.assertIsNotNone(status["task"]["last_kickoff_run_id"])
 
-    def test_legacy_multi_phase_task_still_requires_kickoff_for_phase_two(self) -> None:
+    def test_pre_v3_multi_phase_task_reapproves_and_requires_kickoff_for_phase_two(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.run_cli(root, "new", "task-007bb", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
 
             task_path = root / "workflows" / "tasks" / "task-007bb" / "task.json"
             task = self.read_json(task_path)
-            task.pop("contract_version", None)
+            task["contract_version"] = 2
             task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
             self.finalize_spec(root, "task-007bb")
-            spec_path = root / "workflows" / "tasks" / "task-007bb" / "spec.md"
-            legacy_text = spec_path.read_text(encoding="utf-8")
-            for category in ("scope", "goal", "non_goal", "constraint", "acceptance"):
-                legacy_text = legacy_text.replace(f"Q: [{category}] ", "Q: ")
-            spec_path.write_text(legacy_text, encoding="utf-8")
-
             self.run_cli(root, "approve", "task-007bb", "--note", "approved by user")
+            task = self.read_json(task_path)
+            self.assertEqual(task["contract_version"], 3)
             phase_file = self.write_phase_input(
                 root,
                 ["python3 -c \"print('ok')\""],
                 phase_count=2,
                 test_policy_mode="evidence_only",
-                test_policy_evidence=["legacy tasks should still require kickoff for later phases"],
+                test_policy_evidence=["reapproved pre-v3 tasks should still require kickoff for later phases"],
             )
             self.run_cli(root, "plan", "task-007bb", "--from", str(phase_file))
             self.run_cli(root, "run", "task-007bb", "--start")
@@ -1307,6 +1291,58 @@ class WorkflowCliTest(unittest.TestCase):
             self.assertEqual(status["task"]["active_phase_id"], "phase-2")
             self.assertEqual(status["task"]["kickoff_required_for_phase"], "phase-2")
             self.assertIsNone(status["task"]["last_kickoff_run_id"])
+
+    def test_reopening_earlier_phase_resets_downstream_phases_to_pending(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-007e", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+            self.finalize_spec(root, "task-007e")
+            self.run_cli(root, "approve", "task-007e", "--note", "approved by user")
+            phase_file = self.write_phase_input(
+                root,
+                ["python3 -c \"print('ok')\""],
+                phase_count=2,
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["reopening an upstream phase should invalidate downstream phase state"],
+            )
+            self.run_cli(root, "plan", "task-007e", "--from", str(phase_file))
+            self.run_cli(root, "run", "task-007e", "--start")
+            self.run_cli(root, "run", "task-007e", "--complete", "--changed-path", "scripts/workflow.py")
+            self.run_cli(root, "verify", "task-007e")
+            self.run_cli(root, "kickoff", "task-007e")
+            self.run_cli(root, "run", "task-007e", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-007e",
+                "--fail",
+                "--phase-id",
+                "phase-2",
+                "--error-fingerprint",
+                "phase-2-boom",
+                "--note",
+                "boom",
+                expected=1,
+            )
+
+            self.run_cli(root, "reopen", "task-007e", "--note", "repair upstream contract", "--phase-id", "phase-1")
+
+            status = json.loads(self.run_cli(root, "status", "task-007e").stdout)
+            phases = self.read_json(root / "workflows" / "tasks" / "task-007e" / "phases.json")
+            self.assertEqual(status["task"]["state"], "approved")
+            self.assertEqual(status["task"]["active_phase_id"], "phase-1")
+            self.assertIsNone(status["task"]["kickoff_required_for_phase"])
+            self.assertEqual(phases["phases"][0]["status"], "pending")
+            self.assertEqual(phases["phases"][1]["status"], "pending")
+
+            self.run_cli(root, "run", "task-007e", "--start")
+            self.run_cli(root, "run", "task-007e", "--complete", "--changed-path", "scripts/workflow.py")
+            self.run_cli(root, "verify", "task-007e")
+
+            status = json.loads(self.run_cli(root, "status", "task-007e").stdout)
+            self.assertEqual(status["task"]["state"], "approved")
+            self.assertEqual(status["task"]["active_phase_id"], "phase-2")
+            self.assertEqual(status["task"]["kickoff_required_for_phase"], "phase-2")
 
     def test_reopen_resets_completed_task_for_follow_up(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

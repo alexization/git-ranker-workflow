@@ -1,0 +1,101 @@
+{
+  "task_id": "task-harness-socratic-uncertainty-gate",
+  "generated_at": "2026-04-17T03:01:29+00:00",
+  "phases": [
+    {
+      "id": "phase-1",
+      "order": 1,
+      "title": "Implement Clarification Contract V3",
+      "goal": "Replace coverage-based spec readiness with status-based socratic clarification handling across runtime, docs, skills, and tests.",
+      "inputs": [
+        "AGENTS.md",
+        "docs/artifact-model.md",
+        "docs/runtime.md",
+        "docs/runbook.md",
+        ".codex/skills/socratic-spec-authoring/SKILL.md",
+        "scripts/workflow_runtime/models.py",
+        "scripts/workflow_runtime/engine.py",
+        "scripts/workflow_runtime/templates.py",
+        "tests/test_workflow_cli.py"
+      ],
+      "required_reads": [
+        "workflows/tasks/task-harness-socratic-uncertainty-gate/spec.md",
+        "workflows/tasks/task-harness-socratic-uncertainty-gate/task.json",
+        "AGENTS.md",
+        "docs/runtime.md",
+        "docs/artifact-model.md"
+      ],
+      "starting_points": [
+        "Replace coverage/category parsing with Status: open|resolved parsing.",
+        "Update status/approve/readiness output and locked intake schema.",
+        "Align AGENTS/docs/skills/templates/tests with the new contract."
+      ],
+      "deliverables": [
+        "Runtime and tests enforce contract_version 3 clarification behavior.",
+        "Docs, templates, and skills describe the new open/resolved flow."
+      ],
+      "completion_signal": "workflow CLI tests pass under the new clarification contract.",
+      "allowed_write_paths": [
+        "AGENTS.md",
+        ".codex/skills/",
+        "docs/",
+        "scripts/",
+        "tests/"
+      ],
+      "acceptance": {
+        "commands": [
+          "python3 -m unittest tests.test_workflow_cli -v"
+        ]
+      },
+      "test_policy": {
+        "mode": "require_tests",
+        "evidence": []
+      },
+      "status": "completed",
+      "retry_count": 0
+    },
+    {
+      "id": "phase-2",
+      "order": 2,
+      "title": "Clean Task Artifacts",
+      "goal": "Remove old task artifacts so only the current harness task remains in workflows/tasks, then verify workspace health.",
+      "inputs": [
+        "workflows/tasks/"
+      ],
+      "required_reads": [
+        "workflows/tasks/task-harness-socratic-uncertainty-gate/spec.md",
+        "workflows/tasks/task-harness-socratic-uncertainty-gate/task.json",
+        "workflows/tasks/task-harness-socratic-uncertainty-gate/phases.json",
+        "docs/runtime.md"
+      ],
+      "starting_points": [
+        "Keep task-harness-socratic-uncertainty-gate and workflows/tasks/.gitkeep.",
+        "Delete the previously accumulated task directories after runtime/tests/docs verification is green.",
+        "Verify doctor and status --all --check pass with the cleaned task directory."
+      ],
+      "deliverables": [
+        "Only task-harness-socratic-uncertainty-gate remains under workflows/tasks.",
+        "Workspace health commands pass after cleanup."
+      ],
+      "completion_signal": "doctor and status --all --check succeed after task cleanup.",
+      "allowed_write_paths": [
+        "workflows/tasks/"
+      ],
+      "acceptance": {
+        "commands": [
+          "python3 scripts/workflow.py doctor",
+          "python3 scripts/workflow.py status --all --check",
+          "python3 -m unittest tests.test_workflow_cli -v"
+        ]
+      },
+      "test_policy": {
+        "mode": "evidence_only",
+        "evidence": [
+          "Task artifact cleanup does not change product/runtime behavior; workspace health and workflow CLI tests are the required evidence."
+        ]
+      },
+      "status": "completed",
+      "retry_count": 2
+    }
+  ]
+}

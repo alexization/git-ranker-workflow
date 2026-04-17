@@ -37,12 +37,13 @@
 ## Runtime Rules
 
 - `approve` 전에는 `plan`, `run`, `verify`, `review`를 허용하지 않는다.
-- `approve`는 `spec.md`의 필수 section, placeholder 제거 여부, `Socratic Clarification Log`의 `Q/A/Decision` triplet 형식을 검증한다.
-- 새 task contract에서 `approve`는 clarification coverage도 검증한다. `scope`, `goal`, `non_goal`, `constraint`, `acceptance`가 모두 없으면 승인되지 않는다.
+- 새 clarification contract에서 열린 질문은 `Status: open`으로 남기고, 모든 질문이 닫힌 뒤에만 승인을 요청한다.
+- `approve`는 `spec.md`의 필수 section, placeholder 제거 여부, `Socratic Clarification Log`의 `Q:`/`A:`/`Decision:`/`Status:` 형식을 검증한다.
+- `approve`는 clarification이 최소 1개 이상인지, 열린 질문이 없는지, `open` 항목에 `Decision:`이 없는지, `resolved` 항목이 `A:`와 `Decision:`으로 완결되는지 검증한다.
 - `approve`는 승인된 spec을 `task.json.intake`로 잠그며, 이후 `spec.md`를 수정했으면 `approve`를 다시 실행해 intake를 재잠가야 한다.
 - `plan`은 명시적 phase 입력 없이는 실행되지 않는다.
 - `plan`은 `task.json.intake`와 현재 `spec.md`가 일치할 때만 허용하며, 각 phase를 새 세션이 시작할 수 있도록 bootstrap metadata를 함께 적재한다.
-- `status`는 `spec.md`를 읽어 `ready_for_approval`, `clarification_count`, `coverage_present`, `coverage_missing`, `unresolved_clarifications`를 JSON으로 노출한다.
+- `status`는 `spec.md`를 읽어 `ready_for_approval`, `clarification_count`, `open_clarification_count`, `resolved_clarification_count`, `open_clarifications`, `validation_errors`를 JSON으로 노출한다.
 - `status`는 active phase의 `required_reads`, `starting_points`, `deliverables`, `completion_signal`도 함께 노출해 다음 세션 시작점을 복원한다.
 - `run --complete`는 `allowed_write_paths`와 `workflows/tasks/<task-id>/` 밖 변경을 차단한다.
 - `run --start`는 `task.json.kickoff_required_for_phase`가 active phase와 일치하면, matching `phase_kickoff` evidence 없이는 시작되지 않는다.
@@ -75,6 +76,6 @@
 - verification 실패도 retry에 포함한다.
 - 동일한 `error_fingerprint`가 짧은 시간 안에 반복되면 Circuit Breaker가 `blocked`로 전이한다.
 - `blocked`는 외부 입력, spec 재정의, phase 재계획이 필요한 상태다.
-- `reopen`은 `failed`, `blocked`, `review_ready`, `completed` task를 다시 `approved`로 되돌리고 target phase를 `pending`으로 복구한 뒤 repair loop를 재시작한다.
+- `reopen`은 `failed`, `blocked`, `review_ready`, `completed` task를 다시 `approved`로 되돌리고 target phase와 그 이후 downstream phase를 `pending`으로 복구한 뒤 repair loop를 재시작한다.
 - reopened target phase가 2번째 이상 phase면 kickoff proof를 다시 요구한다.
-- 추가 요구사항이면 `reopen` 뒤 `spec.md`를 다시 잠그고 `approve`를 재실행한 뒤 `plan`으로 phase를 다시 적재한다.
+- 추가 요구사항이면 `reopen` 뒤 `spec.md`에 새 clarification을 열고, 질문을 닫은 다음 `approve`를 재실행한 뒤 `plan`으로 phase를 다시 적재한다.

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-CURRENT_TASK_CONTRACT_VERSION = 2
-CLARIFICATION_REQUIRED_CATEGORIES = ["scope", "goal", "non_goal", "constraint", "acceptance"]
+CURRENT_TASK_CONTRACT_VERSION = 3
 
 TASK_STATES = {"draft", "approved", "in_progress", "failed", "blocked", "review_ready", "completed"}
 PHASE_STATES = {"pending", "in_progress", "completed", "failed", "blocked"}
@@ -65,10 +64,10 @@ DOC_FILES = [
 
 DOC_REQUIRED_MARKERS = {
     "docs/README.md": ["AGENTS.md", "docs/runtime.md", "docs/artifact-model.md"],
-    "docs/artifact-model.md": ["task.json", "intake", "clarifications", "kickoff_required_for_phase", "required_reads"],
-    "docs/runtime.md": ["소크라테스 질문", "approve", "plan", "kickoff", "review --close"],
+    "docs/artifact-model.md": ["task.json", "intake", "clarifications", "status", "kickoff_required_for_phase", "required_reads"],
+    "docs/runtime.md": ["소크라테스 질문", "Status: open", "approve", "plan", "kickoff", "review --close"],
     "docs/hooks.md": [".githooks/", "TDD Guard", "Dangerous Command Guard", "Circuit Breaker", "workflow.py hook"],
-    "docs/runbook.md": ["사용자가 현재 spec 초안에 명시적으로 동의하면 approve 한다.", "approve", "plan", "kickoff"],
+    "docs/runbook.md": ["Status: open", "사용자가 현재 spec 초안에 명시적으로 동의하면 approve 한다.", "approve", "plan", "kickoff"],
 }
 
 STALE_REFERENCE_PATTERNS = [

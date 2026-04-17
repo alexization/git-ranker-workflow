@@ -284,18 +284,9 @@ class WorkflowService:
         if not note.strip():
             raise WorkflowError("approval note is required")
 
-        require_coverage = task["contract_version"] >= 2
-        if not require_coverage:
-            coverage_probe = inspect_spec(self.spec_path(task_id), require_coverage=True)
-            require_coverage = coverage_probe["ready_for_approval"]
-
-        intake = validate_spec_for_approval(
-            self.spec_path(task_id),
-            require_coverage=require_coverage,
-        )
+        intake = validate_spec_for_approval(self.spec_path(task_id))
         timestamp = now_iso()
-        if require_coverage:
-            task["contract_version"] = CURRENT_TASK_CONTRACT_VERSION
+        task["contract_version"] = CURRENT_TASK_CONTRACT_VERSION
         task["state"] = "approved"
         task["approved_at"] = timestamp
         task["approval"] = {"actor": actor, "note": note.strip(), "timestamp": timestamp}
@@ -332,10 +323,10 @@ class WorkflowService:
             raise WorkflowError("plan requires approved task")
         if source_payload is None:
             raise WorkflowError("plan requires explicit phase input via --from or --stdin")
-        spec = inspect_spec(self.spec_path(task_id), require_coverage=task["contract_version"] >= 2)
+        spec = inspect_spec(self.spec_path(task_id))
         if not spec["ready_for_approval"]:
             raise WorkflowError("plan requires approval-ready spec.md")
-        intake = ensure_locked_intake(task["intake"], require_coverage=task["contract_version"] >= 2)
+        intake = ensure_locked_intake(task["intake"])
         if intake != spec["intake"]:
             raise WorkflowError("spec.md and task.intake are out of sync; rerun approve before plan")
 
@@ -928,8 +919,13 @@ class WorkflowService:
                         target_phase = candidate
                         break
 
-        if target_phase and target_phase["status"] in {"failed", "blocked", "completed"}:
-            self.update_phase_state(target_phase, "pending")
+        if target_phase is not None:
+            target_order = target_phase["order"]
+            for candidate in phases_payload["phases"]:
+                if candidate["order"] < target_order:
+                    continue
+                if candidate["status"] in {"in_progress", "failed", "blocked", "completed"}:
+                    self.update_phase_state(candidate, "pending")
 
         task["state"] = "approved"
         task["blocked_reason"] = None
@@ -967,7 +963,7 @@ class WorkflowService:
         payload = {
             "task": task,
             "phases": phases,
-            "spec": inspect_spec(self.spec_path(task_id), require_coverage=task["contract_version"] >= 2),
+            "spec": inspect_spec(self.spec_path(task_id)),
         }
         if active_phase is not None:
             payload["active_phase_bootstrap"] = self.phase_bootstrap_summary(task_id, active_phase)
@@ -986,7 +982,7 @@ class WorkflowService:
                     raise WorkflowError(incomplete.removeprefix(f"{task_id}: "))
                 task = self.load_task(task_id)
                 phases = self.load_phases(task_id)
-                spec = inspect_spec(self.spec_path(task_id), require_coverage=task["contract_version"] >= 2)
+                spec = inspect_spec(self.spec_path(task_id))
                 active_phase = None
                 if task["active_phase_id"] is not None:
                     active_phase = next((phase for phase in phases["phases"] if phase["id"] == task["active_phase_id"]), None)
@@ -1009,7 +1005,7 @@ class WorkflowService:
                 if task["state"] != "draft":
                     if not spec["ready_for_approval"]:
                         raise WorkflowError("approved-or-later task requires approval-ready spec.md")
-                    if ensure_locked_intake(task["intake"], require_coverage=task["contract_version"] >= 2) != spec["intake"]:
+                    if ensure_locked_intake(task["intake"]) != spec["intake"]:
                         raise WorkflowError("task.intake is out of sync with spec.md")
                 if task["latest_run_id"] is not None:
                     self.load_run(task_id, task["latest_run_id"])

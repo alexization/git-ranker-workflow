@@ -16,12 +16,20 @@ python3 -m unittest discover -s tests -v
 python3 scripts/workflow.py new task-001 --title "..." --primary-repo git-ranker-workflow
 ```
 
-이후 `workflows/tasks/task-001/spec.md`를 소크라테스 질문으로 잠근다. 새 spec contract에서는 `Socratic Clarification Log`가 아래처럼 coverage category를 포함한 `Q/A/Decision` triplet을 모두 채워야 한다.
+이후 `workflows/tasks/task-001/spec.md`를 소크라테스 질문으로 잠근다. 새 spec contract에서는 `Socratic Clarification Log`가 질문 단위의 `Status:`를 명시하고, `Status: open` 질문이 하나라도 남아 있으면 승인되지 않는다.
 
 ```md
-- Q: [scope] phase canonical source는 무엇인가?
+- Q: phase canonical source는 무엇인가?
 - A: executable plan은 prose가 아니라 JSON이어야 한다.
 - Decision: `phases.json`만 canonical plan으로 쓴다.
+- Status: resolved
+```
+
+답을 아직 못 받았거나 추가 확인이 필요한 질문은 아래처럼 열린 상태로 남긴다.
+
+```md
+- Q: 아직 확인이 필요한 요구사항은 무엇인가?
+- Status: open
 ```
 
 사용자가 현재 spec 초안에 명시적으로 동의하면 approve 한다. 이때 `approve`가 `spec.md`를 `task.json.intake`로 잠근다.
@@ -57,7 +65,7 @@ python3 scripts/workflow.py review task-001 --close --user-validation-note "vali
 
 ## Repair / Reopen
 
-실패, block, review follow-up, 추가 요구사항이 들어오면 `reopen`으로 다시 `approved` 상태로 되돌린다. `reopen`은 target phase를 `pending`으로 복구해서 바로 `run --start`로 재개할 수 있게 만든다. 추가 요구사항이면 `spec.md`를 다시 잠근 뒤 `approve`를 다시 실행하고, 그 다음 `plan`으로 phase를 갱신한다.
+실패, block, review follow-up, 추가 요구사항이 들어오면 `reopen`으로 다시 `approved` 상태로 되돌린다. `reopen`은 target phase와 그 이후 downstream phase를 `pending`으로 복구해서 repair loop가 뒤 단계 실패 상태에 걸리지 않게 만든다. 추가 요구사항이면 `spec.md`를 다시 잠근 뒤 `approve`를 다시 실행하고, 그 다음 `plan`으로 phase를 갱신한다.
 
 ```bash
 python3 scripts/workflow.py reopen task-001 --note "추가 요구사항 반영"
