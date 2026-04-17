@@ -18,7 +18,7 @@ workflows/
 
 ## Artifact Roles
 
-- `workflows/tasks/<task-id>/spec.md`: 사람용 requirement artifact. 요청, 문제, 목표, 비목표, 제약, acceptance, 소크라테스 질문 로그, 승인 기록을 담는다. 새 spec contract에서는 clarification question마다 coverage category를 잠근다.
+- `workflows/tasks/<task-id>/spec.md`: 사람용 requirement artifact. 요청, 문제, 목표, 비목표, 제약, acceptance, 소크라테스 질문 로그, 승인 기록을 담는다. 새 spec contract에서는 clarification마다 `Status: open|resolved`를 명시하고, 열린 질문이 없어질 때까지 질의를 계속한다.
 - `workflows/tasks/<task-id>/task.json`: mutable task state이자 승인 시점의 locked intake source다. approval, active phase, latest run, latest verified run, kickoff requirement, blocked reason, user validation과 `intake`를 담는다.
 - `workflows/tasks/<task-id>/phases.json`: 승인 이후 생성된 executable phase 집합이다. phase 목표, write scope, acceptance command, test policy, retry count와 다음 세션 kickoff용 bootstrap metadata를 담는다.
 - `workflows/tasks/<task-id>/runs/*.json`: phase completion, phase kickoff, verification, review, reopen evidence다.
@@ -28,7 +28,7 @@ workflows/
 ## Spec And Phase Loading Flow
 
 1. `new`가 task 디렉터리와 `spec.md`, `task.json`, `phases.json` skeleton을 만든다.
-2. 소크라테스 질문으로 `spec.md`를 채운다. `Socratic Clarification Log`는 `Q:`, `A:`, `Decision:` triplet만 허용하고, 새 contract에서는 `[scope]`, `[goal]`, `[non_goal]`, `[constraint]`, `[acceptance]` coverage를 모두 채운다.
+2. 소크라테스 질문으로 `spec.md`를 채운다. `Socratic Clarification Log`는 clarification마다 `Q:`로 시작하고 마지막 줄에 `Status:`를 둔다. `open`은 `Q:`와 선택적 `A:`를 허용하고, `resolved`는 `Q:`/`A:`/`Decision:`/`Status: resolved`를 순서대로 가진다.
 3. 사용자가 현재 spec 초안에 명시적으로 동의하면 `approve`가 같은 `spec.md`에 Approval block을 추가하고, 내용을 `task.json.intake`로 잠근 뒤 `task.json`을 `approved`로 전이한다.
 4. 추가 요구사항으로 spec을 다시 잠그면 `approve`를 다시 실행해 `task.json.intake`를 갱신한다.
 5. `plan --from` 또는 `plan --stdin`이 외부 phase 초안을 읽어 같은 task 디렉터리의 `phases.json`으로 적재한다.
@@ -65,10 +65,9 @@ workflows/
 `intake.clarifications`의 각 항목은 아래 필드를 가진다.
 
 - `question`
-- `category`
 - `answer`
 - `decision`
-- `resolved`
+- `status`
 
 ## Phase Fields
 

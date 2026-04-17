@@ -1,0 +1,179 @@
+{
+  "id": "task-harness-socratic-uncertainty-gate",
+  "title": "Require socratic clarification until uncertainty is resolved",
+  "contract_version": 3,
+  "state": "review_ready",
+  "primary_repo": "git-ranker-workflow",
+  "created_at": "2026-04-17T01:56:40+00:00",
+  "approved_at": "2026-04-17T03:00:46+00:00",
+  "approval": {
+    "actor": "user",
+    "note": "새 clarification contract spec 승인",
+    "timestamp": "2026-04-17T03:00:46+00:00"
+  },
+  "active_phase_id": "phase-2",
+  "latest_run_id": "20260417T043324-82195f22",
+  "last_verified_run_id": "20260417T043319-e2c0ab27",
+  "kickoff_required_for_phase": null,
+  "last_kickoff_run_id": "20260417T043247-bd03edcd",
+  "blocked_reason": null,
+  "user_validated": false,
+  "user_validation_note": null,
+  "intake": {
+    "request_summary": "Harness의 소크라테스식 spec authoring을 고쳐, 단순한 5개 coverage 충족이 아니라 실제 불확실성이 없어질 때까지 질문이 계속되도록 만든다. Codex가 작업을 이해하고 phase를 설계하는 데 필요한 애매점, 미이해 지점, 사용자 확인이 필요한 판단 포인트를 발견할 때마다 질문을 추가할 수 있어야 한다. `approve`는 더 질문이 없고 열린 clarification이 없는 경우에만 가능해야 하며, 이 contract는 다음 task부터 기본 흐름으로 강제되어야 한다.",
+    "problem_summary": "현재 harness는 `Socratic Clarification Log`의 형식과 coverage category만 확인하고, 실제로 남은 불확실성이 있는지는 모델링하지 않는다. 그 결과 Codex가 구현 계획과 phase를 설계하기에 아직 애매한 상태여도 spec이 approval-ready로 보일 수 있다. 이 상태에서는 사용자와 Codex의 이해가 완전히 sync되지 않은 채 승인과 구현이 진행될 위험이 있다.",
+    "goals": [
+      "`Socratic Clarification Log`가 열린 질문과 해결된 질문을 명시적으로 표현할 수 있게 한다.",
+      "Codex가 spec 작성 중 새 애매점을 발견하면 언제든 clarification을 추가하거나 기존 질문을 다시 열 수 있게 한다.",
+      "`approve`와 `status`가 열린 clarification 존재 여부를 기준으로 readiness를 계산하게 만든다.",
+      "이번 task는 예외 bootstrap으로 진행하되, 구현 완료 후 다음 task부터는 새 clarification contract가 기본 규칙으로 동작하게 만든다."
+    ],
+    "non_goals": [
+      "이번 작업은 앱 저장소의 기능 구현이나 테스트 보강 작업 자체를 수행하는 것이 아니다.",
+      "clarification contract 변경과 직접 관련 없는 phase/runtime 전반의 대규모 재설계는 이번 범위가 아니다.",
+      "기존 task artifact를 보존한 채 하위 호환성을 폭넓게 유지하는 것은 목표가 아니다."
+    ],
+    "constraints": [
+      "이번 task 자체는 새 contract를 도입하기 위한 bootstrap 예외로 진행하고, 다음 task부터 새 규칙을 기본 enforcement로 사용한다.",
+      "`workflows/tasks/` 아래 기존 과거 task들은 정리 대상으로 보고, 현재 harness 변경 task만 남긴다.",
+      "`Status: open` 질문이 하나라도 있으면 `approve`는 실패해야 한다.",
+      "`open` 질문에는 `Decision:`이 있으면 안 되며, 아직 답을 못 받은 질문은 `A:` 없이 남길 수 있어야 한다.",
+      "기존 coverage category requirement는 제거하고 불확실성 관리 자체를 readiness 기준으로 삼는다."
+    ],
+    "acceptance": [
+      "`Socratic Clarification Log`가 `Status: open|resolved`를 이해하고, 열린 질문을 machine-readable 하게 판단할 수 있다.",
+      "spec 작성 중 clarification을 추가하거나 기존 질문을 다시 `open`으로 되돌릴 수 있는 contract와 parser 규칙이 문서/코드/테스트에 반영된다.",
+      "`approve`는 열린 clarification이 없을 때만 성공하고, readiness 계산도 같은 기준을 사용한다.",
+      "이번 task 완료 후 다음 task부터는 새 clarification contract를 기본 흐름으로 사용할 수 있다.",
+      "`workflows/tasks/` 정리 정책이 이번 spec에 반영되고, 구현 단계에서 현재 harness task만 남기는 방향으로 수행된다."
+    ],
+    "clarifications": [
+      {
+        "question": "Harness가 이번 변경으로 강제해야 하는 핵심 동작은 무엇인가?",
+        "answer": "Codex가 spec을 작성하면서 이해하지 못했거나 애매한 부분이 생길 때마다 질문을 계속하고, 열린 질문이 남아 있으면 승인할 수 없어야 한다.",
+        "decision": "Harness는 coverage 충족이 아니라 남은 불확실성 유무를 approval gate의 핵심 기준으로 삼는다.",
+        "status": "resolved"
+      },
+      {
+        "question": "열린 질문과 해결된 질문은 spec artifact에서 어떻게 표현해야 하는가?",
+        "answer": "`Socratic Clarification Log`를 확장해 각 질문에 `Status:`를 두고, `open`과 `resolved`를 명시적으로 구분해야 한다.",
+        "decision": "clarification contract는 `Status: open|resolved`를 기본 상태 모델로 사용한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "아직 답을 못 받은 질문과 해결된 질문의 문법은 어떻게 달라야 하는가?",
+        "answer": "아직 답을 못 받은 질문은 `Q:`와 `Status: open`만 있으면 되고 `A:`는 비어 있을 수 있다. 해결된 질문은 사용자 답변과 결정이 잠겨야 한다.",
+        "decision": "`open` 질문은 `A:` 없이 남길 수 있고, `resolved` 질문만 `A:`와 `Decision:`을 갖는다.",
+        "status": "resolved"
+      },
+      {
+        "question": "기존 질문에서 후속 확인이 필요해지면 어떻게 다뤄야 하는가?",
+        "answer": "기존 질문을 업데이트하거나 새 질문을 추가해서 다시 `open`으로 되돌릴 수 있어야 한다.",
+        "decision": "clarification은 고정 목록이 아니며, spec authoring 중 언제든 추가/수정/재오픈될 수 있다.",
+        "status": "resolved"
+      },
+      {
+        "question": "readiness와 approve 차단 조건은 무엇인가?",
+        "answer": "`Status: open` 질문이 하나라도 있으면 실패해야 하고, 내가 더 이상 질문이 없다고 판단했을 때만 최종 승인을 요청해야 한다.",
+        "decision": "approval readiness는 열린 clarification이 0개일 때만 성립한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "기존 coverage category requirement는 유지해야 하는가?",
+        "answer": "아니다. 핵심은 coverage 5개를 채우는 것이 아니라 불확실성 관리다.",
+        "decision": "`[scope]`, `[goal]`, `[non_goal]`, `[constraint]`, `[acceptance]` coverage requirement는 제거한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "기존에 쌓인 과거 task artifact는 어떻게 처리해야 하는가?",
+        "answer": "`workflows/tasks/`의 과거 task들은 모두 제거하고, 현재 harness 변경 task만 남긴 뒤 다시 시작한다.",
+        "decision": "구현 단계에서 `task-harness-socratic-uncertainty-gate`만 남기고 나머지 task 디렉터리는 삭제 대상으로 본다.",
+        "status": "resolved"
+      },
+      {
+        "question": "이번 harness 변경 task 자체는 어떤 bootstrap 규칙으로 진행해야 하는가?",
+        "answer": "지금 작업은 다음 task부터 사용할 흐름을 설계하는 예외 작업이므로, 이번 task만 예외적으로 진행하고 다음 task부터 새 contract를 강제한다.",
+        "decision": "현재 task는 bootstrap 예외로 수행하고, 완료 후 다음 task부터 새 clarification contract를 기본 흐름으로 적용한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "새 clarification contract에서 `status` 명령은 무엇을 보여줘야 하는가?",
+        "answer": "approval readiness와 함께 전체 clarification 수, 열린 질문 수, 해결된 질문 수, 그리고 현재 열린 질문 목록까지 보여주는 것이 좋다.",
+        "decision": "`status`는 `ready_for_approval`, `clarification_count`, `open_clarification_count`, `resolved_clarification_count`, `open_clarifications`, `validation_errors`를 노출하는 방향으로 설계한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "`Socratic Clarification Log`가 비어 있어도 승인 가능해야 하는가?",
+        "answer": "아니다. 최소 1개 이상의 clarification 항목은 있어야 하고, 질문 필요 여부를 검토했다는 기록이 남아야 한다.",
+        "decision": "clarification이 0개인 spec은 approval-ready가 될 수 없도록 한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "옛 clarification contract와 versioning은 어떻게 처리해야 하는가?",
+        "answer": "coverage 기반 옛 규칙은 history를 남기지 않고 제거하되, `contract_version` 자체는 이후 변경 가능성을 위해 메타데이터로 유지하는 편이 좋다.",
+        "decision": "runtime은 새 `Status: open|resolved` contract만 공식 지원하고, `contract_version` 필드는 유지한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "`Status: open`인 clarification에서 `A:`를 허용해야 하는가?",
+        "answer": "그렇다. 사용자가 일단 답을 줬지만 추가 확인이 필요해 아직 닫지 못한 상태를 표현할 수 있어야 한다.",
+        "decision": "`open` clarification은 `A:`를 가질 수 있지만 `Decision:`은 가질 수 없도록 한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "clarification 항목의 문법 순서는 어떻게 고정해야 하는가?",
+        "answer": "parser와 사람이 모두 안정적으로 읽을 수 있게 항목 순서를 고정하는 편이 좋다.",
+        "decision": "`open`은 `Q:` → 선택적 `A:` → `Status: open`, `resolved`는 `Q:` → `A:` → `Decision:` → `Status: resolved` 순서로 고정하고 `Status:`는 각 clarification의 마지막 줄로 둔다.",
+        "status": "resolved"
+      },
+      {
+        "question": "기존 과거 task artifact 삭제는 언제 수행해야 하는가?",
+        "answer": "새 clarification contract 구현과 검증을 먼저 끝낸 뒤, 같은 작업의 마지막 단계에서 `workflows/tasks/` 정리를 수행하는 편이 안전하다.",
+        "decision": "runtime/tests/docs 변경과 검증 완료 후 마지막 단계에서 `task-harness-socratic-uncertainty-gate`만 남기고 나머지 task 디렉터리를 삭제한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "`approve`가 clarification을 `task.json.intake`에 잠글 때 어떤 형태로 저장해야 하는가?",
+        "answer": "category는 제거하고, 새 contract의 핵심 상태를 그대로 반영하도록 `question`, `answer`, `decision`, `status` 중심으로 잠그는 편이 좋다.",
+        "decision": "`approve`는 `status=resolved` clarification만 `task.json.intake.clarifications`에 잠그고, clarification schema는 `question`, `answer`, `decision`, `status`를 기본 필드로 사용한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "새 clarification contract의 `contract_version`은 얼마로 올려야 하는가?",
+        "answer": "readiness 판단 방식과 clarification schema가 실제로 바뀌므로 새 major contract로 보는 편이 명확하다.",
+        "decision": "`Status: open|resolved` 기반 clarification contract는 `contract_version = 3`으로 올린다.",
+        "status": "resolved"
+      },
+      {
+        "question": "승인 이후 `spec.md`에 새 `Status: open` 질문이 생기면 task lifecycle은 어떻게 동작해야 하는가?",
+        "answer": "이미 승인됐더라도 더 이상 실행 가능한 spec이 아니므로, 다시 질의 루프로 돌아가 질문을 닫고 재승인해야 한다.",
+        "decision": "승인 이후 `spec.md`에 새 `open` clarification이 생기면 `plan`/`run`/`verify`를 막고, `reopen` 후 clarification을 닫은 다음 `approve`를 다시 수행하도록 한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "이번 bootstrap 예외 task는 구현 완료 후 어떤 흐름으로 닫아야 하는가?",
+        "answer": "예외적으로 시작하더라도 runtime이 준비된 뒤에는 현재 task도 새 contract 아래로 다시 편입해 정상적인 workflow로 닫는 편이 일관적이다.",
+        "decision": "`task-harness-socratic-uncertainty-gate`는 bootstrap 예외로 시작하되, 구현 후에는 새 clarification contract로 `approve -> plan -> verify -> review/close` 흐름을 다시 타서 정상적으로 마무리한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "`Q:`, `A:`, `Decision:` 값은 한 줄로 제한해야 하는가?",
+        "answer": "그렇다. clarification log는 짧고 기계적으로 읽히는 형태를 유지하고, 상세 설명은 다른 spec section에 두는 편이 parser와 검증 모두 단순하다.",
+        "decision": "`Q:`, `A:`, `Decision:` 값은 각각 한 줄 항목으로 제한한다.",
+        "status": "resolved"
+      },
+      {
+        "question": "새 task를 만들 때 기본 `spec.md` 템플릿의 clarification 예시는 어떻게 시작해야 하는가?",
+        "answer": "템플릿 자체가 새 contract 문법을 보여줘야 하므로, `Q:`와 `Status: open` 기반 placeholder 예시로 시작하는 편이 좋다.",
+        "decision": "`new`가 생성하는 기본 `spec.md` 템플릿의 `Socratic Clarification Log`는 새 `Status:` 기반 placeholder 예시를 사용하도록 바꾼다.",
+        "status": "resolved"
+      },
+      {
+        "question": "approval block과 `approve --note` 메타데이터 구조도 함께 바꿔야 하는가?",
+        "answer": "아니다. clarification model과 독립적인 메타데이터이므로 기존 `Actor/Timestamp/Note` 구조를 유지하는 편이 안전하다.",
+        "decision": "approval 메타데이터 구조는 유지하고, 이번 변경 범위는 clarification readiness와 intake schema에 한정한다.",
+        "status": "resolved"
+      }
+    ]
+  }
+}

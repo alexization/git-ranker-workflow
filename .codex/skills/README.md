@@ -33,4 +33,4 @@
 5. 모든 phase가 끝나면 `review-closeout`
 6. 실패, block, follow-up이면 `repair-reopen`
 
-새 workflow에서는 markdown spec과 JSON state를 분리한다. `spec.md`는 사람용 요구사항 초안이고, `approve`가 이를 `task.json.intake`로 잠근다. 새 spec contract에서는 clarification coverage category를 모두 채워야 승인된다. `task.json`/`phases.json`/`runs/*.json`은 자동화용 canonical source고, phase boundary kickoff proof도 여기 남긴다.
+새 workflow에서는 markdown spec과 JSON state를 분리한다. `spec.md`는 사람용 요구사항 초안이고, `approve`가 이를 `task.json.intake`로 잠근다. 새 spec contract에서는 `Socratic Clarification Log`의 열린 질문이 모두 닫혀야 승인된다. `task.json`/`phases.json`/`runs/*.json`은 자동화용 canonical source고, phase boundary kickoff proof도 여기 남긴다.

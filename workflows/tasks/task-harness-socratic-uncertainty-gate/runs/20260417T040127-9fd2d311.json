@@ -1,0 +1,18 @@
+{
+  "id": "20260417T040127-9fd2d311",
+  "task_id": "task-harness-socratic-uncertainty-gate",
+  "phase_id": "phase-2",
+  "event": "verification",
+  "commands": [
+    {
+      "command": "python3 scripts/workflow.py doctor",
+      "status": "failed",
+      "output": "{\n  \"status\": \"failed\",\n  \"checks\": [\n    \"workflow system hook config is readable\",\n    \"git core.hooksPath points to .githooks\",\n    \"task artifacts are internally consistent\",\n    \"runtime surface matches source\",\n    \"AGENTS constitution is complete\",\n    \"no stale legacy references remain in control-plane files\"\n  ],\n  \"errors\": [\n    \"docs/runtime.md missing required marker: Status: open\"\n  ]\n}"
+    }
+  ],
+  "result": "failed",
+  "evidence": [],
+  "error_fingerprint": "verification:phase-2:python3 scripts/workflow.py doctor",
+  "next_action": "repair",
+  "timestamp": "2026-04-17T04:01:27+00:00"
+}

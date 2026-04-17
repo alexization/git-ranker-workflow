@@ -1,0 +1,20 @@
+{
+  "id": "20260417T040744-867e760e",
+  "task_id": "task-harness-socratic-uncertainty-gate",
+  "phase_id": "phase-2",
+  "event": "phase_failure",
+  "commands": [
+    {
+      "command": "phase failure",
+      "status": "failed",
+      "output": "re-enter repair loop after upstream reopen fix"
+    }
+  ],
+  "result": "failed",
+  "evidence": [
+    "re-enter repair loop after upstream reopen fix"
+  ],
+  "error_fingerprint": null,
+  "next_action": "repair or retry",
+  "timestamp": "2026-04-17T04:07:44+00:00"
+}

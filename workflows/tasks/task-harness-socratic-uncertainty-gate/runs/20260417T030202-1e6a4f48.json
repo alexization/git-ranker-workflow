@@ -1,0 +1,18 @@
+{
+  "id": "20260417T030202-1e6a4f48",
+  "task_id": "task-harness-socratic-uncertainty-gate",
+  "phase_id": "phase-1",
+  "event": "verification",
+  "commands": [
+    {
+      "command": "python3 -m unittest tests.test_workflow_cli -v",
+      "status": "passed",
+      "output": "test_approve_rejects_open_clarifications_before_locking_intake (tests.test_workflow_cli.WorkflowCliTest.test_approve_rejects_open_clarifications_before_locking_intake) ... ok\ntest_approve_requires_structured_socratic_log_and_locks_intake (tests.test_workflow_cli.WorkflowCliTest.test_approve_requires_structured_socratic_log_and_locks_intake) ... ok\ntest_check_fails_when_approved_task_points_to_completed_phase (tests.test_workflow_cli.WorkflowCliTest.test_check_fails_when_approved_task_points_to_completed_phase) ... ok\ntest_circuit_breaker_triggers_from_verification_failures (tests.test_workflow..."
+    }
+  ],
+  "result": "passed",
+  "evidence": [],
+  "error_fingerprint": null,
+  "next_action": "review",
+  "timestamp": "2026-04-17T03:02:02+00:00"
+}
