@@ -326,7 +326,7 @@ class WorkflowService:
         spec = inspect_spec(self.spec_path(task_id))
         if not spec["ready_for_approval"]:
             raise WorkflowError("plan requires approval-ready spec.md")
-        intake = ensure_locked_intake(task["intake"])
+        intake = ensure_locked_intake(task["intake"], contract_version=task_contract_version(task))
         if intake != spec["intake"]:
             raise WorkflowError("spec.md and task.intake are out of sync; rerun approve before plan")
 
@@ -1005,7 +1005,7 @@ class WorkflowService:
                 if task["state"] != "draft":
                     if not spec["ready_for_approval"]:
                         raise WorkflowError("approved-or-later task requires approval-ready spec.md")
-                    if ensure_locked_intake(task["intake"]) != spec["intake"]:
+                    if ensure_locked_intake(task["intake"], contract_version=task_contract_version(task)) != spec["intake"]:
                         raise WorkflowError("task.intake is out of sync with spec.md")
                 if task["latest_run_id"] is not None:
                     self.load_run(task_id, task["latest_run_id"])

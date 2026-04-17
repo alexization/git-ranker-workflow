@@ -377,7 +377,12 @@ def validate_spec_for_approval(spec_path: Path) -> dict[str, Any]:
     return readiness["intake"]
 
 
-def validate_locked_intake(payload: dict[str, Any], label: str = "task.intake") -> dict[str, Any]:
+def validate_locked_intake(
+    payload: dict[str, Any],
+    label: str = "task.intake",
+    *,
+    contract_version: int = CURRENT_TASK_CONTRACT_VERSION,
+) -> dict[str, Any]:
     payload = _require_mapping(payload, label)
     _require_keys(
         payload,
@@ -405,12 +410,24 @@ def validate_locked_intake(payload: dict[str, Any], label: str = "task.intake") 
     normalized_clarifications: list[dict[str, Any]] = []
     for index, clarification in enumerate(clarifications):
         clarification = _require_mapping(clarification, f"{label}.clarifications[{index}]")
-        _require_keys(clarification, ["question", "answer", "decision", "status"], f"{label}.clarifications[{index}]")
-        status = _require_string(clarification["status"], f"{label}.clarifications[{index}].status").lower()
+        if contract_version >= CURRENT_TASK_CONTRACT_VERSION:
+            _require_keys(clarification, ["question", "answer", "decision", "status"], f"{label}.clarifications[{index}]")
+            status = _require_string(clarification["status"], f"{label}.clarifications[{index}].status").lower()
+        else:
+            _require_keys(clarification, ["question"], f"{label}.clarifications[{index}]")
+            if "status" in clarification:
+                status = _require_string(clarification["status"], f"{label}.clarifications[{index}].status").lower()
+            elif "resolved" in clarification:
+                resolved = _require_bool(clarification["resolved"], f"{label}.clarifications[{index}].resolved")
+                status = "resolved" if resolved else "open"
+            else:
+                raise WorkflowError(
+                    f"{label}.clarifications[{index}] legacy clarifications require status or resolved"
+                )
         if status not in {"open", "resolved"}:
             raise WorkflowError(f"{label}.clarifications[{index}].status must be open or resolved")
-        answer = _require_optional_string(clarification["answer"], f"{label}.clarifications[{index}].answer")
-        decision = _require_optional_string(clarification["decision"], f"{label}.clarifications[{index}].decision")
+        answer = _require_optional_string(clarification.get("answer"), f"{label}.clarifications[{index}].answer")
+        decision = _require_optional_string(clarification.get("decision"), f"{label}.clarifications[{index}].decision")
         if status == "open" and decision is not None:
             raise WorkflowError(f"{label}.clarifications[{index}] open clarifications must not contain decision")
         if status == "resolved":
@@ -438,8 +455,13 @@ def validate_locked_intake(payload: dict[str, Any], label: str = "task.intake") 
     }
 
 
-def ensure_locked_intake(payload: dict[str, Any], label: str = "task.intake") -> dict[str, Any]:
-    intake = validate_locked_intake(payload, label)
+def ensure_locked_intake(
+    payload: dict[str, Any],
+    label: str = "task.intake",
+    *,
+    contract_version: int = CURRENT_TASK_CONTRACT_VERSION,
+) -> dict[str, Any]:
+    intake = validate_locked_intake(payload, label, contract_version=contract_version)
     required_list_fields = ["goals", "non_goals", "constraints", "acceptance", "clarifications"]
     if intake["request_summary"] is None:
         raise WorkflowError(f"{label}.request_summary must be locked before approval")
@@ -492,7 +514,7 @@ def validate_task(payload: dict[str, Any]) -> None:
     _require_optional_string(payload["blocked_reason"], "task.blocked_reason")
     _require_bool(payload["user_validated"], "task.user_validated")
     _require_optional_string(payload["user_validation_note"], "task.user_validation_note")
-    intake = validate_locked_intake(payload["intake"])
+    intake = validate_locked_intake(payload["intake"], contract_version=contract_version)
 
     approval = payload["approval"]
     if approval is not None:
@@ -517,7 +539,7 @@ def validate_task(payload: dict[str, Any]) -> None:
     if payload["state"] in {"review_ready", "completed"} and not payload["last_verified_run_id"]:
         raise WorkflowError("review_ready/completed task requires last_verified_run_id")
     if payload["state"] != "draft":
-        ensure_locked_intake(intake)
+        ensure_locked_intake(intake, contract_version=contract_version)
 
 
 def validate_phases(payload: dict[str, Any]) -> None:

@@ -471,6 +471,53 @@ class WorkflowCliTest(unittest.TestCase):
             status = json.loads(self.run_cli(root, "status", "task-002cc").stdout)
             self.assertEqual(status["active_phase_bootstrap"]["required_reads"], [])
 
+    def test_plan_accepts_legacy_locked_intake_schema_for_pre_v3_task(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.run_cli(root, "new", "task-002cd", "--title", "Harness V2", "--primary-repo", "git-ranker-workflow")
+            self.finalize_spec(root, "task-002cd")
+            self.run_cli(root, "approve", "task-002cd", "--note", "approved by user")
+
+            task_path = root / "workflows" / "tasks" / "task-002cd" / "task.json"
+            task = self.read_json(task_path)
+            task["contract_version"] = 2
+            for clarification in task["intake"]["clarifications"]:
+                clarification["resolved"] = True
+                clarification["category"] = "goal"
+                clarification.pop("status", None)
+            task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            status = json.loads(self.run_cli(root, "status", "task-002cd").stdout)
+            self.assertEqual(status["task"]["contract_version"], 2)
+            self.assertEqual(status["task"]["intake"]["clarifications"][0]["resolved"], True)
+
+            phase_file = self.write_phase_input(root, ["python3 -c \"print('ok')\""])
+            self.run_cli(root, "plan", "task-002cd", "--from", str(phase_file))
+
+    def test_doctor_accepts_legacy_locked_intake_schema_for_pre_v3_task(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.init_git_repo(root)
+            self.run_cli(root, "init")
+            self.bootstrap_task(
+                root,
+                "task-002ce",
+                test_policy_mode="evidence_only",
+                test_policy_evidence=["legacy intake compatibility is exercised by CLI tests"],
+            )
+
+            task_path = root / "workflows" / "tasks" / "task-002ce" / "task.json"
+            task = self.read_json(task_path)
+            task["contract_version"] = 2
+            for clarification in task["intake"]["clarifications"]:
+                clarification["resolved"] = True
+                clarification["category"] = "goal"
+                clarification.pop("status", None)
+            task_path.write_text(json.dumps(task, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+            self.run_cli(root, "doctor")
+            self.run_cli(root, "status", "--check", "--all")
+
     def test_approve_rejects_open_clarifications_before_locking_intake(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
