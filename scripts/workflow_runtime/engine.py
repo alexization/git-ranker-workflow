@@ -258,6 +258,9 @@ class WorkflowService:
         self.ensure_spec_locked(task_id, state)
         if not state["implementation_scopes"]:
             raise WorkflowError("plan must run before implementation starts")
+        active = next((existing for existing in state["implementation_scopes"] if existing["status"] == "in_progress"), None)
+        if active:
+            raise WorkflowError(f"complete or fail active implementation scope before starting another: {active['imp_id']}")
 
         scope = self.implementation_scope(state, imp_id) if imp_id else self.next_startable_scope(state)
         if scope["status"] not in {"pending", "failed"}:
@@ -282,8 +285,8 @@ class WorkflowService:
         self.add_event(state, "start", imp_id=scope["imp_id"], note=note or "")
         self.save_state(task_id, state)
 
-    def scope_delta(self, scope: dict[str, Any], changed_paths: list[str]) -> list[str]:
-        allowed = [*scope["change_paths"], f"workflows/tasks/{scope['imp_id']}"]
+    def scope_delta(self, task_id: str, scope: dict[str, Any], changed_paths: list[str]) -> list[str]:
+        allowed = [*scope["change_paths"], f"workflows/tasks/{task_id}/"]
         delta = []
         for path in changed_paths:
             if not any(scope_matches(path, allowed_path) for allowed_path in allowed):
@@ -309,7 +312,7 @@ class WorkflowService:
         final_paths = sorted(set(changed_paths or self.staged_or_worktree_paths(staged=False)))
         scope["status"] = "completed"
         scope["changed_paths"] = final_paths
-        scope["scope_delta"] = self.scope_delta(scope, final_paths)
+        scope["scope_delta"] = self.scope_delta(task_id, scope, final_paths)
         scope["completed_at"] = now_iso()
         scope["note"] = note or ("; ".join(evidence) if evidence else "")
         state["state"] = "in_progress"
@@ -365,6 +368,7 @@ class WorkflowService:
 
     def verify_task(self, task_id: str, imp_id: str | None, commands: list[str] | None, evidence: list[str]) -> int:
         state = self.load_state(task_id)
+        self.ensure_spec_locked(task_id, state)
         scope = self.verification_target(state, imp_id)
         if scope["status"] != "completed":
             raise WorkflowError("verification requires completed implementation scope")

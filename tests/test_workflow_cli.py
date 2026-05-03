@@ -36,9 +36,18 @@ class WorkflowCliTest(unittest.TestCase):
         *,
         open_question: bool = False,
         scope_path: str = "docs/",
+        extra_scope: bool = False,
     ) -> None:
         status = "open" if open_question else "resolved"
         answer = "" if open_question else "- A: `spec.md`와 `state.json`만 유지한다.\n- Decision: task state는 단일 JSON으로 관리한다.\n"
+        extra_scope_block = ""
+        if extra_scope:
+            extra_scope_block = (
+                "- IMP-02: Guard update\n"
+                "  - 대상 저장소: `git-ranker-workflow`\n"
+                "  - 변경 경로: `scripts/`\n"
+                "  - 정책: state 전이 guard를 보강한다.\n\n"
+            )
         spec = (
             "# Single State Harness\n\n"
             f"- Task ID: `{task_id}`\n"
@@ -62,6 +71,7 @@ class WorkflowCliTest(unittest.TestCase):
             "  - 대상 저장소: `git-ranker-workflow`\n"
             f"  - 변경 경로: `{scope_path}`\n"
             "  - 정책: state.json에 진행 상태와 검증 결과를 기록한다.\n\n"
+            f"{extra_scope_block}"
             "## Socratic Clarification Log\n\n"
             "- Q: 상태 파일은 어떻게 관리해야 하는가?\n"
             f"{answer}"
@@ -69,9 +79,9 @@ class WorkflowCliTest(unittest.TestCase):
         )
         (root / "workflows" / "tasks" / task_id / "spec.md").write_text(spec, encoding="utf-8")
 
-    def bootstrap_planned_task(self, root: Path, task_id: str = "task-001") -> None:
+    def bootstrap_planned_task(self, root: Path, task_id: str = "task-001", *, extra_scope: bool = False) -> None:
         self.run_cli(root, "new", task_id, "--title", "Single State Harness", "--primary-repo", "git-ranker-workflow")
-        self.write_spec(root, task_id)
+        self.write_spec(root, task_id, extra_scope=extra_scope)
         self.run_cli(root, "approve", task_id, "--note", "approved by user")
         self.run_cli(root, "plan", task_id)
 
@@ -131,32 +141,78 @@ class WorkflowCliTest(unittest.TestCase):
             result = self.run_cli(root, "plan", "task-004", expected=1)
             self.assertIn("spec.md has changed since approval", result.stderr)
 
-    def test_full_single_state_flow_reaches_completed(self) -> None:
+    def test_verify_blocks_spec_change_after_scope_completion(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.bootstrap_planned_task(root, "task-005")
-
             self.run_cli(root, "run", "task-005", "--start")
             self.run_cli(root, "run", "task-005", "--complete", "--changed-path", "docs/runtime.md")
-            self.run_cli(root, "verify", "task-005", "--verify-command", "python3 -c \"print('ok')\"")
-            self.run_cli(root, "review", "task-005", "--note", "ready")
-            self.run_cli(root, "review", "task-005", "--close", "--user-validation-note", "validated by user")
+            spec_path = root / "workflows" / "tasks" / "task-005" / "spec.md"
+            spec_path.write_text(spec_path.read_text(encoding="utf-8") + "\n<!-- changed -->\n", encoding="utf-8")
 
-            state = self.read_json(root / "workflows" / "tasks" / "task-005" / "state.json")
-            self.assertEqual(state["state"], "completed")
-            self.assertTrue(state["user_validation"]["validated"])
-            self.assertEqual(state["implementation_scopes"][0]["verification"]["status"], "passed")
+            result = self.run_cli(
+                root,
+                "verify",
+                "task-005",
+                "--verify-command",
+                "python3 -c \"print('ok')\"",
+                expected=1,
+            )
+            self.assertIn("spec.md has changed since approval", result.stderr)
 
-    def test_scope_delta_is_advisory_not_a_hard_failure(self) -> None:
+    def test_full_single_state_flow_reaches_completed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             self.bootstrap_planned_task(root, "task-006")
 
             self.run_cli(root, "run", "task-006", "--start")
-            self.run_cli(root, "run", "task-006", "--complete", "--changed-path", "scripts/workflow.py")
+            self.run_cli(root, "run", "task-006", "--complete", "--changed-path", "docs/runtime.md")
+            self.run_cli(root, "verify", "task-006", "--verify-command", "python3 -c \"print('ok')\"")
+            self.run_cli(root, "review", "task-006", "--note", "ready")
+            self.run_cli(root, "review", "task-006", "--close", "--user-validation-note", "validated by user")
 
             state = self.read_json(root / "workflows" / "tasks" / "task-006" / "state.json")
+            self.assertEqual(state["state"], "completed")
+            self.assertTrue(state["user_validation"]["validated"])
+            self.assertEqual(state["implementation_scopes"][0]["verification"]["status"], "passed")
+
+    def test_start_blocks_second_scope_while_one_is_active(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_planned_task(root, "task-007", extra_scope=True)
+
+            self.run_cli(root, "run", "task-007", "--start", "--imp-id", "IMP-01")
+            result = self.run_cli(root, "run", "task-007", "--start", "--imp-id", "IMP-02", expected=1)
+            self.assertIn("complete or fail active implementation scope", result.stderr)
+
+    def test_scope_delta_is_advisory_not_a_hard_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_planned_task(root, "task-008")
+
+            self.run_cli(root, "run", "task-008", "--start")
+            self.run_cli(root, "run", "task-008", "--complete", "--changed-path", "scripts/workflow.py")
+
+            state = self.read_json(root / "workflows" / "tasks" / "task-008" / "state.json")
             self.assertEqual(state["implementation_scopes"][0]["scope_delta"], ["scripts/workflow.py"])
+
+    def test_task_artifact_paths_do_not_count_as_scope_delta(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.bootstrap_planned_task(root, "task-009")
+
+            self.run_cli(root, "run", "task-009", "--start")
+            self.run_cli(
+                root,
+                "run",
+                "task-009",
+                "--complete",
+                "--changed-path",
+                "workflows/tasks/task-009/state.json",
+            )
+
+            state = self.read_json(root / "workflows" / "tasks" / "task-009" / "state.json")
+            self.assertEqual(state["implementation_scopes"][0]["scope_delta"], [])
 
     def test_dangerous_command_guard_blocks_force_push(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -174,12 +230,12 @@ class WorkflowCliTest(unittest.TestCase):
     def test_doctor_and_status_check_validate_single_state_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            self.bootstrap_planned_task(root, "task-007")
+            self.bootstrap_planned_task(root, "task-010")
 
             self.run_cli(root, "doctor")
             self.run_cli(root, "status", "--all", "--check")
 
-            legacy = root / "workflows" / "tasks" / "task-007" / "phases.json"
+            legacy = root / "workflows" / "tasks" / "task-010" / "phases.json"
             legacy.write_text("{}", encoding="utf-8")
             result = self.run_cli(root, "status", "--all", "--check", expected=1)
             self.assertIn("legacy phases.json must not exist", result.stdout)

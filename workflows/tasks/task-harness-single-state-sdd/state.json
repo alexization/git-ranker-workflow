@@ -2,10 +2,10 @@
   "task_id": "task-harness-single-state-sdd",
   "title": "Simplify harness into single-state Socratic SDD",
   "contract_version": 4,
-  "state": "completed",
+  "state": "review_ready",
   "primary_repo": "git-ranker-workflow",
   "created_at": "2026-05-03T16:27:42+00:00",
-  "updated_at": "2026-05-03T16:48:27+00:00",
+  "updated_at": "2026-05-03T17:18:39+00:00",
   "spec_lock": {
     "approved": true,
     "approved_at": "2026-05-03T16:40:22+00:00",
@@ -310,13 +310,13 @@
       "status": "completed",
       "changed_paths": [
         "scripts/workflow_runtime/engine.py",
-        "scripts/workflow_runtime/models.py",
-        "tests/test_workflow_cli.py"
+        "tests/test_workflow_cli.py",
+        "workflows/tasks/task-harness-single-state-sdd/state.json"
       ],
       "scope_delta": [],
-      "started_at": "2026-05-03T16:43:24+00:00",
-      "completed_at": "2026-05-03T16:43:28+00:00",
-      "note": "",
+      "started_at": "2026-05-03T17:18:21+00:00",
+      "completed_at": "2026-05-03T17:18:25+00:00",
+      "note": "Addressed PR review feedback for spec lock verification, active scope exclusivity, and task artifact scope delta",
       "verification": {
         "status": "passed",
         "commands": [
@@ -325,13 +325,13 @@
             "cwd": "."
           }
         ],
-        "last_run_at": "2026-05-03T16:43:32+00:00",
+        "last_run_at": "2026-05-03T17:18:29+00:00",
         "results": [
           {
-            "command": "python3 -c \"print('IMP-07 verified by full test run already completed')\"",
+            "command": "python3 -m unittest discover -s tests -v",
             "cwd": ".",
             "status": "passed",
-            "output": "IMP-07 verified by full test run already completed"
+            "output": "test_approve_requires_resolved_clarifications_and_locks_spec_hash (test_workflow_cli.WorkflowCliTest.test_approve_requires_resolved_clarifications_and_locks_spec_hash) ... ok\ntest_dangerous_command_guard_blocks_force_push (test_workflow_cli.WorkflowCliTest.test_dangerous_command_guard_blocks_force_push) ... ok\ntest_doctor_and_status_check_validate_single_state_artifacts (test_workflow_cli.WorkflowCliTest.test_doctor_and_status_check_validate_single_state_artifacts) ... ok\ntest_full_single_state_flow_reaches_completed (test_workflow_cli.WorkflowCliTest.test_full_single_state_flow_reaches_completed) ... ok\ntest_new_creates_spec_and_single_state_file (test_workflow_cli.WorkflowCliTest.test_new_creates_spec_and_single_state_file) ... ok\ntest_plan_parses_implementation_scopes_without_external_j..."
           }
         ]
       }
@@ -682,13 +682,69 @@
       "result": "passed",
       "note": "사용자가 '이어서 진행해주세요'로 single-state SDD Harness 결과 closeout을 승인함",
       "commands": []
+    },
+    {
+      "timestamp": "2026-05-03T17:18:16+00:00",
+      "type": "reopen",
+      "imp_id": "IMP-07",
+      "result": "passed",
+      "note": "PR code review feedback: strengthen state transition guards",
+      "commands": []
+    },
+    {
+      "timestamp": "2026-05-03T17:18:21+00:00",
+      "type": "start",
+      "imp_id": "IMP-07",
+      "result": "passed",
+      "note": "Address PR review guard findings",
+      "commands": []
+    },
+    {
+      "timestamp": "2026-05-03T17:18:25+00:00",
+      "type": "complete",
+      "imp_id": "IMP-07",
+      "result": "passed",
+      "note": "Addressed PR review feedback for spec lock verification, active scope exclusivity, and task artifact scope delta",
+      "commands": [
+        {
+          "changed_paths": [
+            "scripts/workflow_runtime/engine.py",
+            "tests/test_workflow_cli.py",
+            "workflows/tasks/task-harness-single-state-sdd/state.json"
+          ],
+          "scope_delta": []
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-05-03T17:18:29+00:00",
+      "type": "verify",
+      "imp_id": "IMP-07",
+      "result": "passed",
+      "note": "",
+      "commands": [
+        {
+          "command": "python3 -m unittest discover -s tests -v",
+          "cwd": ".",
+          "status": "passed",
+          "output": "test_approve_requires_resolved_clarifications_and_locks_spec_hash (test_workflow_cli.WorkflowCliTest.test_approve_requires_resolved_clarifications_and_locks_spec_hash) ... ok\ntest_dangerous_command_guard_blocks_force_push (test_workflow_cli.WorkflowCliTest.test_dangerous_command_guard_blocks_force_push) ... ok\ntest_doctor_and_status_check_validate_single_state_artifacts (test_workflow_cli.WorkflowCliTest.test_doctor_and_status_check_validate_single_state_artifacts) ... ok\ntest_full_single_state_flow_reaches_completed (test_workflow_cli.WorkflowCliTest.test_full_single_state_flow_reaches_completed) ... ok\ntest_new_creates_spec_and_single_state_file (test_workflow_cli.WorkflowCliTest.test_new_creates_spec_and_single_state_file) ... ok\ntest_plan_parses_implementation_scopes_without_external_j..."
+        }
+      ]
+    },
+    {
+      "timestamp": "2026-05-03T17:18:39+00:00",
+      "type": "review_ready",
+      "imp_id": null,
+      "result": "passed",
+      "note": "PR review feedback addressed; awaiting user validation after updated PR",
+      "commands": []
     }
   ],
-  "next_action": "done",
+  "next_action": "Ask the user to validate the result, then run review --close.",
   "blockers": [],
   "user_validation": {
-    "validated": true,
-    "note": "사용자가 '이어서 진행해주세요'로 single-state SDD Harness 결과 closeout을 승인함",
-    "validated_at": "2026-05-03T16:48:27+00:00"
+    "validated": false,
+    "note": null,
+    "validated_at": null
   }
 }
