@@ -5,99 +5,87 @@
 ```text
 workflows/
 ├── system/
-│   ├── hooks.json
-│   └── circuit-breaker.json
+│   └── hooks.json
 └── tasks/
     └── <task-id>/
         ├── spec.md
-        ├── task.json
-        ├── phases.json
-        └── runs/
-            └── <run-id>.json
+        └── state.json
 ```
 
 ## Artifact Roles
 
-- `workflows/tasks/<task-id>/spec.md`: 사람용 requirement artifact. 요청, 문제, 목표, 비목표, 제약, acceptance, 소크라테스 질문 로그, 승인 기록을 담는다. 새 spec contract에서는 clarification마다 `Status: open|resolved`를 명시하고, 열린 질문이 없어질 때까지 질의를 계속한다.
-- `workflows/tasks/<task-id>/task.json`: mutable task state이자 승인 시점의 locked intake source다. approval, active phase, latest run, latest verified run, kickoff requirement, blocked reason, user validation과 `intake`를 담는다.
-- `workflows/tasks/<task-id>/phases.json`: 승인 이후 생성된 executable phase 집합이다. phase 목표, write scope, acceptance command, test policy, retry count와 다음 세션 kickoff용 bootstrap metadata를 담는다.
-- `workflows/tasks/<task-id>/runs/*.json`: phase completion, phase kickoff, verification, review, reopen evidence다.
-- `workflows/system/hooks.json`: 전역 hook/guard/breaker 정책이다.
-- `workflows/system/circuit-breaker.json`: 반복 실패 fingerprint 메모리다.
+- `spec.md`: 사람용 SDD source of truth다. Request, Problem, Goals, Non-goals, Constraints, Acceptance, Implementation Scopes, Socratic Clarification Log, Approval block을 담는다.
+- `state.json`: 단일 mutable task state다. approval lock, current focus, IMP별 진행률, verification result, recent events, next action, blockers, user validation을 담는다.
+- `hooks.json`: 최소 guard 정책이다. 위험 명령과 user validation closeout만 전역 정책으로 둔다.
 
-## Spec And Phase Loading Flow
+`task.json`, `phases.json`, 별도 `status.json`, `runs/*.json`은 새 모델에서 생성하지 않는다.
 
-1. `new`가 task 디렉터리와 `spec.md`, `task.json`, `phases.json` skeleton을 만든다.
-2. 소크라테스 질문으로 `spec.md`를 채운다. `Socratic Clarification Log`는 clarification마다 `Q:`로 시작하고 마지막 줄에 `Status:`를 둔다. `open`은 `Q:`와 선택적 `A:`를 허용하고, `resolved`는 `Q:`/`A:`/`Decision:`/`Status: resolved`를 순서대로 가진다.
-3. 사용자가 현재 spec 초안에 명시적으로 동의하면 `approve`가 같은 `spec.md`에 Approval block을 추가하고, 내용을 `task.json.intake`로 잠근 뒤 `task.json`을 `approved`로 전이한다.
-4. 추가 요구사항으로 spec을 다시 잠그면 `approve`를 다시 실행해 `task.json.intake`를 갱신한다.
-5. `plan --from` 또는 `plan --stdin`이 외부 phase 초안을 읽어 같은 task 디렉터리의 `phases.json`으로 적재한다.
-6. 이후 실행, verification, review, reopen은 같은 task 디렉터리 artifact만 읽고 쓴다.
+## Spec Sections
 
-## Canonical State Fields
+`spec.md`는 아래 section을 가져야 한다.
 
-`task.json`은 최소한 아래 필드를 가진다.
+- `Request`
+- `Problem`
+- `Goals`
+- `Non-goals`
+- `Constraints`
+- `Acceptance`
+- `Implementation Scopes`
+- `Socratic Clarification Log`
 
-- `id`
+`Implementation Scopes`는 `IMP-*` 항목을 사용한다.
+
+```markdown
+- IMP-01: 문서 계약 정리
+  - 대상 저장소: `git-ranker-workflow`
+  - 변경 경로: `AGENTS.md`, `docs/`
+  - 정책: SDD 5단계와 state.json 단일 상태 모델을 설명한다.
+```
+
+## State Fields
+
+`state.json`은 최소한 아래 필드를 가진다.
+
+- `task_id`
 - `title`
 - `contract_version`
 - `state`
 - `primary_repo`
 - `created_at`
-- `approved_at`
-- `approval`
-- `active_phase_id`
-- `latest_run_id`
-- `last_verified_run_id`
-- `kickoff_required_for_phase`
-- `last_kickoff_run_id`
-- `blocked_reason`
-- `user_validated`
-- `user_validation_note`
-- `intake.request_summary`
-- `intake.problem_summary`
-- `intake.goals`
-- `intake.non_goals`
-- `intake.constraints`
-- `intake.acceptance`
-- `intake.clarifications`
+- `updated_at`
+- `spec_lock.approved`
+- `spec_lock.approved_at`
+- `spec_lock.approved_by`
+- `spec_lock.approval_note`
+- `spec_lock.spec_sha256`
+- `current_focus.imp_id`
+- `current_focus.status`
+- `implementation_scopes[]`
+- `events[]`
+- `next_action`
+- `blockers[]`
+- `user_validation.validated`
+- `user_validation.note`
+- `user_validation.validated_at`
 
-`intake.clarifications`의 각 항목은 아래 필드를 가진다.
+## Implementation Scope State
 
-- `question`
-- `answer`
-- `decision`
-- `status`
+각 `implementation_scopes[]` 항목은 아래 필드를 가진다.
 
-## Phase Fields
-
-`phases.json`의 각 phase는 최소한 아래 필드를 가진다.
-
-- `id`
-- `order`
+- `imp_id`
 - `title`
-- `goal`
-- `inputs`
-- `required_reads`
-- `starting_points`
-- `deliverables`
-- `completion_signal`
-- `allowed_write_paths`
-- `acceptance.commands`
-- `test_policy.mode`
-- `test_policy.evidence`
+- `target_repos`
+- `change_paths`
+- `policy`
 - `status`
-- `retry_count`
+- `changed_paths`
+- `scope_delta`
+- `started_at`
+- `completed_at`
+- `note`
+- `verification.status`
+- `verification.commands[]`
+- `verification.last_run_at`
+- `verification.results[]`
 
-`test_policy.mode`는 아래 둘 중 하나다.
-
-- `require_tests`: 구현 변경이 있으면 대응 테스트 변경이 필요하다.
-- `evidence_only`: 테스트 delta 대신 명시적 evidence 배열을 근거로 허용한다.
-
-`required_reads`, `starting_points`, `deliverables`, `completion_signal`은 다음 phase를 새 세션에서 시작할 때 `task.json`/`phases.json`/`spec.md`만으로 bootstrap할 수 있게 만드는 canonical metadata다.
-
-## Validation Ownership
-
-- JSON schema 파일은 사용하지 않는다.
-- artifact validation과 상태 전이는 `scripts/workflow_runtime/models.py`와 `engine.py`가 소유한다.
-- 문서는 구조를 설명하지만 enforcement owner는 코드와 테스트다.
+`scope_delta`는 hard failure가 아니라 spec 범위 밖 변경을 드러내기 위한 signal이다.
