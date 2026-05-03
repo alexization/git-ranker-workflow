@@ -1,64 +1,17 @@
 {
-  "version": 1,
+  "version": 2,
   "events": {
     "pre_command": [
       "dangerous_cmd_guard"
     ],
-    "pre_commit": [
-      "write_scope_guard",
-      "tdd_guard"
-    ],
-    "post_change": [
-      "tdd_guard"
-    ],
-    "pre_phase_complete": [
-      "write_scope_guard",
-      "tdd_guard"
-    ],
-    "pre_review": [
-      "latest_verified_run_guard"
+    "pre_push": [
+      "dangerous_cmd_guard"
     ],
     "pre_complete": [
       "user_validation_guard"
-    ],
-    "pre_push": [
-      "dangerous_cmd_guard",
-      "latest_verified_run_guard"
     ]
   },
   "guards": {
-    "tdd_guard": {
-      "strict": true,
-      "implementation_patterns": [
-        "*.py",
-        "*.sh",
-        "*.js",
-        "*.jsx",
-        "*.ts",
-        "*.tsx",
-        "*.java",
-        "*.kt"
-      ],
-      "test_patterns": [
-        "tests/**",
-        "**/*_test.py",
-        "**/*test*.py",
-        "**/*.spec.ts",
-        "**/*.test.ts",
-        "**/*.spec.tsx",
-        "**/*.test.tsx",
-        "**/src/test/**"
-      ],
-      "ignore_patterns": [
-        "docs/**",
-        "workflows/**",
-        ".github/**",
-        "*.md",
-        "*.json",
-        "*.yml",
-        "*.yaml"
-      ]
-    },
     "dangerous_cmd_guard": {
       "blocked_patterns": [
         "rm\\s+-rf",
@@ -70,17 +23,6 @@
         "DROP\\s+TABLE",
         "TRUNCATE\\s+TABLE"
       ]
-    },
-    "latest_verified_run_guard": {
-      "require_phase_match": true,
-      "scope_sensitive_events": [
-        "pre_push"
-      ]
-    },
-    "circuit_breaker": {
-      "window_seconds": 60,
-      "threshold": 5,
-      "state_file": "workflows/system/circuit-breaker.json"
     }
   }
 }

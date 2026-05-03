@@ -1,29 +1,17 @@
 from __future__ import annotations
 
-import copy
 import os
 import re
 import shutil
 import subprocess
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
 
-from workflow_runtime.constants import CURRENT_TASK_CONTRACT_VERSION, PHASE_TRANSITIONS, TASK_TRANSITIONS
+from workflow_runtime.constants import CURRENT_TASK_CONTRACT_VERSION, EVENT_LIMIT
 from workflow_runtime.doctor import build_doctor_report
 from workflow_runtime.git_ops import git_paths, unpushed_git_paths
-from workflow_runtime.guards import (
-    dangerous_cmd_guard,
-    latest_verified_run_guard,
-    out_of_scope_paths,
-    phase_scope,
-    tdd_guard,
-    user_validation_guard,
-    write_scope_guard,
-)
+from workflow_runtime.guards import dangerous_cmd_guard, user_validation_guard
 from workflow_runtime.models import (
-    ensure_locked_intake,
     HookResult,
     WorkflowError,
     compact_output,
@@ -32,21 +20,20 @@ from workflow_runtime.models import (
     now_iso,
     read_json,
     scope_matches,
-    task_contract_version,
-    validate_phases,
+    spec_sha256,
+    scope_to_progress,
     validate_relative_repo_path,
-    validate_run,
     validate_spec_for_approval,
+    validate_state,
     validate_task_id,
-    validate_task,
     write_json,
 )
-from workflow_runtime.templates import approval_block, default_spec, empty_phases_payload, empty_task_payload
+from workflow_runtime.templates import approval_block, default_spec, empty_state_payload
+
 
 SOURCE_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ROOT = Path(os.environ.get("WORKFLOW_ROOT", SOURCE_ROOT))
-ACTIVE_TASK_STATES = {"approved", "in_progress", "failed", "blocked", "review_ready"}
-PRE_PUSH_TASK_STATES = ACTIVE_TASK_STATES | {"completed"}
+ACTIVE_TASK_STATES = {"approved", "in_progress", "failed", "review_ready"}
 
 
 class WorkflowService:
@@ -60,20 +47,11 @@ class WorkflowService:
     def sync_runtime_surface(self, *, overwrite: bool) -> None:
         surfaces = (
             (SOURCE_ROOT / "workflows" / "system" / "hooks.json", self.hooks_config_path),
-            (SOURCE_ROOT / ".githooks" / "pre-commit", self.root / ".githooks" / "pre-commit"),
             (SOURCE_ROOT / ".githooks" / "pre-push", self.root / ".githooks" / "pre-push"),
         )
         for source, target in surfaces:
-            if not source.exists():
+            if not source.exists() or source == target:
                 continue
-            if source == target:
-                continue
-            if target.exists():
-                try:
-                    if source.samefile(target):
-                        continue
-                except FileNotFoundError:
-                    pass
             target.parent.mkdir(parents=True, exist_ok=True)
             if overwrite or not target.exists():
                 shutil.copy2(source, target)
@@ -86,64 +64,28 @@ class WorkflowService:
     def task_dir(self, task_id: str) -> Path:
         return self.tasks_dir / validate_task_id(task_id)
 
-    def task_path(self, task_id: str) -> Path:
-        return self.task_dir(task_id) / "task.json"
-
     def spec_path(self, task_id: str) -> Path:
         return self.task_dir(task_id) / "spec.md"
 
-    def phases_path(self, task_id: str) -> Path:
-        return self.task_dir(task_id) / "phases.json"
-
-    def runs_dir(self, task_id: str) -> Path:
-        return self.task_dir(task_id) / "runs"
-
-    def run_path(self, task_id: str, run_id: str) -> Path:
-        return self.runs_dir(task_id) / f"{run_id}.json"
+    def state_path(self, task_id: str) -> Path:
+        return self.task_dir(task_id) / "state.json"
 
     def load_hooks_config(self) -> dict[str, Any]:
         self.ensure_layout()
         return read_json(self.hooks_config_path)
 
-    def load_task(self, task_id: str) -> dict[str, Any]:
-        path = self.task_path(task_id)
+    def load_state(self, task_id: str) -> dict[str, Any]:
+        path = self.state_path(task_id)
         if not path.exists():
-            raise WorkflowError(f"task not found: {task_id}")
+            raise WorkflowError(f"state not found: {task_id}")
         payload = read_json(path)
-        validate_task(payload)
-        payload["contract_version"] = task_contract_version(payload)
-        payload.setdefault("kickoff_required_for_phase", None)
-        payload.setdefault("last_kickoff_run_id", None)
+        validate_state(payload)
         return payload
 
-    def save_task(self, task_id: str, payload: dict[str, Any]) -> None:
-        validate_task(payload)
-        write_json(self.task_path(task_id), payload)
-
-    def load_phases(self, task_id: str) -> dict[str, Any]:
-        path = self.phases_path(task_id)
-        if not path.exists():
-            raise WorkflowError(f"phases not found: {task_id}")
-        payload = read_json(path)
-        validate_phases(payload)
-        payload["phases"] = [self.apply_phase_bootstrap_defaults(task_id, copy.deepcopy(phase)) for phase in payload["phases"]]
-        return payload
-
-    def save_phases(self, task_id: str, payload: dict[str, Any]) -> None:
-        validate_phases(payload)
-        write_json(self.phases_path(task_id), payload)
-
-    def load_run(self, task_id: str, run_id: str) -> dict[str, Any]:
-        path = self.run_path(task_id, run_id)
-        if not path.exists():
-            raise WorkflowError(f"run not found: {run_id}")
-        payload = read_json(path)
-        validate_run(payload)
-        return payload
-
-    def write_run(self, task_id: str, payload: dict[str, Any]) -> None:
-        validate_run(payload)
-        write_json(self.run_path(task_id, payload["id"]), payload)
+    def save_state(self, task_id: str, payload: dict[str, Any]) -> None:
+        payload["updated_at"] = now_iso()
+        validate_state(payload)
+        write_json(self.state_path(task_id), payload)
 
     def configure_git_hooks(self) -> str | None:
         result = subprocess.run(
@@ -184,88 +126,34 @@ class WorkflowService:
             raise WorkflowError(f"task already exists: {task_id}")
         task_dir.mkdir(parents=True, exist_ok=False)
         try:
-            self.runs_dir(task_id).mkdir(parents=True, exist_ok=True)
             self.spec_path(task_id).write_text(default_spec(task_id, title, primary_repo), encoding="utf-8")
-            self.save_task(task_id, empty_task_payload(task_id, title, primary_repo))
-            self.save_phases(task_id, empty_phases_payload(task_id))
+            self.save_state(task_id, empty_state_payload(task_id, title, primary_repo))
         except Exception:
             shutil.rmtree(task_dir, ignore_errors=True)
             raise
 
-    def apply_phase_bootstrap_defaults(self, task_id: str, phase: dict[str, Any]) -> dict[str, Any]:
-        required_reads = [item.strip() for item in phase.get("required_reads", []) if isinstance(item, str) and item.strip()]
-        if not required_reads:
-            required_reads = [item.strip() for item in phase.get("inputs", []) if isinstance(item, str) and item.strip()]
-
-        starting_points = [item.strip() for item in phase.get("starting_points", []) if isinstance(item, str) and item.strip()]
-        if not starting_points:
-            starting_points = [
-                f"Read the locked spec for {task_id}.",
-                f"Inspect the active phase goal: {phase['goal']}",
-                "Confirm allowed write paths and acceptance commands before editing.",
-            ]
-
-        deliverables = [item.strip() for item in phase.get("deliverables", []) if isinstance(item, str) and item.strip()]
-        if not deliverables:
-            deliverables = [phase["goal"]]
-
-        completion_signal = phase.get("completion_signal")
-        if not isinstance(completion_signal, str) or not completion_signal.strip():
-            completion_signal = f"{phase['id']} acceptance commands pass"
-
-        if required_reads:
-            phase["required_reads"] = required_reads
-        else:
-            phase.pop("required_reads", None)
-        phase["starting_points"] = starting_points
-        phase["deliverables"] = deliverables
-        phase["completion_signal"] = completion_signal.strip()
-        return phase
-
-    def phase_bootstrap_summary(self, task_id: str, phase: dict[str, Any]) -> dict[str, Any]:
-        phase = self.apply_phase_bootstrap_defaults(task_id, copy.deepcopy(phase))
-        return {
-            "phase_id": phase["id"],
-            "title": phase["title"],
-            "goal": phase["goal"],
-            "required_reads": phase.get("required_reads", []),
-            "starting_points": phase["starting_points"],
-            "deliverables": phase["deliverables"],
-            "completion_signal": phase["completion_signal"],
-            "allowed_write_paths": phase["allowed_write_paths"],
-            "acceptance_commands": phase["acceptance"]["commands"],
-        }
-
-    def kickoff_required(self, task: dict[str, Any], phase: dict[str, Any]) -> bool:
-        return task.get("kickoff_required_for_phase") == phase["id"]
-
-    def incomplete_task_error(self, task_dir: Path) -> str | None:
-        missing = []
-        if not (task_dir / "spec.md").exists():
-            missing.append("spec.md")
-        if not (task_dir / "task.json").exists():
-            missing.append("task.json")
-        if not (task_dir / "phases.json").exists():
-            missing.append("phases.json")
-        if not (task_dir / "runs").exists():
-            missing.append("runs/")
-        if missing:
-            return f"{task_dir.name}: incomplete task directory missing {', '.join(missing)}"
-        return None
-
-    def update_task_state(self, task: dict[str, Any], next_state: str) -> None:
-        current = task["state"]
-        allowed = TASK_TRANSITIONS[current]
-        if next_state not in allowed:
-            raise WorkflowError(f"invalid task transition: {current} -> {next_state}")
-        task["state"] = next_state
-
-    def update_phase_state(self, phase: dict[str, Any], next_state: str) -> None:
-        current = phase["status"]
-        allowed = PHASE_TRANSITIONS[current]
-        if next_state not in allowed:
-            raise WorkflowError(f"invalid phase transition: {current} -> {next_state}")
-        phase["status"] = next_state
+    def add_event(
+        self,
+        state: dict[str, Any],
+        event_type: str,
+        *,
+        imp_id: str | None = None,
+        result: str = "passed",
+        note: str = "",
+        commands: list[dict[str, Any]] | None = None,
+    ) -> None:
+        state["events"].append(
+            {
+                "timestamp": now_iso(),
+                "type": event_type,
+                "imp_id": imp_id,
+                "result": result,
+                "note": note,
+                "commands": commands or [],
+            }
+        )
+        if len(state["events"]) > EVENT_LIMIT:
+            state["events"] = state["events"][-EVENT_LIMIT:]
 
     def append_approval_to_spec(self, task_id: str, note: str, actor: str, timestamp: str) -> None:
         spec_path = self.spec_path(task_id)
@@ -278,115 +166,336 @@ class WorkflowService:
         spec_path.write_text(spec, encoding="utf-8")
 
     def approve_task(self, task_id: str, note: str, actor: str) -> None:
-        task = self.load_task(task_id)
-        if task["state"] not in {"draft", "approved"}:
-            raise WorkflowError("approve requires draft or approved task")
+        state = self.load_state(task_id)
+        if state["state"] not in {"draft", "approved", "failed"}:
+            raise WorkflowError("approve requires draft, approved, or failed state")
         if not note.strip():
             raise WorkflowError("approval note is required")
 
-        intake = validate_spec_for_approval(self.spec_path(task_id))
+        readiness = validate_spec_for_approval(self.spec_path(task_id))
         timestamp = now_iso()
-        task["contract_version"] = CURRENT_TASK_CONTRACT_VERSION
-        task["state"] = "approved"
-        task["approved_at"] = timestamp
-        task["approval"] = {"actor": actor, "note": note.strip(), "timestamp": timestamp}
-        task["intake"] = intake
         self.append_approval_to_spec(task_id, note.strip(), actor, timestamp)
-        self.save_task(task_id, task)
-
-    def normalize_phase(self, payload: dict[str, Any], fallback_order: int) -> dict[str, Any]:
-        try:
-            phase = copy.deepcopy(payload)
-            phase["id"] = phase["id"].strip()
-            phase["title"] = phase["title"].strip()
-            phase["goal"] = phase["goal"].strip()
-            phase["order"] = phase.get("order", fallback_order)
-            phase["status"] = "pending"
-            phase["retry_count"] = 0
-            phase["inputs"] = [item.strip() for item in phase.get("inputs", [])]
-            phase["allowed_write_paths"] = [validate_relative_repo_path(item) for item in phase["allowed_write_paths"]]
-            phase["acceptance"] = {
-                "commands": [command.strip() for command in phase["acceptance"]["commands"]],
-            }
-            policy = phase.get("test_policy") or {"mode": "require_tests", "evidence": []}
-            phase["test_policy"] = {
-                "mode": policy["mode"],
-                "evidence": [item.strip() for item in policy.get("evidence", []) if item.strip()],
-            }
-            return self.apply_phase_bootstrap_defaults("task", phase)
-        except KeyError as exc:
-            raise WorkflowError(f"phase input missing key: {exc.args[0]}") from exc
-
-    def plan_task(self, task_id: str, source_payload: Any) -> None:
-        task = self.load_task(task_id)
-        if task["state"] != "approved":
-            raise WorkflowError("plan requires approved task")
-        if source_payload is None:
-            raise WorkflowError("plan requires explicit phase input via --from or --stdin")
-        spec = inspect_spec(self.spec_path(task_id))
-        if not spec["ready_for_approval"]:
-            raise WorkflowError("plan requires approval-ready spec.md")
-        intake = ensure_locked_intake(task["intake"], contract_version=task_contract_version(task))
-        if intake != spec["intake"]:
-            raise WorkflowError("spec.md and task.intake are out of sync; rerun approve before plan")
-
-        phases_input = source_payload["phases"] if isinstance(source_payload, dict) and "phases" in source_payload else source_payload
-        if not isinstance(phases_input, list) or not phases_input:
-            raise WorkflowError("phases input must be a non-empty array")
-
-        normalized = [self.normalize_phase(phase, index) for index, phase in enumerate(phases_input, start=1)]
-        normalized = sorted(normalized, key=lambda item: item["order"])
-        normalized = [self.apply_phase_bootstrap_defaults(task_id, phase) for phase in normalized]
-        phases_payload = {
-            "task_id": task_id,
-            "generated_at": now_iso(),
-            "phases": normalized,
+        locked_hash = spec_sha256(self.spec_path(task_id))
+        state["contract_version"] = CURRENT_TASK_CONTRACT_VERSION
+        state["state"] = "approved"
+        state["spec_lock"] = {
+            "approved": True,
+            "approved_at": timestamp,
+            "approved_by": actor,
+            "approval_note": note.strip(),
+            "spec_sha256": locked_hash,
         }
-        self.save_phases(task_id, phases_payload)
-
-        task["active_phase_id"] = normalized[0]["id"]
-        task["last_verified_run_id"] = None
-        task["kickoff_required_for_phase"] = None
-        task["last_kickoff_run_id"] = None
-        task["blocked_reason"] = None
-        task["user_validated"] = False
-        task["user_validation_note"] = None
-        self.save_task(task_id, task)
-
-    def current_phase(self, task_id: str, phase_id: str | None = None) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
-        task = self.load_task(task_id)
-        phases_payload = self.load_phases(task_id)
-        if not phases_payload["phases"]:
-            raise WorkflowError("task has no phases")
-        target_id = phase_id or task["active_phase_id"]
-        if target_id is None:
-            raise WorkflowError("task has no active phase")
-        for phase in phases_payload["phases"]:
-            if phase["id"] == target_id:
-                return task, phases_payload, phase
-        raise WorkflowError(f"phase not found: {target_id}")
-
-    def next_pending_phase_id(self, phases_payload: dict[str, Any]) -> str | None:
-        pending = sorted(
-            (phase for phase in phases_payload["phases"] if phase["status"] == "pending"),
-            key=lambda item: item["order"],
+        state["next_action"] = "Run plan to initialize implementation scope progress."
+        state["blockers"] = []
+        self.add_event(
+            state,
+            "approve",
+            note=f"approved spec with {readiness['implementation_scope_count']} implementation scopes",
         )
-        return pending[0]["id"] if pending else None
+        self.save_state(task_id, state)
+
+    def ensure_spec_locked(self, task_id: str, state: dict[str, Any]) -> dict[str, Any]:
+        if not state["spec_lock"]["approved"]:
+            raise WorkflowError("spec is not approved")
+        if spec_sha256(self.spec_path(task_id)) != state["spec_lock"]["spec_sha256"]:
+            raise WorkflowError("spec.md has changed since approval; rerun approve before continuing")
+        readiness = inspect_spec(self.spec_path(task_id))
+        if not readiness["ready_for_approval"]:
+            raise WorkflowError("approved task requires approval-ready spec.md")
+        return readiness
+
+    def plan_task(self, task_id: str) -> None:
+        state = self.load_state(task_id)
+        if state["state"] not in {"approved", "in_progress", "failed"}:
+            raise WorkflowError("plan requires approved, in_progress, or failed state")
+        readiness = self.ensure_spec_locked(task_id, state)
+
+        existing = {scope["imp_id"]: scope for scope in state["implementation_scopes"]}
+        planned: list[dict[str, Any]] = []
+        for scope in readiness["intake"]["implementation_scopes"]:
+            progress = existing.get(scope["imp_id"])
+            if progress is None:
+                progress = scope_to_progress(scope)
+            else:
+                progress["title"] = scope["title"]
+                progress["target_repos"] = scope["target_repos"]
+                progress["change_paths"] = scope["change_paths"]
+                progress["policy"] = scope["policy"]
+                if not progress["verification"].get("commands"):
+                    progress["verification"]["commands"] = scope_to_progress(scope)["verification"]["commands"]
+            planned.append(progress)
+
+        state["implementation_scopes"] = planned
+        state["state"] = "approved"
+        state["current_focus"] = {"imp_id": None, "status": "idle", "started_at": None, "note": ""}
+        state["next_action"] = "Run the next pending IMP with `run --start`."
+        state["blockers"] = []
+        self.add_event(state, "plan", note=f"planned {len(planned)} implementation scopes")
+        self.save_state(task_id, state)
+
+    def implementation_scope(self, state: dict[str, Any], imp_id: str) -> dict[str, Any]:
+        for scope in state["implementation_scopes"]:
+            if scope["imp_id"] == imp_id:
+                return scope
+        raise WorkflowError(f"implementation scope not found: {imp_id}")
+
+    def next_startable_scope(self, state: dict[str, Any]) -> dict[str, Any]:
+        for scope in state["implementation_scopes"]:
+            if scope["status"] in {"pending", "failed"}:
+                return scope
+        raise WorkflowError("no pending implementation scope")
+
+    def active_scope(self, state: dict[str, Any]) -> dict[str, Any]:
+        imp_id = state["current_focus"].get("imp_id")
+        if not imp_id:
+            raise WorkflowError("no active implementation scope")
+        return self.implementation_scope(state, imp_id)
+
+    def start_scope(self, task_id: str, imp_id: str | None, note: str | None = None) -> None:
+        state = self.load_state(task_id)
+        if state["state"] not in {"approved", "in_progress", "failed"}:
+            raise WorkflowError(f"state does not allow start: {state['state']}")
+        self.ensure_spec_locked(task_id, state)
+        if not state["implementation_scopes"]:
+            raise WorkflowError("plan must run before implementation starts")
+        active = next((existing for existing in state["implementation_scopes"] if existing["status"] == "in_progress"), None)
+        if active:
+            raise WorkflowError(f"complete or fail active implementation scope before starting another: {active['imp_id']}")
+
+        scope = self.implementation_scope(state, imp_id) if imp_id else self.next_startable_scope(state)
+        if scope["status"] not in {"pending", "failed"}:
+            raise WorkflowError(f"implementation scope state does not allow start: {scope['status']}")
+        timestamp = now_iso()
+        scope["status"] = "in_progress"
+        scope["started_at"] = timestamp
+        scope["completed_at"] = None
+        scope["note"] = note or ""
+        scope["verification"]["status"] = "not_run"
+        scope["verification"]["last_run_at"] = None
+        scope["verification"]["results"] = []
+        state["state"] = "in_progress"
+        state["current_focus"] = {
+            "imp_id": scope["imp_id"],
+            "status": "in_progress",
+            "started_at": timestamp,
+            "note": note or "",
+        }
+        state["next_action"] = f"Implement {scope['imp_id']} then run --complete."
+        state["blockers"] = []
+        self.add_event(state, "start", imp_id=scope["imp_id"], note=note or "")
+        self.save_state(task_id, state)
+
+    def scope_delta(self, task_id: str, scope: dict[str, Any], changed_paths: list[str]) -> list[str]:
+        allowed = [*scope["change_paths"], f"workflows/tasks/{task_id}/"]
+        delta = []
+        for path in changed_paths:
+            if not any(scope_matches(path, allowed_path) for allowed_path in allowed):
+                delta.append(path)
+        return sorted(set(delta))
+
+    def complete_scope(
+        self,
+        task_id: str,
+        imp_id: str | None,
+        changed_paths: list[str],
+        note: str | None,
+        evidence: list[str],
+    ) -> None:
+        state = self.load_state(task_id)
+        if imp_id:
+            scope = self.implementation_scope(state, imp_id)
+        else:
+            scope = self.active_scope(state)
+        if scope["status"] != "in_progress":
+            raise WorkflowError("implementation scope must be in_progress before completion")
+
+        final_paths = sorted(set(changed_paths or self.staged_or_worktree_paths(staged=False)))
+        scope["status"] = "completed"
+        scope["changed_paths"] = final_paths
+        scope["scope_delta"] = self.scope_delta(task_id, scope, final_paths)
+        scope["completed_at"] = now_iso()
+        scope["note"] = note or ("; ".join(evidence) if evidence else "")
+        state["state"] = "in_progress"
+        state["current_focus"] = {"imp_id": None, "status": "idle", "started_at": None, "note": ""}
+        if scope["scope_delta"]:
+            state["next_action"] = f"Review scope delta for {scope['imp_id']} before verification."
+        else:
+            state["next_action"] = f"Run verify for {scope['imp_id']}."
+        self.add_event(
+            state,
+            "complete",
+            imp_id=scope["imp_id"],
+            note=note or "",
+            commands=[{"changed_paths": final_paths, "scope_delta": scope["scope_delta"]}],
+        )
+        self.save_state(task_id, state)
+
+    def fail_scope(self, task_id: str, imp_id: str | None, note: str | None) -> int:
+        state = self.load_state(task_id)
+        scope = self.implementation_scope(state, imp_id) if imp_id else self.active_scope(state)
+        scope["status"] = "failed"
+        scope["note"] = note or ""
+        state["state"] = "failed"
+        state["blockers"] = [note or f"failed implementation scope: {scope['imp_id']}"]
+        state["current_focus"] = {
+            "imp_id": scope["imp_id"],
+            "status": "failed",
+            "started_at": scope.get("started_at"),
+            "note": note or "",
+        }
+        state["next_action"] = f"Repair or reopen {scope['imp_id']}."
+        self.add_event(state, "fail", imp_id=scope["imp_id"], result="failed", note=note or "")
+        self.save_state(task_id, state)
+        return 1
+
+    def command_payloads(self, commands: list[str] | None, scope: dict[str, Any]) -> list[dict[str, str]]:
+        if commands:
+            return [{"cmd": command.strip(), "cwd": "."} for command in commands if command.strip()]
+        return list(scope["verification"]["commands"])
+
+    def verification_target(self, state: dict[str, Any], imp_id: str | None) -> dict[str, Any]:
+        if imp_id:
+            return self.implementation_scope(state, imp_id)
+        focus = state["current_focus"].get("imp_id")
+        if focus:
+            scope = self.implementation_scope(state, focus)
+            if scope["status"] == "completed":
+                return scope
+        for scope in state["implementation_scopes"]:
+            if scope["status"] == "completed" and scope["verification"]["status"] != "passed":
+                return scope
+        raise WorkflowError("no completed implementation scope requires verification")
+
+    def verify_task(self, task_id: str, imp_id: str | None, commands: list[str] | None, evidence: list[str]) -> int:
+        state = self.load_state(task_id)
+        self.ensure_spec_locked(task_id, state)
+        scope = self.verification_target(state, imp_id)
+        if scope["status"] != "completed":
+            raise WorkflowError("verification requires completed implementation scope")
+
+        command_list = self.command_payloads(commands, scope)
+        if not command_list:
+            raise WorkflowError("verification commands are required")
+
+        results: list[dict[str, str]] = []
+        overall = "passed"
+        for command in command_list:
+            guard = self.run_hooks("pre_command", command=command["cmd"])
+            if guard.status != "passed":
+                results.append({"command": command["cmd"], "cwd": command["cwd"], "status": "failed", "output": "; ".join(guard.messages)})
+                overall = "failed"
+                break
+
+            cwd = self.root / command["cwd"]
+            result = subprocess.run(command["cmd"], cwd=cwd, shell=True, capture_output=True, text=True)
+            status = "passed" if result.returncode == 0 else "failed"
+            results.append(
+                {
+                    "command": command["cmd"],
+                    "cwd": command["cwd"],
+                    "status": status,
+                    "output": compact_output(result.stdout, result.stderr),
+                }
+            )
+            if status == "failed":
+                overall = "failed"
+                break
+
+        scope["verification"]["status"] = overall
+        scope["verification"]["last_run_at"] = now_iso()
+        scope["verification"]["results"] = results
+
+        if overall == "passed":
+            state["blockers"] = []
+            if self.all_scopes_verified(state):
+                state["next_action"] = "Run review to request user validation."
+            else:
+                state["next_action"] = "Run the next pending IMP with `run --start`."
+            self.add_event(state, "verify", imp_id=scope["imp_id"], result="passed", note="; ".join(evidence), commands=results)
+            self.save_state(task_id, state)
+            return 0
+
+        scope["status"] = "failed"
+        state["state"] = "failed"
+        state["blockers"] = [f"verification failed for {scope['imp_id']}"]
+        state["next_action"] = f"Repair {scope['imp_id']} and rerun verification."
+        self.add_event(state, "verify", imp_id=scope["imp_id"], result="failed", note="; ".join(evidence), commands=results)
+        self.save_state(task_id, state)
+        return 1
+
+    def all_scopes_verified(self, state: dict[str, Any]) -> bool:
+        return bool(state["implementation_scopes"]) and all(
+            scope["status"] == "completed" and scope["verification"]["status"] == "passed"
+            for scope in state["implementation_scopes"]
+        )
+
+    def review_task(self, task_id: str, note: str | None) -> None:
+        state = self.load_state(task_id)
+        if not self.all_scopes_verified(state):
+            raise WorkflowError("review requires every implementation scope to be completed and verified")
+        state["state"] = "review_ready"
+        state["next_action"] = "Ask the user to validate the result, then run review --close."
+        self.add_event(state, "review_ready", note=note or "")
+        self.save_state(task_id, state)
+
+    def close_review(self, task_id: str, note: str) -> None:
+        state = self.load_state(task_id)
+        if state["state"] != "review_ready":
+            raise WorkflowError("review closeout requires state=review_ready")
+        hook = self.run_hooks("pre_complete", state=state, user_validation_note=note)
+        if hook.status != "passed":
+            raise WorkflowError("; ".join(hook.messages))
+
+        timestamp = now_iso()
+        state["user_validation"] = {"validated": True, "note": note, "validated_at": timestamp}
+        state["state"] = "completed"
+        state["next_action"] = "done"
+        state["blockers"] = []
+        self.add_event(state, "review_closeout", result="passed", note=note)
+        self.save_state(task_id, state)
+
+    def reopen_task(self, task_id: str, note: str, imp_id: str | None) -> None:
+        state = self.load_state(task_id)
+        if state["state"] not in {"in_progress", "failed", "review_ready", "completed"}:
+            raise WorkflowError("reopen requires in_progress, failed, review_ready, or completed state")
+        if not state["implementation_scopes"]:
+            raise WorkflowError("reopen requires planned implementation scopes")
+
+        target = self.implementation_scope(state, imp_id) if imp_id else None
+        if target is None:
+            target = next((scope for scope in state["implementation_scopes"] if scope["status"] == "failed"), None)
+        if target is None:
+            target = self.implementation_scope(state, state["current_focus"]["imp_id"]) if state["current_focus"].get("imp_id") else state["implementation_scopes"][0]
+
+        target_index = state["implementation_scopes"].index(target)
+        for scope in state["implementation_scopes"][target_index:]:
+            scope["status"] = "pending"
+            scope["completed_at"] = None
+            scope["verification"]["status"] = "not_run"
+            scope["verification"]["last_run_at"] = None
+            scope["verification"]["results"] = []
+
+        state["state"] = "approved"
+        state["current_focus"] = {"imp_id": None, "status": "idle", "started_at": None, "note": ""}
+        state["user_validation"] = {"validated": False, "note": None, "validated_at": None}
+        state["blockers"] = []
+        state["next_action"] = f"Restart {target['imp_id']} with run --start."
+        self.add_event(state, "reopen", imp_id=target["imp_id"], note=note)
+        self.save_state(task_id, state)
 
     def task_ids_by_state(self, states: set[str]) -> list[str]:
         if not self.tasks_dir.exists():
             return []
-
-        active = []
+        active: list[str] = []
         for candidate in sorted(self.tasks_dir.iterdir()):
             if not candidate.is_dir():
                 continue
-            task_file = candidate / "task.json"
-            if not task_file.exists():
+            state_file = candidate / "state.json"
+            if not state_file.exists():
                 continue
-            task = read_json(task_file)
-            if task.get("state") in states:
-                active.append(task.get("id") or candidate.name)
+            state = read_json(state_file)
+            if state.get("state") in states:
+                active.append(state.get("task_id") or candidate.name)
         return active
 
     def active_task_ids(self) -> list[str]:
@@ -397,76 +506,6 @@ class WorkflowService:
         if len(active) == 1:
             return active[0]
         return None
-
-    def task_covers_changed_paths(self, task: dict[str, Any], phase: dict[str, Any], changed_paths: list[str]) -> bool:
-        scopes = phase_scope(task["id"], phase)
-        return all(any(scope_matches(path, scope) for scope in scopes) for path in changed_paths)
-
-    def scoped_task_ids(self, changed_paths: list[str], *, states: set[str]) -> list[str]:
-        if not changed_paths:
-            return []
-
-        matches: list[str] = []
-        for task_id in self.task_ids_by_state(states):
-            task = self.load_task(task_id)
-            active_phase_id = task.get("active_phase_id")
-            if not active_phase_id:
-                continue
-            try:
-                _, _, phase = self.current_phase(task_id, active_phase_id)
-            except WorkflowError:
-                continue
-            if self.task_covers_changed_paths(task, phase, changed_paths):
-                matches.append(task_id)
-        return matches
-
-    def infer_hook_task(self, event: str, changed_paths: list[str]) -> str | None:
-        if event == "pre_push":
-            if not changed_paths:
-                return None
-            matches = self.scoped_task_ids(changed_paths, states=PRE_PUSH_TASK_STATES)
-            if len(matches) == 1:
-                return matches[0]
-            if len(matches) > 1:
-                raise WorkflowError(
-                    f"{event} requires explicit --task-id or WORKFLOW_TASK_ID when changed paths match multiple tasks: {', '.join(matches)}"
-                )
-            raise WorkflowError(
-                f"{event} requires explicit --task-id or WORKFLOW_TASK_ID when unpushed changes do not map to a single task"
-            )
-
-        active = self.active_task_ids()
-        if len(active) > 1:
-            raise WorkflowError(
-                f"{event} requires explicit --task-id or WORKFLOW_TASK_ID when multiple active tasks exist: {', '.join(active)}"
-            )
-        if len(active) == 1:
-            return active[0]
-        return None
-
-    def build_run(
-        self,
-        task_id: str,
-        phase_id: str | None,
-        event: str,
-        commands: list[dict[str, str]],
-        result: str,
-        evidence: list[str],
-        error_fingerprint: str | None,
-        next_action: str,
-    ) -> dict[str, Any]:
-        return {
-            "id": f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}-{uuid4().hex[:8]}",
-            "task_id": task_id,
-            "phase_id": phase_id,
-            "event": event,
-            "commands": commands,
-            "result": result,
-            "evidence": evidence,
-            "error_fingerprint": error_fingerprint,
-            "next_action": next_action,
-            "timestamp": now_iso(),
-        }
 
     def staged_or_worktree_paths(self, staged: bool = False) -> list[str]:
         try:
@@ -480,43 +519,11 @@ class WorkflowService:
         except Exception:
             return []
 
-    def circuit_breaker_path(self) -> Path:
-        config = self.load_hooks_config()["guards"]["circuit_breaker"]
-        return self.root / config["state_file"]
-
-    def record_circuit_breaker(self, fingerprint: str) -> HookResult:
-        config = self.load_hooks_config()["guards"]["circuit_breaker"]
-        window = timedelta(seconds=int(config["window_seconds"]))
-        threshold = int(config["threshold"])
-        path = self.circuit_breaker_path()
-        state = {"fingerprints": {}}
-        if path.exists():
-            state = read_json(path)
-
-        now = datetime.now(timezone.utc)
-        entries = state["fingerprints"].get(fingerprint, [])
-        fresh_entries = []
-        for entry in entries:
-            try:
-                entry_time = datetime.fromisoformat(entry)
-            except ValueError:
-                continue
-            if now - entry_time <= window:
-                fresh_entries.append(entry)
-        fresh_entries.append(now_iso())
-        state["fingerprints"][fingerprint] = fresh_entries
-        write_json(path, state)
-
-        if len(fresh_entries) >= threshold:
-            return HookResult("circuit_breaker", "blocked", [f"circuit breaker open for {fingerprint}"])
-        return HookResult("circuit_breaker", "passed", [f"failure count for {fingerprint}: {len(fresh_entries)}"])
-
     def run_hooks(
         self,
         event: str,
-        task: dict[str, Any] | None = None,
-        phase: dict[str, Any] | None = None,
-        changed_paths: list[str] | None = None,
+        *,
+        state: dict[str, Any] | None = None,
         command: str | None = None,
         user_validation_note: str | None = None,
     ) -> HookResult:
@@ -527,29 +534,12 @@ class WorkflowService:
 
         messages: list[str] = []
         for guard_name in guards:
-            if guard_name == "tdd_guard":
-                result = tdd_guard(config["guards"]["tdd_guard"], changed_paths or [], phase)
-            elif guard_name == "dangerous_cmd_guard":
+            if guard_name == "dangerous_cmd_guard":
                 result = dangerous_cmd_guard(config["guards"]["dangerous_cmd_guard"], command or "")
-            elif guard_name == "write_scope_guard":
-                result = write_scope_guard(task["id"] if task else None, phase, changed_paths or [])
-            elif guard_name == "latest_verified_run_guard":
-                if task is None and event == "pre_push" and not (changed_paths or []):
-                    result = HookResult("latest_verified_run_guard", "passed", ["no changed paths detected"])
-                elif task is None:
-                    raise WorkflowError(f"{event} requires task context")
-                else:
-                    result = latest_verified_run_guard(
-                        task,
-                        phase,
-                        changed_paths or [],
-                        load_run=self.load_run,
-                        scope_sensitive=(event == "pre_push"),
-                    )
             elif guard_name == "user_validation_guard":
-                if task is None:
+                if state is None:
                     raise WorkflowError("pre_complete requires task context")
-                result = user_validation_guard(user_validation_note, task)
+                result = user_validation_guard(user_validation_note, state)
             else:
                 raise WorkflowError(f"unknown guard: {guard_name}")
 
@@ -558,467 +548,55 @@ class WorkflowService:
                 return HookResult(event, result.status, messages)
         return HookResult(event, "passed", messages)
 
-    def open_circuit_if_needed(
-        self,
-        task: dict[str, Any],
-        phases_payload: dict[str, Any],
-        phase: dict[str, Any],
-        fingerprint: str,
-        note: str,
-    ) -> int:
-        breaker = self.record_circuit_breaker(fingerprint)
-        if breaker.status != "blocked":
-            return 1
-
-        if phase["status"] != "blocked" and phase["status"] in {"failed", "completed", "in_progress", "pending"}:
-            self.update_phase_state(phase, "blocked")
-        task["state"] = "blocked"
-        task["blocked_reason"] = note
-        self.save_phases(task["id"], phases_payload)
-        self.save_task(task["id"], task)
-        return 2
-
-    def start_phase(self, task_id: str, phase_id: str | None) -> None:
-        task, phases_payload, phase = self.current_phase(task_id, phase_id)
-        if task["state"] not in {"approved", "in_progress", "failed", "blocked"}:
-            raise WorkflowError(f"task state does not allow start: {task['state']}")
-        if phase["status"] not in {"pending", "failed", "blocked"}:
-            raise WorkflowError(f"phase state does not allow start: {phase['status']}")
-        if self.kickoff_required(task, phase):
-            run_id = task.get("last_kickoff_run_id")
-            if not run_id:
-                raise WorkflowError(f"kickoff is required before starting {phase['id']}")
-            run = self.load_run(task_id, run_id)
-            if run["event"] != "phase_kickoff" or run["result"] != "passed" or run["phase_id"] != phase["id"]:
-                raise WorkflowError(f"kickoff is required before starting {phase['id']}")
-
-        self.update_phase_state(phase, "in_progress")
-        task["state"] = "in_progress"
-        task["active_phase_id"] = phase["id"]
-        task["kickoff_required_for_phase"] = None
-        task["blocked_reason"] = None
-        task["last_verified_run_id"] = None
-        self.save_phases(task_id, phases_payload)
-        self.save_task(task_id, task)
-
-    def kickoff_phase(self, task_id: str, phase_id: str | None = None) -> dict[str, Any]:
-        task, _, phase = self.current_phase(task_id, phase_id)
-        if phase["status"] not in {"pending", "failed", "blocked"}:
-            raise WorkflowError("kickoff requires a startable phase")
-        if not self.kickoff_required(task, phase):
-            raise WorkflowError(f"kickoff is not required for {phase['id']}")
-
-        summary = self.phase_bootstrap_summary(task_id, phase)
-        run = self.build_run(
-            task_id,
-            phase["id"],
-            "phase_kickoff",
-            [{"command": "phase kickoff", "status": "passed", "output": f"kickoff recorded for {phase['id']}"}],
-            "passed",
-            [
-                f"required_reads: {', '.join(summary['required_reads'])}",
-                f"starting_points: {', '.join(summary['starting_points'])}",
-                f"completion_signal: {summary['completion_signal']}",
-            ],
-            None,
-            "start phase",
-        )
-        self.write_run(task_id, run)
-        task["latest_run_id"] = run["id"]
-        task["last_kickoff_run_id"] = run["id"]
-        self.save_task(task_id, task)
-        return {
-            "status": "kickoff_recorded",
-            "task_id": task_id,
-            "phase_id": phase["id"],
-            "run_id": run["id"],
-            "summary": summary,
-        }
-
-    def complete_phase(
-        self,
-        task_id: str,
-        phase_id: str | None,
-        changed_paths: list[str],
-        note: str | None,
-        evidence: list[str],
-    ) -> None:
-        task, phases_payload, phase = self.current_phase(task_id, phase_id)
-        if phase["status"] != "in_progress":
-            raise WorkflowError("phase must be in_progress before completion")
-
-        final_paths = sorted(set(changed_paths or self.staged_or_worktree_paths(staged=False)))
-        violations = out_of_scope_paths(task_id, phase, final_paths)
-        if violations:
-            raise WorkflowError(f"changed paths outside allowed_write_paths: {', '.join(violations)}")
-
-        for event in ("post_change", "pre_phase_complete"):
-            hook_result = self.run_hooks(event, task=task, phase=phase, changed_paths=final_paths)
-            if hook_result.status != "passed":
-                raise WorkflowError("; ".join(hook_result.messages))
-
-        self.update_phase_state(phase, "completed")
-        run = self.build_run(
-            task_id,
-            phase["id"],
-            "phase_completion",
-            [{"command": "phase completion", "status": "passed", "output": ", ".join(final_paths)}],
-            "passed",
-            evidence + ([note] if note else []),
-            None,
-            "verify",
-        )
-        self.write_run(task_id, run)
-        task["latest_run_id"] = run["id"]
-        task["last_verified_run_id"] = None
-        task["blocked_reason"] = None
-        task["active_phase_id"] = phase["id"]
-        task["state"] = "in_progress"
-        self.save_phases(task_id, phases_payload)
-        self.save_task(task_id, task)
-
-    def fail_phase(self, task_id: str, phase_id: str | None, fingerprint: str | None, note: str | None) -> int:
-        task, phases_payload, phase = self.current_phase(task_id, phase_id)
-        if phase["status"] not in {"pending", "in_progress", "failed"}:
-            raise WorkflowError("phase cannot be failed from current state")
-
-        if phase["status"] == "pending":
-            self.update_phase_state(phase, "in_progress")
-        if phase["status"] != "failed":
-            self.update_phase_state(phase, "failed")
-        phase["retry_count"] += 1
-
-        run = self.build_run(
-            task_id,
-            phase["id"],
-            "phase_failure",
-            [{"command": "phase failure", "status": "failed", "output": note or ""}],
-            "failed",
-            [note] if note else [],
-            fingerprint,
-            "repair or retry",
-        )
-        self.write_run(task_id, run)
-        task["latest_run_id"] = run["id"]
-        task["last_verified_run_id"] = None
-        task["active_phase_id"] = phase["id"]
-
-        if fingerprint:
-            code = self.open_circuit_if_needed(
-                task,
-                phases_payload,
-                phase,
-                fingerprint,
-                note or f"repeated failure in {phase['id']}",
-            )
-            if code == 2:
-                return 2
-
-        task["state"] = "failed"
-        task["blocked_reason"] = None
-        self.save_phases(task_id, phases_payload)
-        self.save_task(task_id, task)
-        return 1
-
-    def block_phase(self, task_id: str, phase_id: str | None, note: str | None) -> None:
-        task, phases_payload, phase = self.current_phase(task_id, phase_id)
-        reason = note or f"manual block on {phase['id']}"
-        if phase["status"] not in {"pending", "in_progress", "failed", "completed"}:
-            raise WorkflowError("phase cannot be blocked from current state")
-        if phase["status"] != "blocked":
-            self.update_phase_state(phase, "blocked")
-
-        run = self.build_run(
-            task_id,
-            phase["id"],
-            "phase_blocked",
-            [{"command": "phase blocked", "status": "blocked", "output": reason}],
-            "blocked",
-            [reason],
-            None,
-            "manual intervention",
-        )
-        self.write_run(task_id, run)
-        task["latest_run_id"] = run["id"]
-        task["last_verified_run_id"] = None
-        task["state"] = "blocked"
-        task["blocked_reason"] = reason
-        task["active_phase_id"] = phase["id"]
-        self.save_phases(task_id, phases_payload)
-        self.save_task(task_id, task)
-
-    def verification_fingerprint(self, phase: dict[str, Any], command: str) -> str:
-        return f"verification:{phase['id']}:{command.strip()}"
-
-    def verify_task(self, task_id: str, phase_id: str | None, commands: list[str] | None, evidence: list[str]) -> int:
-        task, phases_payload, phase = self.current_phase(task_id, phase_id)
-        if phase["status"] != "completed":
-            raise WorkflowError("verification requires phase status completed")
-
-        command_list = commands or phase["acceptance"]["commands"]
-        if not command_list:
-            raise WorkflowError("verification commands are required")
-
-        command_results: list[dict[str, str]] = []
-        overall = "passed"
-        failure_fingerprint: str | None = None
-        block_reason: str | None = None
-        for command in command_list:
-            guard = self.run_hooks("pre_command", task=task, phase=phase, command=command)
-            if guard.status != "passed":
-                overall = "blocked"
-                block_reason = "; ".join(guard.messages)
-                command_results.append({"command": command, "status": "blocked", "output": block_reason})
-                break
-
-            result = subprocess.run(command, cwd=self.root, shell=True, capture_output=True, text=True)
-            status = "passed" if result.returncode == 0 else "failed"
-            output = compact_output(result.stdout, result.stderr)
-            command_results.append({"command": command, "status": status, "output": output})
-            if status == "failed":
-                overall = "failed"
-                failure_fingerprint = self.verification_fingerprint(phase, command)
-                break
-
-        next_action = "review" if overall == "passed" else ("manual intervention" if overall == "blocked" else "repair")
-        run = self.build_run(
-            task_id,
-            phase["id"],
-            "verification",
-            command_results,
-            overall,
-            evidence,
-            failure_fingerprint,
-            next_action,
-        )
-        self.write_run(task_id, run)
-        task["latest_run_id"] = run["id"]
-        task["active_phase_id"] = phase["id"]
-
-        if overall == "passed":
-            task["last_verified_run_id"] = run["id"]
-            task["blocked_reason"] = None
-            next_phase = self.next_pending_phase_id(phases_payload)
-            if phase["status"] == "completed" and next_phase:
-                task["active_phase_id"] = next_phase
-                task["state"] = "approved"
-                task["kickoff_required_for_phase"] = next_phase
-                task["last_kickoff_run_id"] = None
-            else:
-                task["state"] = "in_progress"
-                task["kickoff_required_for_phase"] = None
-            self.save_phases(task_id, phases_payload)
-            self.save_task(task_id, task)
-            return 0
-
-        task["last_verified_run_id"] = None
-        task["kickoff_required_for_phase"] = None
-        if phase["status"] != "failed":
-            self.update_phase_state(phase, "failed" if overall == "failed" else "blocked")
-        phase["retry_count"] += 1
-
-        if overall == "blocked":
-            task["state"] = "blocked"
-            task["blocked_reason"] = block_reason or f"verification blocked for {phase['id']}"
-            self.save_phases(task_id, phases_payload)
-            self.save_task(task_id, task)
-            return 2
-
-        code = self.open_circuit_if_needed(
-            task,
-            phases_payload,
-            phase,
-            failure_fingerprint or f"verification:{phase['id']}",
-            f"repeated verification failure in {phase['id']}",
-        )
-        if code == 2:
-            return 2
-
-        task["state"] = "failed"
-        task["blocked_reason"] = None
-        self.save_phases(task_id, phases_payload)
-        self.save_task(task_id, task)
-        return 1
-
-    def review_task(self, task_id: str, note: str | None) -> None:
-        task = self.load_task(task_id)
-        phases_payload = self.load_phases(task_id)
-        if not phases_payload["phases"]:
-            raise WorkflowError("review requires planned phases")
-        if any(phase["status"] != "completed" for phase in phases_payload["phases"]):
-            raise WorkflowError("review requires all phases to be completed")
-
-        _, _, phase = self.current_phase(task_id, task["active_phase_id"])
-        hook = self.run_hooks("pre_review", task=task, phase=phase)
-        if hook.status != "passed":
-            raise WorkflowError("; ".join(hook.messages))
-
-        if task["state"] != "review_ready":
-            self.update_task_state(task, "review_ready")
-        run = self.build_run(
-            task_id,
-            phase["id"],
-            "review_ready",
-            [{"command": "review gate", "status": "passed", "output": "; ".join(hook.messages)}],
-            "passed",
-            [note] if note else [],
-            None,
-            "user validation",
-        )
-        self.write_run(task_id, run)
-        task["latest_run_id"] = run["id"]
-        self.save_task(task_id, task)
-
-    def close_review(self, task_id: str, note: str) -> None:
-        task = self.load_task(task_id)
-        if task["state"] != "review_ready":
-            raise WorkflowError("review closeout requires state=review_ready")
-
-        task["user_validated"] = True
-        task["user_validation_note"] = note
-        hook = self.run_hooks("pre_complete", task=task, user_validation_note=note)
-        if hook.status != "passed":
-            raise WorkflowError("; ".join(hook.messages))
-
-        self.update_task_state(task, "completed")
-        task["blocked_reason"] = None
-        run = self.build_run(
-            task_id,
-            task["active_phase_id"],
-            "review_closeout",
-            [{"command": "complete task", "status": "passed", "output": note}],
-            "passed",
-            [note],
-            None,
-            "done",
-        )
-        self.write_run(task_id, run)
-        task["latest_run_id"] = run["id"]
-        self.save_task(task_id, task)
-
-    def reopen_task(self, task_id: str, note: str, phase_id: str | None) -> None:
-        task = self.load_task(task_id)
-        phases_payload = self.load_phases(task_id)
-        if task["state"] not in {"failed", "blocked", "review_ready", "completed"}:
-            raise WorkflowError("reopen requires failed, blocked, review_ready, or completed task")
-
-        target_phase: dict[str, Any] | None = None
-        if phase_id:
-            for candidate in phases_payload["phases"]:
-                if candidate["id"] == phase_id:
-                    target_phase = candidate
-                    break
-            if target_phase is None:
-                raise WorkflowError(f"phase not found: {phase_id}")
-        else:
-            ordered = sorted(phases_payload["phases"], key=lambda item: item["order"])
-            target_phase = next((phase for phase in ordered if phase["status"] in {"failed", "blocked", "pending"}), None)
-            if target_phase is None and task["active_phase_id"]:
-                for candidate in ordered:
-                    if candidate["id"] == task["active_phase_id"]:
-                        target_phase = candidate
-                        break
-
-        if target_phase is not None:
-            target_order = target_phase["order"]
-            for candidate in phases_payload["phases"]:
-                if candidate["order"] < target_order:
-                    continue
-                if candidate["status"] in {"in_progress", "failed", "blocked", "completed"}:
-                    self.update_phase_state(candidate, "pending")
-
-        task["state"] = "approved"
-        task["blocked_reason"] = None
-        task["last_verified_run_id"] = None
-        task["last_kickoff_run_id"] = None
-        task["user_validated"] = False
-        task["user_validation_note"] = None
-        if target_phase is not None:
-            task["active_phase_id"] = target_phase["id"]
-            task["kickoff_required_for_phase"] = target_phase["id"] if target_phase["order"] > 1 else None
-        else:
-            task["kickoff_required_for_phase"] = None
-
-        run = self.build_run(
-            task_id,
-            target_phase["id"] if target_phase else task["active_phase_id"],
-            "reopened",
-            [{"command": "reopen task", "status": "passed", "output": note}],
-            "passed",
-            [note],
-            None,
-            "plan or run",
-        )
-        self.write_run(task_id, run)
-        task["latest_run_id"] = run["id"]
-        self.save_phases(task_id, phases_payload)
-        self.save_task(task_id, task)
-
     def status_payload(self, task_id: str) -> dict[str, Any]:
-        task = self.load_task(task_id)
-        phases = self.load_phases(task_id)
-        active_phase = None
-        if task["active_phase_id"]:
-            active_phase = next((phase for phase in phases["phases"] if phase["id"] == task["active_phase_id"]), None)
-        payload = {
-            "task": task,
-            "phases": phases,
-            "spec": inspect_spec(self.spec_path(task_id)),
+        state = self.load_state(task_id)
+        spec = inspect_spec(self.spec_path(task_id))
+        lock_hash = state["spec_lock"].get("spec_sha256")
+        return {
+            "state": state,
+            "spec": spec,
+            "spec_lock_current": bool(lock_hash and lock_hash == spec.get("spec_sha256")),
         }
-        if active_phase is not None:
-            payload["active_phase_bootstrap"] = self.phase_bootstrap_summary(task_id, active_phase)
-        return payload
+
+    def incomplete_task_error(self, task_dir: Path) -> str | None:
+        missing = []
+        if not (task_dir / "spec.md").exists():
+            missing.append("spec.md")
+        if not (task_dir / "state.json").exists():
+            missing.append("state.json")
+        if missing:
+            return f"{task_dir.name}: incomplete task directory missing {', '.join(missing)}"
+        return None
 
     def check_all(self) -> list[str]:
         self.ensure_layout()
-        errors = []
+        errors: list[str] = []
         for task_dir in sorted(self.tasks_dir.iterdir()):
             if not task_dir.is_dir():
+                continue
+            if not any(candidate.is_file() for candidate in task_dir.rglob("*")):
                 continue
             task_id = task_dir.name
             try:
                 incomplete = self.incomplete_task_error(task_dir)
                 if incomplete:
                     raise WorkflowError(incomplete.removeprefix(f"{task_id}: "))
-                task = self.load_task(task_id)
-                phases = self.load_phases(task_id)
-                spec = inspect_spec(self.spec_path(task_id))
-                active_phase = None
-                if task["active_phase_id"] is not None:
-                    active_phase = next((phase for phase in phases["phases"] if phase["id"] == task["active_phase_id"]), None)
-                    if active_phase is None:
-                        raise WorkflowError("active phase does not exist")
-                elif task["state"] != "draft" and phases["phases"]:
-                    raise WorkflowError("planned task requires active phase")
+                if (task_dir / "task.json").exists():
+                    raise WorkflowError("legacy task.json must not exist")
+                if (task_dir / "phases.json").exists():
+                    raise WorkflowError("legacy phases.json must not exist")
+                if (task_dir / "runs").exists():
+                    raise WorkflowError("legacy runs directory must not exist")
 
-                if active_phase is not None:
-                    if task["state"] == "approved" and active_phase["status"] != "pending":
-                        raise WorkflowError("approved task requires active phase status pending")
-                    if task["state"] == "in_progress" and active_phase["status"] not in {"in_progress", "completed"}:
-                        raise WorkflowError("in_progress task requires active phase status in_progress or completed")
-                    if task["state"] == "failed" and active_phase["status"] != "failed":
-                        raise WorkflowError("failed task requires active phase status failed")
-                    if task["state"] == "blocked" and active_phase["status"] != "blocked":
-                        raise WorkflowError("blocked task requires active phase status blocked")
-                    if task["state"] in {"review_ready", "completed"} and active_phase["status"] != "completed":
-                        raise WorkflowError(f"{task['state']} task requires active phase status completed")
-                if task["state"] != "draft":
+                state = self.load_state(task_id)
+                spec = inspect_spec(self.spec_path(task_id))
+                if state["state"] != "draft":
                     if not spec["ready_for_approval"]:
                         raise WorkflowError("approved-or-later task requires approval-ready spec.md")
-                    if ensure_locked_intake(task["intake"], contract_version=task_contract_version(task)) != spec["intake"]:
-                        raise WorkflowError("task.intake is out of sync with spec.md")
-                if task["latest_run_id"] is not None:
-                    self.load_run(task_id, task["latest_run_id"])
-                if task["last_verified_run_id"] is not None:
-                    run = self.load_run(task_id, task["last_verified_run_id"])
-                    if run["event"] != "verification" or run["result"] != "passed":
-                        raise WorkflowError("last_verified_run_id must point to passed verification")
-                if task["state"] in {"review_ready", "completed"} and any(
-                    phase["status"] != "completed" for phase in phases["phases"]
-                ):
-                    raise WorkflowError("review_ready/completed task requires every phase to be completed")
-                for run_file in sorted(self.runs_dir(task_id).glob("*.json")):
-                    validate_run(read_json(run_file))
+                    if state["spec_lock"]["spec_sha256"] != spec.get("spec_sha256"):
+                        raise WorkflowError("state.spec_lock.spec_sha256 is out of sync with spec.md")
+                if state["state"] in {"review_ready", "completed"} and not self.all_scopes_verified(state):
+                    raise WorkflowError(f"{state['state']} state requires every implementation scope to be verified")
             except WorkflowError as exc:
                 errors.append(f"{task_id}: {exc}")
         return errors

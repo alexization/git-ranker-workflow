@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import fnmatch
+import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -10,9 +11,10 @@ from typing import Any
 
 from workflow_runtime.constants import (
     CURRENT_TASK_CONTRACT_VERSION,
-    PHASE_STATES,
+    IMPLEMENTATION_STATES,
     SPEC_REQUIRED_SECTIONS,
     TASK_STATES,
+    VERIFICATION_STATES,
 )
 
 
@@ -47,7 +49,7 @@ def emit(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, indent=2, ensure_ascii=False))
 
 
-def compact_output(stdout: str, stderr: str, limit: int = 600) -> str:
+def compact_output(stdout: str, stderr: str, limit: int = 800) -> str:
     text = (stdout + "\n" + stderr).strip()
     if len(text) <= limit:
         return text
@@ -82,32 +84,38 @@ def path_matches(path: str, patterns: list[str]) -> bool:
     return any(pure.match(pattern) or fnmatch.fnmatch(normalized, pattern) for pattern in patterns)
 
 
+def has_glob(pattern: str) -> bool:
+    return any(token in pattern for token in "*?[")
+
+
 def validate_relative_repo_path(value: str, *, allow_glob: bool = True) -> str:
     normalized = normalize_repo_path(value)
     if not normalized:
         raise WorkflowError("path must not be empty")
     if normalized == ".":
-        raise WorkflowError("path must not be repo root")
+        return normalized
     if normalized.startswith("/") or normalized.startswith("../") or "/../" in normalized or normalized == "..":
         raise WorkflowError(f"path must be repo-relative: {value}")
-    if not allow_glob and any(token in normalized for token in "*?["):
+    if not allow_glob and has_glob(normalized):
         raise WorkflowError(f"path must not contain glob tokens: {value}")
     return normalized
-
-
-def has_glob(pattern: str) -> bool:
-    return any(token in pattern for token in "*?[")
 
 
 def scope_matches(path: str, scope: str) -> bool:
     normalized_path = normalize_repo_path(path)
     normalized_scope = validate_relative_repo_path(scope)
+    if normalized_scope == ".":
+        return True
     if normalized_scope.endswith("/"):
         scope_root = normalized_scope.rstrip("/")
         return normalized_path == scope_root or normalized_path.startswith(f"{scope_root}/")
     if has_glob(normalized_scope):
         return path_matches(normalized_path, [normalized_scope])
     return normalized_path == normalized_scope
+
+
+def spec_sha256(spec_path: Path) -> str:
+    return hashlib.sha256(spec_path.read_bytes()).hexdigest()
 
 
 def _require_mapping(payload: Any, label: str) -> dict[str, Any]:
@@ -142,19 +150,6 @@ def _require_bool(value: Any, label: str) -> bool:
     return value
 
 
-def _require_string_list(value: Any, label: str, *, allow_empty: bool = True) -> list[str]:
-    if not isinstance(value, list):
-        raise WorkflowError(f"{label} must be an array")
-    result: list[str] = []
-    for index, item in enumerate(value):
-        if not isinstance(item, str) or not item.strip():
-            raise WorkflowError(f"{label}[{index}] must be a non-empty string")
-        result.append(item)
-    if not allow_empty and not result:
-        raise WorkflowError(f"{label} must not be empty")
-    return result
-
-
 def _require_int(value: Any, label: str, *, minimum: int = 0) -> int:
     if not isinstance(value, int) or isinstance(value, bool):
         raise WorkflowError(f"{label} must be an integer")
@@ -163,25 +158,17 @@ def _require_int(value: Any, label: str, *, minimum: int = 0) -> int:
     return value
 
 
-def empty_task_intake() -> dict[str, Any]:
-    return {
-        "request_summary": None,
-        "problem_summary": None,
-        "goals": [],
-        "non_goals": [],
-        "constraints": [],
-        "acceptance": [],
-        "clarifications": [],
-    }
-
-
-def task_contract_version(payload: dict[str, Any]) -> int:
-    value = payload.get("contract_version")
-    if value is None:
-        return 1
-    if not isinstance(value, int) or isinstance(value, bool) or value < 1:
-        raise WorkflowError("task.contract_version must be an integer >= 1")
-    return value
+def _require_string_list(value: Any, label: str, *, allow_empty: bool = True) -> list[str]:
+    if not isinstance(value, list):
+        raise WorkflowError(f"{label} must be an array")
+    result: list[str] = []
+    for index, item in enumerate(value):
+        if not isinstance(item, str) or not item.strip():
+            raise WorkflowError(f"{label}[{index}] must be a non-empty string")
+        result.append(item.strip())
+    if not allow_empty and not result:
+        raise WorkflowError(f"{label} must not be empty")
+    return result
 
 
 def _strip_markdown_prefix(line: str) -> str:
@@ -209,6 +196,60 @@ def _normalize_items(body: str, label: str) -> list[str]:
     return items
 
 
+def _values_from_markdown(text: str) -> list[str]:
+    ticked = re.findall(r"`([^`]+)`", text)
+    if ticked:
+        return [item.strip() for item in ticked if item.strip()]
+    _, _, value = text.partition(":")
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _normalize_implementation_scopes(body: str) -> tuple[list[dict[str, Any]], list[str]]:
+    scopes: list[dict[str, Any]] = []
+    errors: list[str] = []
+    current: dict[str, Any] | None = None
+
+    def finish() -> None:
+        if current is None:
+            return
+        missing = [key for key in ("target_repos", "change_paths", "policy") if not current.get(key)]
+        if missing:
+            errors.append(f"Implementation Scope {current['imp_id']} missing: {', '.join(missing)}")
+        scopes.append(current.copy())
+
+    for line in _markdown_lines(body):
+        match = re.match(r"^(IMP-\d+):\s*(.+)$", line)
+        if match:
+            finish()
+            current = {
+                "imp_id": match.group(1),
+                "title": match.group(2).strip(),
+                "target_repos": [],
+                "change_paths": [],
+                "policy": "",
+            }
+            continue
+
+        if current is None:
+            errors.append("Implementation Scopes must contain IMP-* entries")
+            continue
+
+        if line.startswith("대상 저장소:") or line.startswith("Target Repo:") or line.startswith("Target Repos:"):
+            current["target_repos"] = _values_from_markdown(line)
+        elif line.startswith("변경 경로:") or line.startswith("Change Paths:"):
+            current["change_paths"] = [validate_relative_repo_path(item) for item in _values_from_markdown(line)]
+        elif line.startswith("정책:") or line.startswith("Policy:"):
+            _, _, policy = line.partition(":")
+            current["policy"] = policy.strip()
+
+    finish()
+
+    ids = [scope["imp_id"] for scope in scopes]
+    if len(ids) != len(set(ids)):
+        errors.append("Implementation Scopes must use unique IMP ids")
+    return scopes, errors
+
+
 def _normalize_clarifications(body: str, *, strict: bool) -> tuple[list[dict[str, Any]], list[str]]:
     clarifications: list[dict[str, Any]] = []
     errors: list[str] = []
@@ -224,11 +265,11 @@ def _normalize_clarifications(body: str, *, strict: bool) -> tuple[list[dict[str
             if current:
                 push_error("must end each clarification with a Status line")
                 current = {}
-            raw_question = line[2:].strip()
-            if not raw_question:
+            question = line[2:].strip()
+            if not question:
                 push_error("contains an empty question")
                 continue
-            current = {"question": raw_question}
+            current = {"question": question}
             continue
 
         if line.startswith("A:"):
@@ -261,17 +302,12 @@ def _normalize_clarifications(body: str, *, strict: bool) -> tuple[list[dict[str
             if status not in {"open", "resolved"}:
                 push_error("must declare status as open or resolved")
                 continue
-            if status == "open":
-                if "decision" in current:
-                    push_error("open clarifications must not contain Decision")
-                    continue
-            else:
-                if "answer" not in current:
-                    push_error("resolved clarifications require an answer")
-                    continue
-                if "decision" not in current:
-                    push_error("resolved clarifications require a decision")
-                    continue
+            if status == "open" and "decision" in current:
+                push_error("open clarifications must not contain Decision")
+                continue
+            if status == "resolved" and ("answer" not in current or "decision" not in current):
+                push_error("resolved clarifications require answer and decision")
+                continue
             clarifications.append(
                 {
                     "question": current["question"],
@@ -290,6 +326,30 @@ def _normalize_clarifications(body: str, *, strict: bool) -> tuple[list[dict[str
     return clarifications, errors
 
 
+def markdown_sections(text: str) -> dict[str, str]:
+    matches = list(re.finditer(r"^##\s+(.+?)\s*$", text, flags=re.M))
+    sections: dict[str, str] = {}
+    for index, match in enumerate(matches):
+        name = match.group(1).strip()
+        start = match.end()
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        sections[name] = text[start:end].strip()
+    return sections
+
+
+def empty_spec_intake() -> dict[str, Any]:
+    return {
+        "request_summary": None,
+        "problem_summary": None,
+        "goals": [],
+        "non_goals": [],
+        "constraints": [],
+        "acceptance": [],
+        "implementation_scopes": [],
+        "clarifications": [],
+    }
+
+
 def inspect_spec(spec_path: Path) -> dict[str, Any]:
     readiness = {
         "ready_for_approval": False,
@@ -300,13 +360,17 @@ def inspect_spec(spec_path: Path) -> dict[str, Any]:
         "open_clarification_count": 0,
         "resolved_clarification_count": 0,
         "open_clarifications": [],
-        "intake": empty_task_intake(),
+        "implementation_scope_count": 0,
+        "implementation_scope_ids": [],
+        "intake": empty_spec_intake(),
+        "spec_sha256": None,
     }
     if not spec_path.exists():
         readiness["validation_errors"].append("spec.md is missing")
         return readiness
 
     spec = spec_path.read_text(encoding="utf-8")
+    readiness["spec_sha256"] = hashlib.sha256(spec.encode("utf-8")).hexdigest()
     sections = markdown_sections(spec)
     readiness["missing_sections"] = [name for name in SPEC_REQUIRED_SECTIONS if name not in sections]
     if readiness["missing_sections"]:
@@ -314,12 +378,8 @@ def inspect_spec(spec_path: Path) -> dict[str, Any]:
 
     placeholder_sections: list[str] = []
     for name in SPEC_REQUIRED_SECTIONS:
-        body = sections[name]
-        content_lines = [line.strip() for line in body.splitlines() if line.strip()]
-        if not content_lines:
-            placeholder_sections.append(name)
-            continue
-        if any("TODO:" in line for line in content_lines):
+        lines = [line.strip() for line in sections[name].splitlines() if line.strip()]
+        if not lines or any("TODO:" in line or "(AI가 소크라테스 문답을 통해 작성합니다.)" in line for line in lines):
             placeholder_sections.append(name)
     readiness["placeholder_sections"] = placeholder_sections
     if placeholder_sections:
@@ -330,6 +390,7 @@ def inspect_spec(spec_path: Path) -> dict[str, Any]:
             sections["Socratic Clarification Log"],
             strict=False,
         )
+        scopes, scope_errors = _normalize_implementation_scopes(sections["Implementation Scopes"])
         intake = {
             "request_summary": _normalize_summary(sections["Request"], "Request"),
             "problem_summary": _normalize_summary(sections["Problem"], "Problem"),
@@ -337,6 +398,7 @@ def inspect_spec(spec_path: Path) -> dict[str, Any]:
             "non_goals": _normalize_items(sections["Non-goals"], "Non-goals"),
             "constraints": _normalize_items(sections["Constraints"], "Constraints"),
             "acceptance": _normalize_items(sections["Acceptance"], "Acceptance"),
+            "implementation_scopes": scopes,
             "clarifications": clarifications,
         }
         readiness["intake"] = intake
@@ -344,12 +406,17 @@ def inspect_spec(spec_path: Path) -> dict[str, Any]:
         readiness["open_clarification_count"] = sum(1 for item in clarifications if item["status"] == "open")
         readiness["resolved_clarification_count"] = sum(1 for item in clarifications if item["status"] == "resolved")
         readiness["open_clarifications"] = [item["question"] for item in clarifications if item["status"] == "open"]
+        readiness["implementation_scope_count"] = len(scopes)
+        readiness["implementation_scope_ids"] = [item["imp_id"] for item in scopes]
         readiness["validation_errors"].extend(clarification_errors)
+        readiness["validation_errors"].extend(scope_errors)
     except WorkflowError as exc:
         readiness["validation_errors"].append(str(exc))
 
     if readiness["clarification_count"] == 0:
         readiness["validation_errors"].append("Socratic Clarification Log requires at least one clarification entry")
+    if readiness["implementation_scope_count"] == 0:
+        readiness["validation_errors"].append("Implementation Scopes requires at least one IMP-* entry")
     readiness["ready_for_approval"] = not (
         readiness["missing_sections"]
         or readiness["placeholder_sections"]
@@ -374,301 +441,166 @@ def validate_spec_for_approval(spec_path: Path) -> dict[str, Any]:
             "Socratic Clarification Log still has open clarifications: "
             + "; ".join(readiness["open_clarifications"])
         )
-    return readiness["intake"]
+    return readiness
 
 
-def validate_locked_intake(
-    payload: dict[str, Any],
-    label: str = "task.intake",
-    *,
-    contract_version: int = CURRENT_TASK_CONTRACT_VERSION,
-) -> dict[str, Any]:
-    payload = _require_mapping(payload, label)
-    _require_keys(
-        payload,
-        [
-            "request_summary",
-            "problem_summary",
-            "goals",
-            "non_goals",
-            "constraints",
-            "acceptance",
-            "clarifications",
-        ],
-        label,
-    )
-    request_summary = _require_optional_string(payload["request_summary"], f"{label}.request_summary")
-    problem_summary = _require_optional_string(payload["problem_summary"], f"{label}.problem_summary")
-    goals = _require_string_list(payload["goals"], f"{label}.goals")
-    non_goals = _require_string_list(payload["non_goals"], f"{label}.non_goals")
-    constraints = _require_string_list(payload["constraints"], f"{label}.constraints")
-    acceptance = _require_string_list(payload["acceptance"], f"{label}.acceptance")
-    clarifications = payload["clarifications"]
-    if not isinstance(clarifications, list):
-        raise WorkflowError(f"{label}.clarifications must be an array")
+def default_verification_commands(target_repos: list[str]) -> list[dict[str, str]]:
+    commands: list[dict[str, str]] = []
+    if "git-ranker-workflow" in target_repos:
+        commands.append({"cmd": "python3 -m unittest discover -s tests -v", "cwd": "."})
+    if "git-ranker" in target_repos:
+        commands.append({"cmd": "./gradlew test", "cwd": "git-ranker"})
+    if "git-ranker-client" in target_repos:
+        commands.append({"cmd": "npm test", "cwd": "git-ranker-client"})
+    return commands
 
-    normalized_clarifications: list[dict[str, Any]] = []
-    for index, clarification in enumerate(clarifications):
-        clarification = _require_mapping(clarification, f"{label}.clarifications[{index}]")
-        if contract_version >= CURRENT_TASK_CONTRACT_VERSION:
-            _require_keys(clarification, ["question", "answer", "decision", "status"], f"{label}.clarifications[{index}]")
-            status = _require_string(clarification["status"], f"{label}.clarifications[{index}].status").lower()
-        else:
-            _require_keys(clarification, ["question"], f"{label}.clarifications[{index}]")
-            if "status" in clarification:
-                status = _require_string(clarification["status"], f"{label}.clarifications[{index}].status").lower()
-            elif "resolved" in clarification:
-                resolved = _require_bool(clarification["resolved"], f"{label}.clarifications[{index}].resolved")
-                status = "resolved" if resolved else "open"
-            else:
-                raise WorkflowError(
-                    f"{label}.clarifications[{index}] legacy clarifications require status or resolved"
-                )
-        if status not in {"open", "resolved"}:
-            raise WorkflowError(f"{label}.clarifications[{index}].status must be open or resolved")
-        answer = _require_optional_string(clarification.get("answer"), f"{label}.clarifications[{index}].answer")
-        decision = _require_optional_string(clarification.get("decision"), f"{label}.clarifications[{index}].decision")
-        if status == "open" and decision is not None:
-            raise WorkflowError(f"{label}.clarifications[{index}] open clarifications must not contain decision")
-        if status == "resolved":
-            if answer is None:
-                raise WorkflowError(f"{label}.clarifications[{index}] resolved clarifications require answer")
-            if decision is None:
-                raise WorkflowError(f"{label}.clarifications[{index}] resolved clarifications require decision")
-        normalized_clarifications.append(
-            {
-                "question": _require_string(clarification["question"], f"{label}.clarifications[{index}].question"),
-                "answer": answer,
-                "decision": decision,
-                "status": status,
-            }
-        )
 
+def scope_to_progress(scope: dict[str, Any]) -> dict[str, Any]:
     return {
-        "request_summary": request_summary,
-        "problem_summary": problem_summary,
-        "goals": goals,
-        "non_goals": non_goals,
-        "constraints": constraints,
-        "acceptance": acceptance,
-        "clarifications": normalized_clarifications,
+        "imp_id": scope["imp_id"],
+        "title": scope["title"],
+        "target_repos": scope["target_repos"],
+        "change_paths": scope["change_paths"],
+        "policy": scope["policy"],
+        "status": "pending",
+        "changed_paths": [],
+        "scope_delta": [],
+        "started_at": None,
+        "completed_at": None,
+        "note": "",
+        "verification": {
+            "status": "not_run",
+            "commands": default_verification_commands(scope["target_repos"]),
+            "last_run_at": None,
+            "results": [],
+        },
     }
 
 
-def ensure_locked_intake(
-    payload: dict[str, Any],
-    label: str = "task.intake",
-    *,
-    contract_version: int = CURRENT_TASK_CONTRACT_VERSION,
-) -> dict[str, Any]:
-    intake = validate_locked_intake(payload, label, contract_version=contract_version)
-    required_list_fields = ["goals", "non_goals", "constraints", "acceptance", "clarifications"]
-    if intake["request_summary"] is None:
-        raise WorkflowError(f"{label}.request_summary must be locked before approval")
-    if intake["problem_summary"] is None:
-        raise WorkflowError(f"{label}.problem_summary must be locked before approval")
-    for name in required_list_fields:
-        if not intake[name]:
-            raise WorkflowError(f"{label}.{name} must not be empty")
-    unresolved = [item["question"] for item in intake["clarifications"] if item["status"] != "resolved"]
-    if unresolved:
-        raise WorkflowError(f"{label}.clarifications must all be resolved")
-    return intake
+def validate_command_payload(payload: Any, label: str) -> dict[str, str]:
+    payload = _require_mapping(payload, label)
+    _require_keys(payload, ["cmd", "cwd"], label)
+    return {
+        "cmd": _require_string(payload["cmd"], f"{label}.cmd").strip(),
+        "cwd": validate_relative_repo_path(_require_string(payload["cwd"], f"{label}.cwd").strip()),
+    }
 
 
-def validate_task(payload: dict[str, Any]) -> None:
-    payload = _require_mapping(payload, "task")
+def validate_state(payload: dict[str, Any]) -> None:
+    payload = _require_mapping(payload, "state")
     _require_keys(
         payload,
         [
-            "id",
+            "task_id",
             "title",
+            "contract_version",
             "state",
             "primary_repo",
             "created_at",
-            "approved_at",
-            "approval",
-            "active_phase_id",
-            "latest_run_id",
-            "last_verified_run_id",
-            "blocked_reason",
-            "user_validated",
-            "user_validation_note",
-            "intake",
-        ],
-        "task",
-    )
-    _require_string(payload["id"], "task.id")
-    _require_string(payload["title"], "task.title")
-    _require_string(payload["primary_repo"], "task.primary_repo")
-    contract_version = task_contract_version(payload)
-    if payload["state"] not in TASK_STATES:
-        raise WorkflowError(f"task.state must be one of {sorted(TASK_STATES)}")
-    _require_string(payload["created_at"], "task.created_at")
-    _require_optional_string(payload["approved_at"], "task.approved_at")
-    _require_optional_string(payload["active_phase_id"], "task.active_phase_id")
-    _require_optional_string(payload["latest_run_id"], "task.latest_run_id")
-    _require_optional_string(payload["last_verified_run_id"], "task.last_verified_run_id")
-    _require_optional_string(payload.get("kickoff_required_for_phase"), "task.kickoff_required_for_phase")
-    _require_optional_string(payload.get("last_kickoff_run_id"), "task.last_kickoff_run_id")
-    _require_optional_string(payload["blocked_reason"], "task.blocked_reason")
-    _require_bool(payload["user_validated"], "task.user_validated")
-    _require_optional_string(payload["user_validation_note"], "task.user_validation_note")
-    intake = validate_locked_intake(payload["intake"], contract_version=contract_version)
-
-    approval = payload["approval"]
-    if approval is not None:
-        approval = _require_mapping(approval, "task.approval")
-        _require_keys(approval, ["actor", "note", "timestamp"], "task.approval")
-        _require_string(approval["actor"], "task.approval.actor")
-        _require_string(approval["note"], "task.approval.note")
-        _require_string(approval["timestamp"], "task.approval.timestamp")
-
-    if (payload["approved_at"] is None) != (payload["approval"] is None):
-        raise WorkflowError("task approval metadata must be fully set or fully null")
-    if payload["state"] == "draft" and payload["approval"] is not None:
-        raise WorkflowError("draft task cannot carry approval metadata")
-    if payload["state"] == "blocked" and not payload["blocked_reason"]:
-        raise WorkflowError("blocked task requires blocked_reason")
-    if payload["state"] != "blocked" and payload["blocked_reason"] is not None:
-        raise WorkflowError("blocked_reason is only valid when state=blocked")
-    if payload["user_validated"] and not payload["user_validation_note"]:
-        raise WorkflowError("user validation note is required when user_validated=true")
-    if payload["user_validation_note"] and not payload["user_validated"]:
-        raise WorkflowError("user_validation_note requires user_validated=true")
-    if payload["state"] in {"review_ready", "completed"} and not payload["last_verified_run_id"]:
-        raise WorkflowError("review_ready/completed task requires last_verified_run_id")
-    if payload["state"] != "draft":
-        ensure_locked_intake(intake, contract_version=contract_version)
-
-
-def validate_phases(payload: dict[str, Any]) -> None:
-    payload = _require_mapping(payload, "phases")
-    _require_keys(payload, ["task_id", "generated_at", "phases"], "phases")
-    _require_string(payload["task_id"], "phases.task_id")
-    _require_string(payload["generated_at"], "phases.generated_at")
-    phase_list = payload["phases"]
-    if not isinstance(phase_list, list):
-        raise WorkflowError("phases.phases must be an array")
-
-    phase_ids: list[str] = []
-    orders: list[int] = []
-    for index, phase in enumerate(phase_list, start=1):
-        phase = _require_mapping(phase, f"phase[{index}]")
-        _require_keys(
-            phase,
-            [
-                "id",
-                "order",
-                "title",
-                "goal",
-                "inputs",
-                "allowed_write_paths",
-                "acceptance",
-                "status",
-                "retry_count",
-                "test_policy",
-            ],
-            f"phase[{index}]",
-        )
-        phase_id = _require_string(phase["id"], f"phase[{index}].id").strip()
-        order = _require_int(phase["order"], f"phase[{index}].order", minimum=1)
-        _require_string(phase["title"], f"phase[{index}].title")
-        _require_string(phase["goal"], f"phase[{index}].goal")
-        _require_string_list(phase["inputs"], f"phase[{index}].inputs")
-
-        write_paths = _require_string_list(phase["allowed_write_paths"], f"phase[{index}].allowed_write_paths", allow_empty=False)
-        normalized_paths = [validate_relative_repo_path(path) for path in write_paths]
-        if len(set(normalized_paths)) != len(normalized_paths):
-            raise WorkflowError(f"phase[{index}] allowed_write_paths must be unique")
-
-        acceptance = _require_mapping(phase["acceptance"], f"phase[{index}].acceptance")
-        _require_keys(acceptance, ["commands"], f"phase[{index}].acceptance")
-        _require_string_list(acceptance["commands"], f"phase[{index}].acceptance.commands", allow_empty=False)
-        if "required_reads" in phase:
-            _require_string_list(phase["required_reads"], f"phase[{index}].required_reads", allow_empty=False)
-        if "starting_points" in phase:
-            _require_string_list(phase["starting_points"], f"phase[{index}].starting_points", allow_empty=False)
-        if "deliverables" in phase:
-            _require_string_list(phase["deliverables"], f"phase[{index}].deliverables", allow_empty=False)
-        if "completion_signal" in phase:
-            _require_string(phase["completion_signal"], f"phase[{index}].completion_signal")
-
-        if phase["status"] not in PHASE_STATES:
-            raise WorkflowError(f"phase[{index}].status must be one of {sorted(PHASE_STATES)}")
-        _require_int(phase["retry_count"], f"phase[{index}].retry_count", minimum=0)
-
-        policy = _require_mapping(phase["test_policy"], f"phase[{index}].test_policy")
-        _require_keys(policy, ["mode", "evidence"], f"phase[{index}].test_policy")
-        mode = _require_string(policy["mode"], f"phase[{index}].test_policy.mode")
-        evidence = _require_string_list(policy["evidence"], f"phase[{index}].test_policy.evidence")
-        if mode not in {"require_tests", "evidence_only"}:
-            raise WorkflowError(f"phase[{index}].test_policy.mode is invalid: {mode}")
-        if mode == "evidence_only" and not evidence:
-            raise WorkflowError(f"phase[{index}] evidence_only requires non-empty evidence")
-
-        phase_ids.append(phase_id)
-        orders.append(order)
-
-    if len(set(phase_ids)) != len(phase_ids):
-        raise WorkflowError("phase ids must be unique")
-    expected_orders = list(range(1, len(orders) + 1))
-    if sorted(orders) != expected_orders:
-        raise WorkflowError(
-            f"phase orders must be contiguous starting at 1: expected {expected_orders}, got {sorted(orders)}"
-        )
-
-
-def validate_run(payload: dict[str, Any]) -> None:
-    payload = _require_mapping(payload, "run")
-    _require_keys(
-        payload,
-        [
-            "id",
-            "task_id",
-            "phase_id",
-            "event",
-            "commands",
-            "result",
-            "evidence",
-            "error_fingerprint",
+            "updated_at",
+            "spec_lock",
+            "current_focus",
+            "implementation_scopes",
+            "events",
             "next_action",
-            "timestamp",
+            "blockers",
+            "user_validation",
         ],
-        "run",
+        "state",
     )
-    _require_string(payload["id"], "run.id")
-    _require_string(payload["task_id"], "run.task_id")
-    _require_optional_string(payload["phase_id"], "run.phase_id")
-    _require_string(payload["event"], "run.event")
-    commands = payload["commands"]
-    if not isinstance(commands, list):
-        raise WorkflowError("run.commands must be an array")
-    for index, command in enumerate(commands):
-        command = _require_mapping(command, f"run.commands[{index}]")
-        _require_keys(command, ["command", "status", "output"], f"run.commands[{index}]")
-        _require_string(command["command"], f"run.commands[{index}].command")
-        status = _require_string(command["status"], f"run.commands[{index}].status")
-        if status not in {"passed", "failed", "blocked", "skipped"}:
-            raise WorkflowError(f"run.commands[{index}].status is invalid: {status}")
-        if not isinstance(command["output"], str):
-            raise WorkflowError(f"run.commands[{index}].output must be a string")
+    _require_string(payload["task_id"], "state.task_id")
+    _require_string(payload["title"], "state.title")
+    _require_int(payload["contract_version"], "state.contract_version", minimum=1)
+    if payload["state"] not in TASK_STATES:
+        raise WorkflowError(f"state.state must be one of {sorted(TASK_STATES)}")
+    _require_string(payload["primary_repo"], "state.primary_repo")
+    _require_string(payload["created_at"], "state.created_at")
+    _require_string(payload["updated_at"], "state.updated_at")
 
-    result = _require_string(payload["result"], "run.result")
-    if result not in {"passed", "failed", "blocked"}:
-        raise WorkflowError(f"run.result is invalid: {result}")
-    _require_string_list(payload["evidence"], "run.evidence")
-    _require_optional_string(payload["error_fingerprint"], "run.error_fingerprint")
-    _require_string(payload["next_action"], "run.next_action")
-    _require_string(payload["timestamp"], "run.timestamp")
+    spec_lock = _require_mapping(payload["spec_lock"], "state.spec_lock")
+    _require_keys(spec_lock, ["approved", "approved_at", "approved_by", "approval_note", "spec_sha256"], "state.spec_lock")
+    _require_bool(spec_lock["approved"], "state.spec_lock.approved")
+    _require_optional_string(spec_lock["approved_at"], "state.spec_lock.approved_at")
+    _require_optional_string(spec_lock["approved_by"], "state.spec_lock.approved_by")
+    _require_optional_string(spec_lock["approval_note"], "state.spec_lock.approval_note")
+    _require_optional_string(spec_lock["spec_sha256"], "state.spec_lock.spec_sha256")
+    if spec_lock["approved"] and not spec_lock["spec_sha256"]:
+        raise WorkflowError("approved state requires state.spec_lock.spec_sha256")
 
+    focus = _require_mapping(payload["current_focus"], "state.current_focus")
+    _require_keys(focus, ["imp_id", "status", "started_at", "note"], "state.current_focus")
+    _require_optional_string(focus["imp_id"], "state.current_focus.imp_id")
+    _require_string(focus["status"], "state.current_focus.status")
+    _require_optional_string(focus["started_at"], "state.current_focus.started_at")
+    if not isinstance(focus["note"], str):
+        raise WorkflowError("state.current_focus.note must be a string")
 
-def markdown_sections(text: str) -> dict[str, str]:
-    matches = list(re.finditer(r"^##\s+(.+?)\s*$", text, flags=re.M))
-    sections: dict[str, str] = {}
-    for index, match in enumerate(matches):
-        name = match.group(1).strip()
-        start = match.end()
-        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        sections[name] = text[start:end].strip()
-    return sections
+    scopes = payload["implementation_scopes"]
+    if not isinstance(scopes, list):
+        raise WorkflowError("state.implementation_scopes must be an array")
+    seen: set[str] = set()
+    for index, scope in enumerate(scopes):
+        scope = _require_mapping(scope, f"state.implementation_scopes[{index}]")
+        _require_keys(
+            scope,
+            [
+                "imp_id",
+                "title",
+                "target_repos",
+                "change_paths",
+                "policy",
+                "status",
+                "changed_paths",
+                "scope_delta",
+                "started_at",
+                "completed_at",
+                "note",
+                "verification",
+            ],
+            f"state.implementation_scopes[{index}]",
+        )
+        imp_id = _require_string(scope["imp_id"], f"state.implementation_scopes[{index}].imp_id")
+        if imp_id in seen:
+            raise WorkflowError(f"duplicate implementation scope id: {imp_id}")
+        seen.add(imp_id)
+        _require_string(scope["title"], f"state.implementation_scopes[{index}].title")
+        _require_string_list(scope["target_repos"], f"state.implementation_scopes[{index}].target_repos", allow_empty=False)
+        _require_string_list(scope["change_paths"], f"state.implementation_scopes[{index}].change_paths", allow_empty=False)
+        _require_string(scope["policy"], f"state.implementation_scopes[{index}].policy")
+        status = _require_string(scope["status"], f"state.implementation_scopes[{index}].status")
+        if status not in IMPLEMENTATION_STATES:
+            raise WorkflowError(f"state.implementation_scopes[{index}].status is invalid: {status}")
+        _require_string_list(scope["changed_paths"], f"state.implementation_scopes[{index}].changed_paths")
+        _require_string_list(scope["scope_delta"], f"state.implementation_scopes[{index}].scope_delta")
+        _require_optional_string(scope["started_at"], f"state.implementation_scopes[{index}].started_at")
+        _require_optional_string(scope["completed_at"], f"state.implementation_scopes[{index}].completed_at")
+        if not isinstance(scope["note"], str):
+            raise WorkflowError(f"state.implementation_scopes[{index}].note must be a string")
+
+        verification = _require_mapping(scope["verification"], f"state.implementation_scopes[{index}].verification")
+        _require_keys(verification, ["status", "commands", "last_run_at", "results"], f"state.implementation_scopes[{index}].verification")
+        verification_status = _require_string(verification["status"], f"state.implementation_scopes[{index}].verification.status")
+        if verification_status not in VERIFICATION_STATES:
+            raise WorkflowError(f"state.implementation_scopes[{index}].verification.status is invalid: {verification_status}")
+        commands = verification["commands"]
+        if not isinstance(commands, list):
+            raise WorkflowError(f"state.implementation_scopes[{index}].verification.commands must be an array")
+        for command_index, command in enumerate(commands):
+            validate_command_payload(command, f"state.implementation_scopes[{index}].verification.commands[{command_index}]")
+        _require_optional_string(verification["last_run_at"], f"state.implementation_scopes[{index}].verification.last_run_at")
+        if not isinstance(verification["results"], list):
+            raise WorkflowError(f"state.implementation_scopes[{index}].verification.results must be an array")
+
+    if not isinstance(payload["events"], list):
+        raise WorkflowError("state.events must be an array")
+    if not isinstance(payload["next_action"], str):
+        raise WorkflowError("state.next_action must be a string")
+    _require_string_list(payload["blockers"], "state.blockers")
+
+    validation = _require_mapping(payload["user_validation"], "state.user_validation")
+    _require_keys(validation, ["validated", "note", "validated_at"], "state.user_validation")
+    _require_bool(validation["validated"], "state.user_validation.validated")
+    _require_optional_string(validation["note"], "state.user_validation.note")
+    _require_optional_string(validation["validated_at"], "state.user_validation.validated_at")
+    if payload["state"] == "completed" and not validation["validated"]:
+        raise WorkflowError("completed state requires user validation")
