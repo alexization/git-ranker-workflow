@@ -10,10 +10,14 @@
 | `.claude/settings.json` | Claude Code 훅 등록 (PreToolUse) |
 | `.claude/hooks/block-dangerous.sh` | 위험 명령(rm -rf, force push, reset --hard 등) 세션 내 차단 |
 | `git-ranker/CLAUDE.md` | backend 작업 규약 |
-| `git-ranker/.claude/skills/{red,green,refactor}` | backend TDD 턴 스킬 |
+| `git-ranker/docs/{STRUCTURE,DEVELOPMENT,OPERATIONS}.md` | backend 패키지 구조 / 로컬 개발 / 배포·모니터링 |
+| `git-ranker/.claude/skills/{red,green,refactor}` | backend TDD 턴 스킬 (repo 고유) |
+| `git-ranker/.claude/skills/` (springboot-*, jpa-patterns 등) | ECC 선별 지식 스킬 (MIT) |
 | `git-ranker/.githooks/pre-commit` | 구현-테스트 동반 커밋 검사 (TDD_SKIP=1로 명시적 우회) |
 | `git-ranker-client/CLAUDE.md` | frontend 작업 규약 |
+| `git-ranker-client/docs/{STRUCTURE,CONVENTIONS}.md` | frontend 3계층 구조 / 코드 규약 |
 | `git-ranker-client/docs/verification-contract.md` | frontend 검증 계약 (lint/typecheck/build) |
+| `git-ranker-client/.claude/skills/` (react-*, nextjs-* 등) | ECC 선별 지식 스킬 (MIT) |
 
 ## 설계 원칙
 

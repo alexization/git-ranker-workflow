@@ -34,5 +34,8 @@
 
 - `.claude/settings.json` + `.claude/hooks/`: 위험 명령 차단 훅 (PreToolUse)
 - `docs/README.md`: harness 구조 설명
-- `git-ranker/.claude/skills/`: backend TDD 스킬 (`red` → `green` → `refactor`)
+- `git-ranker/docs/`: STRUCTURE(패키지 구조), DEVELOPMENT(로컬 개발), OPERATIONS(배포·모니터링)
+- `git-ranker/.claude/skills/`: TDD 프로세스 스킬(`red`→`green`→`refactor`) + ECC 선별 지식 스킬(Spring Boot/JPA/Security 등)
 - `git-ranker/.githooks/pre-commit`: 구현-테스트 동반 커밋 검사 (활성화: `git config core.hooksPath .githooks`)
+- `git-ranker-client/docs/`: STRUCTURE(3계층 구조), CONVENTIONS(코드 규약), verification-contract(검증 계약)
+- `git-ranker-client/.claude/skills/`: ECC 선별 지식 스킬(React/Next.js/성능/접근성)
