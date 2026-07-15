@@ -1,8 +1,7 @@
 <!--
 Reader-first PR body only.
 Each section should usually be one short paragraph or 1-3 bullets.
-Keep raw verification commands, task artifact paths, full file inventories, reviewer runtime dumps,
-and low-level workflow evidence in `workflows/tasks/<task-id>/` artifacts.
+Raw verification logs and full file inventories belong in commit messages or CI output, not the PR body.
 If a section does not apply, write `없음`.
 -->
 
