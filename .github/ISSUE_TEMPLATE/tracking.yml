@@ -1,0 +1,33 @@
+name: "🧭 요구사항 추적 (Tracking)"
+description: 하나의 요구사항을 FE/BE 작업으로 분해해 추적합니다. 보통 /dispatch가 자동 생성합니다.
+title: "[추적] "
+labels: ["tracking"]
+body:
+  - type: textarea
+    id: requirement
+    attributes:
+      label: 요구사항
+      description: 전체 요구사항 요약.
+    validations:
+      required: true
+  - type: textarea
+    id: breakdown
+    attributes:
+      label: 역할 분해
+      placeholder: |
+        ### Backend (git-ranker) — 이슈 alexization/git-ranker#N
+        - 범위: ...
+        ### Frontend (git-ranker-client) — 이슈 alexization/git-ranker-client#M
+        - 범위: ...
+    validations:
+      required: true
+  - type: textarea
+    id: tracking
+    attributes:
+      label: 완료 추적
+      placeholder: |
+        - [ ] BE 머지 (git-ranker#N)
+        - [ ] FE 머지 (git-ranker-client#M)
+        - [ ] gitlink 반영 (루트 커밋)
+    validations:
+      required: true
