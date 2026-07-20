@@ -39,3 +39,13 @@
 - `git-ranker/.githooks/pre-commit`: 구현-테스트 동반 커밋 검사 (활성화: `git config core.hooksPath .githooks`)
 - `git-ranker-client/docs/`: STRUCTURE(3계층 구조), CONVENTIONS(코드 규약), verification-contract(검증 계약)
 - `git-ranker-client/.claude/skills/`: ECC 선별 지식 스킬(React/Next.js/성능/접근성)
+
+## Workflow 오케스트레이션
+
+이 저장소는 요구사항을 FE/BE로 분배하는 오케스트레이터다. 상세 구현 계획은 각 서브모듈의 Plan 모드가 담당하고, 여기서는 역할별 작업 범위만 나눠 GitHub 이슈로 넘긴다. 세 세션이 GitHub 이슈로만 연결된다(로컬 상태 없음).
+
+- `/dispatch <요구사항>`: Plan 모드+AskUserQuestion으로 FE/BE 범위 분해 → 미리보기 승인 → `gh`로 루트 추적 이슈 + 각 서브모듈 이슈 생성. 절차는 `.claude/skills/workflow-dispatch`가 소유한다.
+- 각 서브모듈: 자기 이슈를 진입점으로 Plan 모드 → 구현 → PR → merge (각 레포 harness).
+- `/sync [추적이슈]`: 머지된 서브모듈 gitlink를 `develop` 최신으로 반영하고 추적 이슈를 닫는다. 절차는 `.claude/skills/workflow-sync`가 소유한다.
+- 이슈 형식은 세 저장소 공통 통합 템플릿(`task.yml` / 루트 `tracking.yml`)을 쓴다. 작업 종류(기능/버그/리팩토링/간단한 수정)를 work-type 필드로 흡수한다.
+- 서브모듈 remote org는 `alexization`, 추적 브랜치는 `develop`.
