@@ -15,13 +15,13 @@
 
 - 비자명한 구현 작업은 Plan 모드로 계획을 세우고 사용자 승인 후 구현한다.
 - 요구사항이 모호하면 구현 전에 AskUserQuestion으로 해소한다. 추측으로 범위를 넓히지 않는다.
-- 구현 코드 변경에는 대응하는 테스트 변경을 함께 제출한다. 테스트를 생략하면 그 근거를 커밋/PR에 명시한다.
+- 구현 코드 변경에는 대응하는 테스트 변경을 함께 제출한다(`git-ranker`는 JUnit, `git-ranker-client`는 vitest 순수 로직 단위 테스트 — 컴포넌트/E2E는 미도입). 테스트 harness가 없는 영역(예: 프런트 UI 컴포넌트)은 테스트를 생략하고 그 근거를 커밋/PR에 명시한다.
 - 작업 완료 보고 전에 해당 저장소의 검증 베이스라인을 통과시킨다.
 
 ## 검증 베이스라인
 
 - `git-ranker`: `./gradlew test` → `./gradlew build`
-- `git-ranker-client`: `npm run lint` → `npm run typecheck` → `npm run build` (자세한 계약은 `git-ranker-client/docs/verification-contract.md`)
+- `git-ranker-client`: `npm run lint` → `npm run typecheck` → `npm run test` → `npm run build` (자세한 계약은 `git-ranker-client/docs/verification-contract.md`)
 
 ## Git 규약
 
