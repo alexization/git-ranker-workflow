@@ -5,7 +5,14 @@ description: 하나의 요구사항을 FE(git-ranker-client)/BE(git-ranker) 작�
 
 # Workflow Dispatch
 
-요구사항을 받아 **역할별 작업 범위로 분해**하고 각 서브모듈에 GitHub 이슈를 생성한다. 상세 구현 계획은 각 서브모듈의 Plan 모드가 담당하므로, 여기서는 "무엇을/어디까지"만 정한다.
+요구사항을 받아 **역할별 작업 범위로 분해**하고 각 서브모듈에 GitHub 이슈를 생성한다.
+
+**무엇을 확정하고 무엇을 위임하는가** — 세 세션이 GitHub 이슈로만 연결되므로, 어느 한 레포가 단독으로 결정할 수 없는 것은 dispatch가 확정하고, 각 레포가 스스로 결정할 수 있는 것은 위임한다.
+
+- **dispatch가 확정한다(이슈에 반드시 담는다)**: 공유 계약(FE↔BE 사이 API 응답/요청 JSON 형태), 역할별 작업 범위, 범위 밖(Non-goals), 실행 순서·의존성, 완료·검증 기준. 이 항목들이 없으면 두 세션의 가정이 어긋난다.
+- **각 서브모듈 Plan 모드에 위임한다**: 위 계약을 만족하는 *내부 구현 방식*(BE 서비스/영속 계층 설계, FE 컴포넌트/상태 구조 등).
+
+즉 이슈만 읽고도 "무엇을 만들어야 하는지(계약·범위·완료조건)"는 명확해야 하고, "어떻게 만들지"만 열려 있어야 한다.
 
 ## 절차
 
@@ -19,7 +26,7 @@ description: 하나의 요구사항을 FE(git-ranker-client)/BE(git-ranker) 작�
 - **BE(git-ranker)**: REST API·엔드포인트, 도메인 로직, 영속성/JPA, 배치, 인증/보안, 관측성.
 - **FE(git-ranker-client)**: 라우팅/페이지, 컴포넌트, 클라이언트 상태(Zustand/React Query), API 계약 미러링(`shared/types/api.ts`), 접근성.
 - 한쪽만 필요하면 그쪽 이슈만 생성하되 추적 이슈는 항상 생성(해당 없는 역할은 "N/A").
-- 계약(API 스키마)은 확정하지 않는다 — 범위만 나누고 두 이슈를 상호 링크한다.
+- **공유 계약(API 스키마)은 추적 이슈의 "공유 계약" 섹션에 정본(single source of truth)으로 확정한다.** FE/BE 이슈는 이 계약을 복제하지 말고 링크로 참조한다 — 양쪽에 필드 목록을 중복 기재하면 한쪽이 바뀔 때 조용히 어긋난다. 내부 구현 방식은 확정하지 않고 각 Plan 모드에 위임한다.
 
 ## 라벨 보장
 
@@ -31,11 +38,12 @@ gh label list --repo alexization/<repo> | grep -q '^triage' || gh label create t
 
 ## 이슈 본문 템플릿
 
-각 서브모듈 `.github/ISSUE_TEMPLATE/task.yml` 폼과 동일한 섹션을 마크다운으로 재현한다(`gh`는 폼을 자동 채우지 않음). 버그가 아니면 "재현 절차" 섹션은 생략.
+각 서브모듈 `.github/ISSUE_TEMPLATE/task.yml` 폼과 동일한 섹션을 마크다운으로 재현한다(`gh`는 폼을 자동 채우지 않음). 아래 슬롯은 **모두 채운다** — 빈 채로 두지 않는다. 버그가 아니면 "재현 절차" 섹션만 생략.
 
 ```markdown
 > 상위 추적: alexization/git-ranker-workflow#<T>
 > 연관: alexization/<상대 레포>#<번호>
+> 공유 계약: 추적 이슈#<T> "공유 계약" 섹션 참조 (여기 필드 목록을 복제하지 않는다)
 
 ## 작업 유형
 <BE: feature|bug|refactor|chore|performance|security|observability|docs
@@ -45,7 +53,10 @@ gh label list --repo alexization/<repo> | grep -q '^triage' || gh label create t
 <이유. 버그면 증상 요약>
 
 ## 작업 내용 / 기대 결과
-<무엇을 / 완료 후 기대 동작>
+<무엇을 / 완료 후 기대 동작. 계약의 구체 필드·JSON은 추적 이슈#<T>를 참조하고, 여기서는 이 레포가 그 계약을 어떻게 충족하는지(어느 지점을 바꾸는지)를 적는다>
+
+## 범위 밖 (Non-goals)
+<이번 이슈에서 의도적으로 하지 않는 것. 스코프 크립·재검토 방지. 없으면 "없음"이라 명시>
 
 ## 재현 절차 / 기대 vs 실제   ← 버그일 때만
 재현: 1) ... 2) ...
@@ -56,11 +67,12 @@ gh label list --repo alexization/<repo> | grep -q '^triage' || gh label create t
 <BE: `domain/...`, `src/test/...`   |   FE: route/component/hook·store>
 
 ## 완료 조건
-- [ ] ...
+- [ ] <검증 가능한 항목. 주관적 "잘 된다" 금지 — 무엇이 참이면 완료인지>
 
 ## 검증 방법
 <BE: `./gradlew test`, `./gradlew build -x test`
- FE: `npm run lint`, `npm run typecheck`, `npm run build`, 브라우저 QA>
+ FE: `npm run lint`, `npm run typecheck`, `npm run build`,
+     브라우저 QA를 구체 시나리오로: (페이지/경로) 접속 → (동작) → (보여야 할 것 / 보이면 안 되는 것)>
 
 ## 리스크 / 의존성 / 연관
 - 리스크:
@@ -68,7 +80,45 @@ gh label list --repo alexization/<repo> | grep -q '^triage' || gh label create t
 - 상위 추적:
 ```
 
-**FE 제약**: 테스트 러너가 없으므로 `작업 유형`에 `testing`을 쓰지 않고 `검증 방법`에 테스트를 넣지 않는다.
+**FE 제약**: 테스트 러너가 없으므로 `작업 유형`에 `testing`을 쓰지 않고 `검증 방법`에 테스트를 넣지 않는다. 대신 브라우저 QA를 위처럼 "경로 → 동작 → 기대/비기대 상태"의 구체 시나리오로 적어 체크 가능하게 만든다.
+
+## 추적 이슈 본문 템플릿
+
+루트 `.github/ISSUE_TEMPLATE/tracking.yml` 폼과 같은 섹션을 마크다운으로 재현한다. **"공유 계약"은 FE↔BE 계약의 정본**이며, 여기서만 필드/JSON을 확정하고 서브모듈 이슈는 이 섹션을 링크로 가리킨다.
+
+````markdown
+## 요구사항
+<전체 요구사항 요약. 우선순위/식별자(P0-1 등)가 있으면 포함>
+
+## 공유 계약 (FE↔BE 정본 — 서브모듈 이슈는 이 섹션을 참조)
+대상: `<METHOD> <경로>`
+
+변경 후 응답(또는 요청) 형태:
+```json
+{ "<필드>": "<타입>  // 설명", ... }
+```
+- 포함 필드: <이름:타입 나열>
+- 제외/삭제 필드: <이름 — 왜 빼는지>
+- 결정과 기각한 대안: <채택안 요약 + "왜 다른 안이 아닌지" 한 줄 — 서브모듈 세션의 재검토 방지>
+
+## 역할 분해
+### Backend (git-ranker) — alexization/git-ranker#<N>
+- 범위: <한 줄>
+### Frontend (git-ranker-client) — alexization/git-ranker-client#<M>
+- 범위: <한 줄>
+(해당 없는 역할은 "N/A")
+
+## 실행 순서 / 의존성
+1. <먼저 배포할 쪽> — 이유
+2. <다음 배포할 쪽> — 이유
+<순서가 무관하면 "무관"이라 명시>
+
+## 완료 추적
+- [ ] BE 머지 (git-ranker#<N>)
+- [ ] FE 머지 (git-ranker-client#<M>)
+- [ ] 계약 준수 확인: <응답에 제외 필드 없음 등 검증 가능한 항목>
+- [ ] gitlink 반영 (루트 커밋)
+````
 
 ## gh 명령 (제목 규칙: `[<work_type>] <요약>`)
 

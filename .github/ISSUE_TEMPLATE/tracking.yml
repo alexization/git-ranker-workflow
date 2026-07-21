@@ -11,6 +11,20 @@ body:
     validations:
       required: true
   - type: textarea
+    id: contract
+    attributes:
+      label: 공유 계약 (FE↔BE 정본)
+      description: FE와 BE 사이 API 계약의 single source of truth. 서브모듈 이슈는 이 섹션을 참조한다(복제 금지). 계약 변경이 없으면 "해당 없음".
+      placeholder: |
+        대상: <METHOD> <경로>
+        변경 후 응답(또는 요청) 형태:
+        { "<필드>": "<타입>" }
+        - 포함: <필드:타입 나열>
+        - 제외: <필드 — 제외 사유>
+        - 결정/기각한 대안: <채택안 + 왜 다른 안이 아닌지 한 줄>
+    validations:
+      required: true
+  - type: textarea
     id: breakdown
     attributes:
       label: 역할 분해
@@ -22,12 +36,23 @@ body:
     validations:
       required: true
   - type: textarea
+    id: sequence
+    attributes:
+      label: 실행 순서 / 의존성
+      description: 배포·머지 순서가 계약 불일치를 좌우하면 순서와 이유를 명시. 무관하면 "무관".
+      placeholder: |
+        1. <먼저 배포/머지할 쪽> — 이유
+        2. <다음 쪽> — 이유
+    validations:
+      required: true
+  - type: textarea
     id: tracking
     attributes:
       label: 완료 추적
       placeholder: |
         - [ ] BE 머지 (git-ranker#N)
         - [ ] FE 머지 (git-ranker-client#M)
+        - [ ] 계약 준수 확인 (계약 대비 검증 가능한 항목)
         - [ ] gitlink 반영 (루트 커밋)
     validations:
       required: true
