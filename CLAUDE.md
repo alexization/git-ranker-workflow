@@ -47,5 +47,5 @@
 - `/dispatch <요구사항>`: Plan 모드+AskUserQuestion으로 FE/BE 범위 분해 → 미리보기 승인 → `gh`로 루트 추적 이슈 + 각 서브모듈 이슈 생성. 절차는 `.claude/skills/workflow-dispatch`가 소유한다.
 - 각 서브모듈: 자기 이슈를 진입점으로 Plan 모드 → 구현 → PR → merge (각 레포 harness).
 - `/sync [추적이슈]`: 머지된 서브모듈 gitlink를 `develop` 최신으로 반영하고 추적 이슈를 닫는다. 절차는 `.claude/skills/workflow-sync`가 소유한다.
-- 이슈 형식은 세 저장소 공통 통합 템플릿(`task.yml` / 루트 `tracking.yml`)을 쓴다. 작업 종류(기능/버그/리팩토링/간단한 수정)를 work-type 필드로 흡수한다.
+- 이슈 형식은 각 서브모듈이 `task.yml`, 루트가 추적용 `tracking.yml`을 쓴다. 작업 종류(기능/버그/리팩토링/간단한 수정)를 work-type 필드로 흡수한다.
 - 서브모듈 remote org는 `alexization`, 추적 브랜치는 `develop`.
